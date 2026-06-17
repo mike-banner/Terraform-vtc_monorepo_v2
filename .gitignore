@@ -17,6 +17,10 @@ pnpm-debug.log*
 
 # Outils d'IA et Mémoire Locale
 .planning/
+.planning
+.claude/
+.impeccable/
+ANTIGRAVITY.md
 .claude.json
 .claude-mem/
 claude-mem.db*
