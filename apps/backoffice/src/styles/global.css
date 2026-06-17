@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* src/styles/global.css */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+:root {
+  --park-colors-accent-default: #6366f1;
+  --park-colors-bg-canvas: #050505;
+  --park-colors-bg-default: #080808;
+  --park-colors-fg-default: #ffffff;
+
+  /* Minor Third Fluid Scale (1.2) */
+  --text-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8rem);
+  --text-sm: clamp(0.875rem, 0.84rem + 0.2vw, 0.95rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.1rem);
+  --text-lg: clamp(1.2rem, 1.15rem + 0.35vw, 1.35rem);
+  --text-xl: clamp(1.44rem, 1.38rem + 0.5vw, 1.6rem);
+  --text-2xl: clamp(1.728rem, 1.65rem + 0.75vw, 2rem);
+  --text-3xl: clamp(2.074rem, 1.95rem + 1vw, 2.5rem);
+  --text-4xl: clamp(2.488rem, 2.35rem + 1.25vw, 3rem);
+  --text-5xl: clamp(2.986rem, 2.8rem + 1.5vw, 3.8rem);
+}
+
+html,
+body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+/* Forcer les conteneurs de tableaux à gérer leur overflow */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  max-width: none; /* Les tableaux peuvent être plus larges que le viewport */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body {
+  background-color: var(--park-colors-bg-canvas);
+  color: var(--park-colors-fg-default);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Elite Dropdown Fix */
+select,
+option {
+  background-color: #050505 !important;
+  color: #ffffff !important;
+}
+
+select:focus {
+  outline: none;
+}
+
+.premium-gradient {
+  background: radial-gradient(circle at top left, #1a1a2e, #0a0a0c);
+}

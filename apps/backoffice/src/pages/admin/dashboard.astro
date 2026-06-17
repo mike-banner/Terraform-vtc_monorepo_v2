@@ -1,0 +1,158 @@
+---
+// src/pages/admin/dashboard.astro
+import KPIGrid from "../../components/admin/KPIGrid.astro";
+import MonthlyChart from "../../components/admin/MonthlyChart.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { requirePlatformAdmin } from "../../lib/guards/platform";
+import { createAdminClient } from "../../lib/supabase/server";
+
+
+const { profile } = Astro.locals;
+
+// Protection d'accès plateforme
+try {
+  await requirePlatformAdmin(profile);
+} catch {
+  return Astro.redirect("/login");
+}
+
+const supabaseAdmin = createAdminClient();
+
+// Récupération des données via la nouvelle vue complète
+const { data: latestBookings, error } = await supabaseAdmin
+  .from('admin_bookings_full_view')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(10);
+
+if (error) console.error("Dashboard Fetch Error:", error);
+
+// 1️⃣ KPIs Globaux (Source: Ledger)
+const { data: globalStats } = await supabaseAdmin
+    .from("financial_movements")
+    .select(`
+        gross_amount,
+        net_amount,
+        movement_type
+    `);
+
+const stats = (globalStats || []).reduce((acc, curr) => {
+    if (curr.movement_type === 'payment') {
+        acc.total_collected += Number(curr.gross_amount);
+        acc.total_net += Number(curr.net_amount);
+    } else if (curr.movement_type === 'refund') {
+        acc.total_net -= Number(curr.net_amount);
+        acc.total_refunded += Number(curr.gross_amount);
+    }
+    return acc;
+}, { total_collected: 0, total_net: 0, total_refunded: 0 });
+
+// 2️⃣ Graphiques (Source: Ledger)
+const { data: monthlySummary } = await supabaseAdmin
+    .from("admin_monthly_summary")
+    .select("*")
+    .order("month", { ascending: true });
+
+const kpiItems = [
+    {
+        label: "CA Total Encaissé",
+        value: new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.total_collected),
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+        trend: "Brut Ledger",
+        trendColor: "text-slate-400"
+    },
+    {
+        label: "Total Remboursé",
+        value: new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.total_refunded),
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />',
+        trend: "Sorties",
+        trendColor: "text-red-400"
+    },
+    {
+        label: "Revenu Net Plateforme",
+        value: new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.total_net),
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />',
+        trend: "Collecté - Refund",
+        trendColor: "text-green-400"
+    }
+];
+
+const monthlyChartData = (monthlySummary || []).map(d => ({
+    month: new Date(d.month).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
+    total_net: Number(d.net_revenue)
+}));
+---
+
+
+<AdminLayout title="Tableau de Bord">
+    <KPIGrid title="Indicateurs Financiers" items={kpiItems} />
+
+    <div class="mt-12">
+        <MonthlyChart title="Performance Mensuelle (Net)" data={monthlyChartData} />
+    </div>
+
+    <!-- DERNIÈRES RÉSERVATIONS -->
+    <div class="mt-12">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-black uppercase tracking-tighter flex items-center gap-3 text-white">
+                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                Dernières Activités Plateforme
+            </h3>
+            <a href="/admin/bookings" class="text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors">Voir tout &rarr;</a>
+        </div>
+
+        <div class="glass rounded-3xl overflow-hidden border border-white/5 bg-white/[0.01]">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-white/5 border-b border-white/5">
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Client</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Partenaire</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Statut</th>
+                        <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">Montant</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {latestBookings?.map((b) => (
+                        <tr class="hover:bg-white/5 transition-colors group">
+                            <td class="px-6 py-4">
+                                <p class="text-[11px] font-black uppercase text-white">
+                                    {b.display_customer_first_name} {b.display_customer_last_name || ''}
+                                </p>
+                                <p class="text-[9px] font-bold text-slate-500 mt-0.5">{b.display_customer_email}</p>
+                                <a href={`tel:${b.display_customer_phone}`} class="text-[8px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors block mt-1">
+                                    {b.display_customer_phone}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4">
+                                {b.driver_id ? (
+                                    <p class="text-[10px] font-black uppercase text-indigo-400">
+                                        {b.driver_first_name} {b.driver_last_name}
+                                    </p>
+                                ) : (
+                                    <p class="text-[9px] font-black uppercase text-amber-500/80">Chauffeur non assigné</p>
+                                )}
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter mt-1">{b.original_tenant_name}</p>
+                                <p class="text-[8px] text-slate-600">{b.original_tenant_domain}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter border ${
+                                    b.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                                    b.status === 'cancelled' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                    'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                                }`}>
+                                    {b.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <span class="text-sm font-black text-white">
+                                    {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(b.total_amount)}
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</AdminLayout>
+

@@ -1,0 +1,42 @@
+---
+// src/pages/app/vehicles.astro
+import { VehicleList } from "@/components/vehicles/VehicleList";
+import AppLayout from "../../layouts/AppLayout.astro";
+import Badge from "../../components/ui/Badge.astro";
+import Button from "../../components/ui/Button.astro";
+import Card from "../../components/ui/Card.astro";
+
+const { profile } = Astro.locals;
+
+if (!profile) return Astro.redirect("/login");
+---
+
+<AppLayout title="Mes Véhicules">
+    <div class="flex flex-col px-6 py-10 md:px-12 md:py-16">
+        <!-- BACK LINK -->
+        <a href="/app/settings" class="inline-flex items-center gap-2 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors mb-8 flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour aux réglages
+        </a>
+        <!-- HEADER -->
+        <div class="flex flex-row items-center justify-between gap-4 mb-8 flex-shrink-0">
+            <div>
+                <Badge variant="indigo">Mes Véhicules</Badge>
+            </div>
+            <Button id="btn-new-vehicle-content">
+                + Nouveau
+            </Button>
+        </div>
+
+        <div class="pb-20">
+            <VehicleList client:only="react" tenantId={profile.tenant_id!} />
+        </div>
+    </div>
+</AppLayout>
+
+<script>
+    const openModal = () => window.dispatchEvent(new CustomEvent('vehicles:open-modal'));
+    document.getElementById('btn-new-vehicle-content')?.addEventListener('click', openModal);
+</script>

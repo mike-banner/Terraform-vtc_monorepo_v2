@@ -1,0 +1,34 @@
+---
+// src/components/ui/Button.astro
+interface Props {
+  id?: string;
+  href?: string;
+  variant?: 'white' | 'primary' | 'emerald' | 'amber' | 'outline' | 'danger';
+  class?: string;
+  onclick?: string;
+  [key: string]: any;
+}
+
+const { id, href, variant = 'white', class: className, onclick, ...rest } = Astro.props;
+
+const variants = {
+  white: "bg-white hover:bg-slate-100 text-slate-950 shadow-white/5",
+  primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20",
+  emerald: "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20",
+  amber: "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20",
+  outline: "bg-white/5 hover:bg-white/10 border border-white/10 text-white",
+  danger: "bg-red-600 hover:bg-red-500 text-white shadow-red-600/20"
+};
+
+const baseClasses = "px-4 py-3 md:px-6 md:py-3.5 text-xs font-black uppercase tracking-wider rounded-lg md:rounded-xl transition-all active:scale-95 shadow-xl inline-flex items-center justify-center gap-2 shrink-0 min-h-[44px]";
+---
+
+{href ? (
+  <a id={id} href={href} class:list={[baseClasses, variants[variant], className]} onclick={onclick} {...rest}>
+    <slot />
+  </a>
+) : (
+  <button id={id} class:list={[baseClasses, variants[variant], className]} onclick={onclick} {...rest}>
+    <slot />
+  </button>
+)}

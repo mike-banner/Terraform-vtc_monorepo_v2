@@ -1,0 +1,61 @@
+---
+// src/components/ui/Card.astro
+interface Props {
+  class?: string;
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  rounded?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+  hover?: boolean;
+  href?: string;
+  id?: string;
+  /** Passed through to the root element (e.g. booking payload for modal). */
+  'data-booking'?: string;
+}
+
+const {
+  class: className,
+  padding = 'md',
+  rounded = '2xl',
+  hover = false,
+  href,
+  id,
+  'data-booking': dataBooking,
+} = Astro.props;
+
+const paddings = {
+  none: "",
+  sm: "p-4 md:p-6",
+  md: "p-6 md:p-8",
+  lg: "p-8 md:p-12",
+  xl: "p-10 md:p-16"
+};
+
+const roundness = {
+  sm: "rounded-lg",
+  md: "rounded-xl",
+  lg: "rounded-2xl",
+  xl: "rounded-[2rem]",
+  "2xl": "rounded-[2.5rem]",
+  "3xl": "rounded-[3rem]"
+};
+
+const baseClasses = "glass border border-white/10 bg-white/[0.02] relative z-10 transition-all block";
+const hoverClasses = (hover || href) ? "hover:border-white/20 hover:bg-white/[0.04] cursor-pointer" : "";
+
+const Element = href ? 'a' : 'div';
+---
+
+<Element
+  id={id}
+  href={href}
+  data-booking={dataBooking}
+  class:list={[baseClasses, roundness[rounded], paddings[padding], hoverClasses, className]}
+>
+  <slot />
+</Element>
+
+<style>
+  .glass {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+</style>

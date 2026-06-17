@@ -1,0 +1,158 @@
+---
+// src/pages/index.astro
+import MainLayout from "../layouts/MainLayout.astro";
+---
+
+<MainLayout title="Accueil" hideFooter>
+	<div class="flex-1 flex items-center justify-center px-4">
+		<div class="glass p-8 sm:p-12 rounded-[2.5rem] text-center max-w-2xl w-full border border-white/10 shadow-[0_0_50px_-12px_rgba(79,70,229,0.2)]">
+			<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-6">
+				<span class="relative flex h-2 w-2">
+					<span class="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+					<span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+				</span>
+				VTC SaaS - V1.0
+			</div>
+
+			<h1
+				class="text-[2.2rem] sm:text-5xl font-black mb-4 text-white tracking-tighter uppercase leading-[1.1]"
+			>
+				L'excellence <br/> du <span class="text-indigo-500">VTC</span>
+			</h1>
+			<p class="text-slate-400 text-sm sm:text-base mb-8 font-medium max-w-xl mx-auto leading-relaxed">
+				Propulsez votre entreprise de transport avec une infrastructure technologique <span class="text-white">Elite</span>.
+			</p>
+			<div class="flex flex-col sm:flex-row gap-3 justify-center">
+				<a
+					href="/signup"
+					class="px-8 py-3.5 bg-indigo-600 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/30 active:scale-95"
+				>
+					Démarrer maintenant
+				</a>
+				<button
+					id="btn-learn-more"
+					class="px-8 py-3.5 glass rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-white/5 transition-all border border-white/10 active:scale-95"
+				>
+					En savoir plus
+				</button>
+			</div>
+
+			<p class="mt-8 text-[11px] text-slate-600">&copy; {new Date().getFullYear()} VTC HUB</p>
+		</div>
+	</div>
+
+	<!-- MODAL: EN SAVOIR PLUS -->
+	<div id="modal-about" class="fixed inset-0 z-[100] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-500">
+		<div class="absolute inset-0 bg-black/80 backdrop-blur-sm modal-overlay"></div>
+
+		<div class="relative glass max-w-2xl w-full rounded-[3rem] border border-white/10 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-500">
+			<!-- Close Button -->
+			<button class="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors close-modal">
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+
+			<div class="p-10 sm:p-16">
+				<div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30 mb-8 mx-auto sm:mx-0">
+					<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+				</div>
+
+				<h2 class="text-4xl font-black uppercase text-white tracking-tighter mb-6 text-center sm:text-left">
+					L'Écosystème <span class="text-indigo-500">VTC MVP</span>
+				</h2>
+
+				<div class="space-y-8 text-left h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+					<p class="text-slate-400 leading-relaxed font-medium">
+						Bienvenue sur l'infrastructure de référence pour les professionnels du VTC. Notre plateforme n'est pas qu'un simple annuaire, c'est un <span class="text-white font-bold">ERP financier</span> et une <span class="text-white font-bold">centrale de réservation</span> privée.
+					</p>
+
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+						<div class="p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-indigo-500/30 transition-colors">
+							<h3 class="text-indigo-400 font-black uppercase text-[10px] tracking-widest mb-3">Finance & Ledger</h3>
+							<p class="text-xs text-slate-500 leading-relaxed">Transparence totale. Chaque euro est tracé dans un Grand Livre (Ledger) immuable. Fini les erreurs de calcul.</p>
+						</div>
+						<div class="p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-indigo-500/30 transition-colors">
+							<h3 class="text-indigo-400 font-black uppercase text-[10px] tracking-widest mb-3">Gestion des Véhicules</h3>
+							<p class="text-xs text-slate-500 leading-relaxed">Partenaires, chauffeurs, véhicules. Gardez un contrôle absolu sur votre activité et celle de vos équipes.</p>
+						</div>
+						<div class="p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-indigo-500/30 transition-colors">
+							<h3 class="text-indigo-400 font-black uppercase text-[10px] tracking-widest mb-3">Réservation Directe</h3>
+							<p class="text-xs text-slate-500 leading-relaxed">Un moteur de booking ultra-performant. Recevez vos paiements via Stripe de manière sécurisée et instantanée.</p>
+						</div>
+						<div class="p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-indigo-500/30 transition-colors">
+							<h3 class="text-indigo-400 font-black uppercase text-[10px] tracking-widest mb-3">Dashboard Admin</h3>
+							<p class="text-xs text-slate-500 leading-relaxed">Une vision à 360° sur vos KPI, vos réservations en cours et vos litiges Stripe éventuels.</p>
+						</div>
+					</div>
+
+					<div class="p-8 rounded-[2rem] bg-indigo-600/10 border border-indigo-500/20">
+						<h4 class="text-white font-black uppercase text-xs mb-2 tracking-widest">En tant que nouveau membre :</h4>
+						<ul class="text-[11px] text-slate-400 space-y-2 list-disc list-inside font-medium">
+							<li>Finalisez votre onboarding en téléchargeant vos documents.</li>
+							<li>Configurez vos tarifs personnalisés (Zones, Forfaits).</li>
+							<li>Commencez à opérer sous votre propre domaine ou via la plateforme.</li>
+						</ul>
+					</div>
+				</div>
+
+				<div class="mt-12 flex justify-center sm:justify-start">
+					<button class="px-8 py-3.5 sm:px-12 sm:py-5 bg-white text-black font-black uppercase tracking-widest text-xs sm:text-base rounded-2xl hover:bg-slate-200 transition-all active:scale-95 close-modal">
+						J'ai compris
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<style>
+		.glass {
+			background: rgba(255, 255, 255, 0.03);
+			backdrop-filter: blur(20px);
+			-webkit-backdrop-filter: blur(20px);
+		}
+
+		#modal-about.is-active {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		#modal-about.is-active > div:last-child {
+			transform: scale(1);
+		}
+
+		.custom-scrollbar::-webkit-scrollbar {
+			width: 4px;
+		}
+		.custom-scrollbar::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		.custom-scrollbar::-webkit-scrollbar-thumb {
+			background: rgba(255, 255, 255, 0.1);
+			border-radius: 10px;
+		}
+	</style>
+
+	<script>
+		const btn = document.getElementById('btn-learn-more');
+		const modal = document.getElementById('modal-about');
+		const closeBtns = document.querySelectorAll('.close-modal');
+		const overlay = document.querySelector('.modal-overlay');
+
+		const toggleModal = () => {
+			modal?.classList.toggle('is-active');
+		};
+
+		btn?.addEventListener('click', toggleModal);
+		closeBtns.forEach(b => b.addEventListener('click', toggleModal));
+		overlay?.addEventListener('click', toggleModal);
+
+		window.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && modal?.classList.contains('is-active')) {
+				toggleModal();
+			}
+		});
+	</script>
+</MainLayout>

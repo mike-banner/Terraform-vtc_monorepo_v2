@@ -1,0 +1,83 @@
+---
+// src/pages/waiting-approval.astro
+import MainLayout from "../layouts/MainLayout.astro";
+---
+
+<MainLayout title="En attente d'approbation" hideFooter>
+    <div class="flex-1 flex items-center justify-center px-4 py-4">
+        <div
+            class="glass p-10 rounded-3xl w-full max-w-lg shadow-2xl border border-white/10 text-center animate-in fade-in zoom-in duration-700"
+        >
+            <div
+                class="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-indigo-500/20"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-indigo-500 animate-pulse"
+                >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+
+            <h1
+                class="text-3xl font-black tracking-tighter uppercase mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400"
+            >
+                Dossier en cours d'examen
+            </h1>
+
+            <div class="space-y-4 text-slate-400 mb-10 leading-relaxed">
+                <p>
+                    Merci d'avoir complété votre inscription. Nos équipes
+                    vérifient actuellement vos documents et les informations de
+                    votre véhicule.
+                </p>
+                <p class="text-sm border-t border-white/5 pt-4">
+                    Cette étape prend généralement <span
+                        class="text-indigo-400 font-bold"
+                        >moins de 24 heures</span
+                    >. Vous recevrez un e-mail dès que votre compte sera activé.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <a
+                    href="/signup?edit=true"
+                    class="w-full py-4 bg-indigo-600 rounded-xl font-bold uppercase tracking-tighter text-xs transition-all hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 text-white flex items-center justify-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    Modifier mon dossier
+                </a>
+                <button
+                    id="waiting-logout-btn"
+                    class="w-full py-4 glass rounded-xl font-bold uppercase tracking-tighter text-xs transition-all hover:bg-white/10 active:scale-95"
+                >
+                    Déconnexion
+                </button>
+            </div>
+
+            <script>
+                import { supabase } from "@/lib/supabase/client";
+                const btn = document.getElementById("waiting-logout-btn");
+                btn?.addEventListener("click", async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = "/";
+                });
+            </script>
+
+            <div
+                class="mt-8 text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]"
+            >
+                VTC HUB &bull; Service Qualité
+            </div>
+        </div>
+    </div>
+</MainLayout>

@@ -1,0 +1,541 @@
+---
+// src/pages/signup.astro
+import MainLayout from "../layouts/MainLayout.astro";
+---
+
+<MainLayout title="Inscription" hideFooter>
+	<div class="flex-1 flex items-center justify-center px-4 py-4">
+		<div class="glass p-10 rounded-3xl w-full max-w-xl shadow-2xl border border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+			<!-- Step Indicators -->
+			<div class="flex justify-between mb-8 relative px-2">
+				<div class="absolute top-1/2 left-0 w-full h-0.5 bg-white/5 -translate-y-1/2"></div>
+				<div id="progress-bar" class="absolute top-1/2 left-0 h-0.5 bg-indigo-500 -translate-y-1/2 transition-all duration-500 ease-in-out" style="width: 0%"></div>
+				{
+					[1, 2, 3].map((step) => (
+						<div
+							class="step-dot w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center text-xs font-black z-10 transition-all duration-500"
+							data-step={step}
+						>
+							{step}
+						</div>
+					))
+				}
+			</div>
+
+			<div class="text-center mb-8 h-[80px]">
+				<div class="step-header" data-step="1">
+					<h1 class="text-3xl font-extrabold mb-2 text-white uppercase tracking-tighter">Compte</h1>
+					<p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Tes identifiants de connexion</p>
+				</div>
+				<div class="step-header hidden" data-step="2">
+					<h1 class="text-3xl font-extrabold mb-2 text-white uppercase tracking-tighter">Profil</h1>
+					<p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Identité du titulaire</p>
+				</div>
+				<div class="step-header hidden" data-step="3">
+					<h1 class="text-3xl font-extrabold mb-2 text-white uppercase tracking-tighter">Entreprise</h1>
+					<p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Détails juridiques & PRO</p>
+				</div>
+			</div>
+
+			<form id="signup-form" class="space-y-6">
+				<!-- Step 1: Account -->
+				<div class="step-content space-y-4" data-step="1">
+					<div class="space-y-2">
+						<label for="email" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email professionnel</label>
+						<input type="email" id="email" name="email" required placeholder="nom@entreprise.fr" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all" />
+					</div>
+					<div class="space-y-2">
+						<label for="password" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Mot de passe</label>
+						<div class="relative">
+							<input type="password" id="password" name="password" required placeholder="••••••••" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all" />
+							<button type="button" id="toggle-password" aria-label="Afficher le mot de passe" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors p-1">
+								<svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+									<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+								</svg>
+								<svg id="eye-off-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 hidden">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+								</svg>
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 2: Profile -->
+				<div class="step-content space-y-6 hidden" data-step="2">
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<div class="space-y-2">
+							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">Prénom</label>
+							<input type="text" name="first_name" required placeholder="Jean" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-inner" />
+						</div>
+						<div class="space-y-2">
+							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">Nom</label>
+							<input type="text" name="last_name" required placeholder="Dupont" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-inner" />
+						</div>
+					</div>
+					<div class="space-y-2">
+						<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">Téléphone</label>
+						<div class="flex items-center bg-white/5 border border-white/10 rounded-2xl px-5 focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all shadow-inner group">
+							<div class="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0 py-4">
+								<span class="text-lg leading-none">🇫🇷</span>
+								<span class="font-black text-sm tracking-tighter opacity-80">+33</span>
+							</div>
+							<input type="tel" name="phone_number" id="phone_number_input" required placeholder="6 12 34 56 78" inputmode="numeric" maxlength="14" class="flex-1 bg-transparent border-none outline-none py-4 pl-4 text-white placeholder:text-slate-500" />
+							<input type="hidden" name="phone_prefix" value="+33" />
+						</div>
+					</div>
+				</div>
+
+				<!-- Step 3: Business -->
+				<div class="step-content space-y-4 hidden" data-step="3">
+					<div class="space-y-2">
+						<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Type d'entreprise</label>
+						<div class="grid grid-cols-2 gap-2 bg-white/5 p-1 rounded-2xl border border-white/10">
+							<button type="button" class="legal-form-toggle-btn py-3 text-[9px] font-black uppercase rounded-xl transition-all active bg-indigo-600 shadow-lg shadow-indigo-600/30 text-white" data-type="societe">
+								Société
+							</button>
+							<button type="button" class="legal-form-toggle-btn py-3 text-[9px] font-black uppercase rounded-xl transition-all text-slate-500 hover:text-white hover:bg-white/5" data-type="auto_entrepreneur">
+								Auto-entrepreneur
+							</button>
+						</div>
+						<input type="hidden" name="legal_form" id="legal_form" value="sasu" />
+					</div>
+
+					<!-- Sous-type de société (masqué pour AE) -->
+					<div id="societe-details" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+						<div class="space-y-2">
+							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">Type de société</label>
+							<div class="relative group">
+								<select id="legal_form_select" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer pr-10">
+									<option value="sasu" selected>SASU</option>
+									<option value="eurl">EURL</option>
+									<option value="sarl">SARL</option>
+									<option value="sas">SAS</option>
+									<option value="ei">Entreprise Individuelle (EI)</option>
+									<option value="other">Autre</option>
+								</select>
+								<div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-white transition-colors">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="space-y-2">
+						<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Nom de l'entreprise</label>
+						<input type="text" id="company_name_input" name="company_name" required placeholder="Ex: Prestige VTC" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+					</div>
+					<div class="space-y-2">
+						<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Domaine web (prestige-vtc)</label>
+						<input type="text" name="primary_domain" required placeholder="prestige-vtc" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+					</div>
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<div class="space-y-2">
+							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">SIRET (14 chiffres)</label>
+							<input type="text" name="siret" id="siret_input" required placeholder="123 456 789 00012" pattern="[0-9 ]{14,18}" maxlength="18" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-[13px] sm:text-sm" />
+						</div>
+						<div class="space-y-2">
+							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Carte VTC</label>
+							<input type="text" name="vtc_license_number" id="vtc_input" required placeholder="123 456 789 012" pattern="[0-9 ]{14,15}" maxlength="15" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-[13px] sm:text-sm" />
+						</div>
+					</div>
+				</div>
+
+				<div class="flex flex-col sm:flex-row gap-4 pt-4">
+					<button type="button" id="prev-btn" class="w-full sm:flex-1 bg-white/10 hover:bg-white/20 text-white text-xs font-black uppercase tracking-wider min-h-[44px] py-3 rounded-xl transition-all opacity-0 pointer-events-none border border-white/5">
+						Retour
+					</button>
+					<button type="button" id="next-btn" class="w-full sm:flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider min-h-[44px] py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all">
+						Suivant
+					</button>
+					<button type="submit" id="final-btn" class="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider min-h-[44px] py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition-all hidden relative overflow-hidden group">
+						<span class="btn-text">Finaliser</span>
+						<div class="loader-container hidden absolute inset-0 flex items-center justify-center bg-emerald-600">
+							<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+						</div>
+					</button>
+				</div>
+			</form>
+
+			<div id="message" role="alert" aria-live="polite" class="mt-6 text-center text-xs font-medium min-h-[20px]">
+			</div>
+		</div>
+	</div>
+</MainLayout>
+
+<script>
+	import { supabase } from "@/lib/supabase/client";
+
+	let currentStep = 1;
+	const totalSteps = 3;
+
+	const form = document.querySelector("#signup-form") as HTMLFormElement;
+	const contents = document.querySelectorAll(".step-content");
+	const headers = document.querySelectorAll(".step-header");
+	const dots = document.querySelectorAll(".step-dot");
+	const progressBar = document.getElementById("progress-bar") as HTMLDivElement;
+
+	const nextBtn = document.querySelector("#next-btn") as HTMLButtonElement;
+	const prevBtn = document.querySelector("#prev-btn") as HTMLButtonElement;
+	const finalBtn = document.querySelector("#final-btn") as HTMLButtonElement;
+
+	const messageEl = document.querySelector("#message") as HTMLDivElement;
+	const loader = document.querySelector(".loader-container") as HTMLDivElement;
+	const btnText = document.querySelector(".btn-text") as HTMLSpanElement;
+
+	const legalFormToggleBtns = document.querySelectorAll(".legal-form-toggle-btn");
+	const legalFormInput = document.getElementById("legal_form") as HTMLInputElement;
+	const legalFormSelect = document.getElementById("legal_form_select") as HTMLSelectElement;
+	const societeDetails = document.getElementById("societe-details") as HTMLDivElement;
+
+	const siretInput = document.getElementById("siret_input") as HTMLInputElement;
+	const phoneInput = document.getElementById("phone_number_input") as HTMLInputElement;
+	const vtcInput = document.getElementById("vtc_input") as HTMLInputElement;
+
+	// Visual Formatter Logic
+	const formatInput = (input: HTMLInputElement, spacing: number) => {
+		input?.addEventListener("input", (e: any) => {
+			let cursorPosition = e.target.selectionStart;
+			let value = e.target.value.replace(/[^0-9]/g, "");
+			let formatted = "";
+
+			for (let i = 0; i < value.length; i++) {
+				if (i > 0 && i % spacing === 0) formatted += " ";
+				formatted += value[i];
+			}
+
+			const oldLength = e.target.value.length;
+			e.target.value = formatted;
+			const newLength = formatted.length;
+
+			// Adjust cursor position
+			if (cursorPosition) {
+				cursorPosition += (newLength - oldLength);
+				e.target.setSelectionRange(cursorPosition, cursorPosition);
+			}
+		});
+	};
+
+	// Apply formatters
+	formatInput(phoneInput, 2); // 6 12 34 56 78
+	formatInput(siretInput, 3); // 123 456 789 00012
+	formatInput(vtcInput, 3);   // 123 456 789
+
+	// Handle legal form selection
+	legalFormToggleBtns.forEach(btn => {
+		btn.addEventListener("click", () => {
+			const type = btn.getAttribute("data-type") || "societe";
+
+			if (type === "auto_entrepreneur") {
+				legalFormInput.value = "auto_entrepreneur";
+				societeDetails.classList.add("hidden");
+			} else {
+				legalFormInput.value = legalFormSelect.value || "sasu";
+				societeDetails.classList.remove("hidden");
+			}
+
+			legalFormToggleBtns.forEach((b: any) => {
+				b.classList.remove("active", "bg-indigo-600", "shadow-lg", "shadow-indigo-600/30", "text-white");
+				b.classList.add("text-slate-500", "hover:text-white", "hover:bg-white/5");
+			});
+			btn.classList.add("active", "bg-indigo-600", "shadow-lg", "shadow-indigo-600/30", "text-white");
+			btn.classList.remove("text-slate-500", "hover:text-white", "hover:bg-white/5");
+		});
+	});
+
+	legalFormSelect.addEventListener("change", () => {
+		legalFormInput.value = legalFormSelect.value;
+	});
+
+	let sessionUser: any = null;
+	let existingOnboarding: any = null;
+
+	async function init() {
+		const { data: { user } } = await supabase.auth.getUser();
+		if (user) {
+			sessionUser = user;
+			const emailInput = document.getElementById("email") as HTMLInputElement;
+			const passwordInput = document.getElementById("password") as HTMLInputElement;
+			if (emailInput) {
+				emailInput.value = user.email || "";
+				emailInput.disabled = true;
+			}
+			if (passwordInput) {
+				passwordInput.required = false;
+				(passwordInput.parentElement as HTMLElement).classList.add("hidden");
+			}
+
+			// Check for existing pending onboarding
+			const { data: onboarding } = await supabase
+				.from("onboarding")
+				.select("*")
+				.eq("profile_id", user.id)
+				.maybeSingle();
+
+			if (onboarding) {
+				existingOnboarding = onboarding;
+				// Pre-fill form
+				(document.getElementsByName("first_name")[0] as HTMLInputElement).value = onboarding.first_name || "";
+				(document.getElementsByName("last_name")[0] as HTMLInputElement).value = onboarding.last_name || "";
+				(document.getElementsByName("company_name")[0] as HTMLInputElement).value = onboarding.company_name || "";
+				(document.getElementsByName("primary_domain")[0] as HTMLInputElement).value = onboarding.primary_domain || "";
+				(document.getElementsByName("siret")[0] as HTMLInputElement).value = onboarding.siret || "";
+				(document.getElementsByName("vtc_license_number")[0] as HTMLInputElement).value = onboarding.vtc_license_number || "";
+
+				if (onboarding.legal_form || onboarding.company_type) {
+					const val = onboarding.legal_form || (onboarding.company_type === 'auto_entrepreneur' ? 'auto_entrepreneur' : 'sasu');
+					if (val === "auto_entrepreneur") {
+						const btn = document.querySelector(`.legal-form-toggle-btn[data-type="auto_entrepreneur"]`) as HTMLButtonElement;
+						if (btn) btn.click();
+					} else {
+						const btn = document.querySelector(`.legal-form-toggle-btn[data-type="societe"]`) as HTMLButtonElement;
+						if (btn) btn.click();
+						legalFormSelect.value = val;
+						legalFormInput.value = val;
+					}
+				}
+
+				if (onboarding.phone) {
+					// Split phone if it starts with prefix
+					const phone = onboarding.phone;
+					if (phone.startsWith("+33")) {
+						(document.getElementsByName("phone_prefix")[0] as HTMLSelectElement).value = "+33";
+						(document.getElementsByName("phone_number")[0] as HTMLInputElement).value = phone.replace("+33", "");
+					} else if (phone.startsWith("+32")) {
+						(document.getElementsByName("phone_prefix")[0] as HTMLSelectElement).value = "+32";
+						(document.getElementsByName("phone_number")[0] as HTMLInputElement).value = phone.replace("+32", "");
+					} else if (phone.startsWith("+41")) {
+						(document.getElementsByName("phone_prefix")[0] as HTMLSelectElement).value = "+41";
+						(document.getElementsByName("phone_number")[0] as HTMLInputElement).value = phone.replace("+41", "");
+					} else {
+						(document.getElementsByName("phone_number")[0] as HTMLInputElement).value = phone;
+					}
+				}
+			}
+
+			currentStep = 2;
+		}
+		updateUI();
+	}
+
+	function updateUI() {
+		contents.forEach((el) => {
+			const step = parseInt(el.getAttribute("data-step")!);
+			el.classList.toggle("hidden", step !== currentStep);
+		});
+		headers.forEach((el) => {
+			const step = parseInt(el.getAttribute("data-step")!);
+			el.classList.toggle("hidden", step !== currentStep);
+		});
+		dots.forEach((dot) => {
+			const step = parseInt(dot.getAttribute("data-step")!);
+			if (step <= currentStep) {
+				dot.classList.add("border-indigo-500", "bg-indigo-500/10", "text-indigo-400");
+			} else {
+				dot.classList.remove("border-indigo-500", "bg-indigo-500/10", "text-indigo-400");
+			}
+		});
+
+		const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+		progressBar.style.width = `${progress}%`;
+
+		prevBtn.style.opacity = currentStep === 1 ? "0" : "1";
+		prevBtn.style.pointerEvents = currentStep === 1 ? "none" : "auto";
+
+		if (currentStep === totalSteps) {
+			nextBtn.classList.add("hidden");
+			finalBtn.classList.remove("hidden");
+		} else {
+			nextBtn.classList.remove("hidden");
+			finalBtn.classList.add("hidden");
+		}
+	}
+
+	nextBtn.addEventListener("click", () => {
+		// Basic validation for current step
+		const inputs = contents[currentStep - 1].querySelectorAll("input");
+		let valid = true;
+		inputs.forEach(input => {
+			if (!input.checkValidity()) {
+				input.reportValidity();
+				valid = false;
+			}
+		});
+
+		if (valid && currentStep < totalSteps) {
+			currentStep++;
+			updateUI();
+		}
+	});
+
+	prevBtn.addEventListener("click", () => {
+		if (currentStep > 1) {
+			currentStep--;
+			updateUI();
+		}
+	});
+
+	form?.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const formData = new FormData(form);
+		const email = formData.get("email") as string;
+		const password = formData.get("password") as string;
+
+		// UI State: Loading
+		finalBtn.disabled = true;
+		loader.classList.remove("hidden");
+		btnText.style.opacity = "0";
+		messageEl.textContent = "CRÉATION DU COMPTE...";
+		messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-indigo-400";
+
+		try {
+			let userId = sessionUser?.id;
+
+			if (!userId) {
+				// 1. Auth SignUp
+				const { data: authData, error: authError } = await supabase.auth.signUp({
+					email,
+					password,
+				});
+
+				if (authError) throw authError;
+				if (!authData.user) throw new Error("Erreur lors de la création de l'utilisateur");
+				userId = authData.user.id;
+			}
+
+			messageEl.textContent = existingOnboarding ? "MISE À JOUR DOSSIER..." : "ENREGISTREMENT DOSSIER...";
+
+			// 2. Prepare Onboarding Data
+			const phonePrefix = formData.get("phone_prefix") as string;
+			const phoneNumber = (formData.get("phone_number") as string).replace(/\s/g, "").replace(/[^0-9]/g, "");
+			const fullPhone = `${phonePrefix}${phoneNumber}`;
+
+			const onboardingData: any = {
+				profile_id: userId,
+				first_name: formData.get("first_name") as string,
+				last_name: formData.get("last_name") as string,
+				company_name: formData.get("company_name") as string,
+				primary_domain: formData.get("primary_domain") as string,
+				phone: fullPhone,
+				vtc_license_number: (formData.get("vtc_license_number") as string).replace(/[^0-9]/g, ""),
+				siret: (formData.get("siret") as string).replace(/[^0-9]/g, ""),
+				legal_form: formData.get("legal_form") as string,
+				status: "pending",
+			};
+
+			// 3. Uniqueness checks
+
+			// a) Domain in tenants
+			const { data: existingTenantDomain } = await supabase
+				.from("tenants")
+				.select("id")
+				.eq("primary_domain", onboardingData.primary_domain)
+				.maybeSingle();
+			if (existingTenantDomain) {
+				throw new Error(`Le domaine "${onboardingData.primary_domain}" est déjà réservé.`);
+			}
+
+			// b) SIRET Cross-Check (Onboarding + Production)
+			const { data: existingOnboardingSiret } = await supabase
+				.from("onboarding")
+				.select("id")
+				.eq("siret", onboardingData.siret)
+				.neq("status", "rejected")
+				.maybeSingle();
+
+			if (existingOnboardingSiret && (!existingOnboarding || existingOnboardingSiret.id !== existingOnboarding.id)) {
+				throw new Error("Ce numéro SIRET est déjà associé à un dossier en cours ou validé.");
+			}
+
+			const { data: prodTenantSiret } = await supabase
+				.from("tenants")
+				.select("id")
+				.eq("siret", onboardingData.siret)
+				.maybeSingle();
+			if (prodTenantSiret) {
+				throw new Error("Ce numéro SIRET est déjà enregistré sur la plateforme.");
+			}
+
+			// c) VTC License Cross-Check (Onboarding + Production)
+			const { data: existingOnboardingVtc } = await supabase
+				.from("onboarding")
+				.select("id")
+				.eq("vtc_license_number", onboardingData.vtc_license_number)
+				.neq("status", "rejected")
+				.maybeSingle();
+
+			if (existingOnboardingVtc && (!existingOnboarding || existingOnboardingVtc.id !== existingOnboarding.id)) {
+				throw new Error("Cette carte VTC est déjà associée à un dossier en cours ou validé.");
+			}
+
+			const { data: prodDriverVtc } = await supabase
+				.from("drivers")
+				.select("id")
+				.eq("license_number", onboardingData.vtc_license_number)
+				.maybeSingle();
+			if (prodDriverVtc) {
+				throw new Error("Cette carte VTC est déjà enregistrée sur la plateforme.");
+			}
+
+			// 4. Insert or Update Onboarding Record
+			let res;
+			if (existingOnboarding) {
+				res = await supabase
+					.from("onboarding")
+					.update(onboardingData)
+					.eq("id", existingOnboarding.id);
+			} else {
+				res = await supabase
+					.from("onboarding")
+					.insert(onboardingData);
+			}
+
+			if (res.error) throw res.error;
+
+			// 4. Welcome Email (silent)
+			try {
+				await supabase.functions.invoke("send-email", {
+					body: {
+						to: email,
+						subject: "Inscription VTC MVP Réussie ! 🚀",
+						html: `<h1>Bienvenue !</h1><p>Ton dossier est en cours de validation par nos administrateurs.</p>`
+					}
+				});
+			} catch (e) { console.error("Email fail", e); }
+
+			messageEl.textContent = "SUCCÈS ! REDIRECTION...";
+			messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-emerald-400";
+
+			setTimeout(() => {
+				window.location.href = "/waiting-approval";
+			}, 1500);
+
+		} catch (err: any) {
+			console.error(err);
+			messageEl.textContent = "ERREUR : " + (err.message || "Technique");
+			messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-red-500";
+			finalBtn.disabled = false;
+			loader.classList.add("hidden");
+			btnText.style.opacity = "1";
+		}
+	});
+
+	const togglePasswordBtn = document.querySelector("#toggle-password") as HTMLButtonElement;
+	const passwordField = document.querySelector("#password") as HTMLInputElement;
+	const eyeIconEl = document.querySelector("#eye-icon") as SVGElement;
+	const eyeOffIconEl = document.querySelector("#eye-off-icon") as SVGElement;
+
+	togglePasswordBtn?.addEventListener("click", () => {
+		const isHidden = passwordField.type === "password";
+		passwordField.type = isHidden ? "text" : "password";
+		eyeIconEl.classList.toggle("hidden", isHidden);
+		eyeOffIconEl.classList.toggle("hidden", !isHidden);
+	});
+
+	init();
+</script>

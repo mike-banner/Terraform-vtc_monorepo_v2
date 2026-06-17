@@ -1,0 +1,493 @@
+---
+// src/pages/admin/bookings.astro
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { requirePlatformAdmin } from "../../lib/guards/platform";
+import { createAdminClient } from "../../lib/supabase/server";
+
+const { profile } = Astro.locals;
+
+// 1. Sécurité : Vérification plateforme
+try {
+  await requirePlatformAdmin(profile);
+} catch {
+  return Astro.redirect("/login");
+}
+
+const supabaseAdmin = createAdminClient();
+
+// 2. Paramètres de pagination et filtres
+const PAGE_SIZE = 25;
+const url = Astro.url;
+const page = parseInt(url.searchParams.get("page") || "1");
+const status = url.searchParams.get("status") || "";
+const driver_id = url.searchParams.get("driver_id") || "";
+const email = url.searchParams.get("email") || "";
+const dateFrom = url.searchParams.get("from") || "";
+const dateTo = url.searchParams.get("to") || "";
+const minAmount = url.searchParams.get("min") || "";
+const maxAmount = url.searchParams.get("max") || "";
+
+const fromIndex = (page - 1) * PAGE_SIZE;
+const toIndex = fromIndex + PAGE_SIZE - 1;
+
+// 3. Construction de la requête principale via la VUE ADMIN
+let query = supabaseAdmin
+    .from("admin_bookings_full_view")
+    .select("*", { count: "exact" });
+
+if (status) query = query.eq("status", status);
+if (driver_id) query = query.eq("driver_id", driver_id);
+if (email) query = query.ilike("display_customer_email", `%${email}%`);
+if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
+if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
+if (minAmount) query = query.gte("total_amount", parseFloat(minAmount));
+if (maxAmount) query = query.lte("total_amount", parseFloat(maxAmount));
+
+const { data: bookings, count, error } = await query
+    .order("created_at", { ascending: false })
+    .range(fromIndex, toIndex);
+
+if (error) console.error("Admin Bookings Fetch Error:", error);
+
+// 4. Données pour les filtres (chauffeurs)
+const { data: drivers } = await supabaseAdmin
+    .from("drivers")
+    .select("id, first_name, last_name")
+    .order("last_name");
+
+const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 0;
+
+// Utilitaire pour construire les liens de pagination en gardant les filtres
+const getPaginationUrl = (p: number) => {
+    const params = new URLSearchParams(url.searchParams);
+    params.set("page", p.toString());
+    return `${url.pathname}?${params.toString()}`;
+};
+
+const getStatusBadge = (s: string) => {
+    switch (s) {
+        case 'pending': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+        case 'accepted': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+        case 'accepted_pending_payment': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+        case 'paid': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+        case 'completed': return 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20';
+        case 'cancelled': return 'bg-red-500/10 text-red-500 border-red-500/20';
+        case 'cancelled_refunded': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+        case 'cancelled_pending_refund': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+        case 'refund_failed': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+        default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+    }
+}
+---
+
+<AdminLayout
+    title="Gestion des Courses"
+    description="Consultez et filtrez l'historique complet des réservations."
+>
+    <div class="max-w-7xl mx-auto py-4 px-6 mt-[-40px]">
+        <!-- FILTRES -->
+        <div class="glass p-8 rounded-3xl border border-white/5 mb-8">
+            <form id="filter-form" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+                <input type="hidden" name="page" value="1" />
+
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Email Client</label>
+                    <input
+                        type="text" name="email" value={email} placeholder="jane@example.com"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Statut</label>
+                    <select name="status" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <option value="">Tous les statuts</option>
+                        {['pending', 'accepted', 'paid', 'completed', 'cancelled', 'refunded'].map(s => (
+                            <option value={s} selected={status === s}>{s}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Chauffeur</label>
+                    <select name="driver_id" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <option value="">Tous les chauffeurs</option>
+                        {drivers?.map(d => (
+                            <option value={d.id} selected={driver_id === d.id}>{d.first_name} {d.last_name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Du</label>
+                        <input type="date" name="from" value={dateFrom} class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Au</label>
+                        <input type="date" name="to" value={dateTo} class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                     <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Min €</label>
+                        <input type="number" name="min" value={minAmount} placeholder="0" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Max €</label>
+                        <input type="number" name="max" value={maxAmount} placeholder="1000" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
+                    </div>
+                </div>
+            </form>
+        </div>
+
+
+        <!-- BARRE D'ACTIONS & RÉSULTATS -->
+        <div class="mb-6 flex items-center justify-between">
+             <div class="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                {count || 0} Résultats
+            </div>
+
+            <div class="flex items-center gap-3">
+                <a href="/admin/bookings" class="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-xl transition-all border border-white/5">Réinitialiser</a>
+                <button type="submit" form="filter-form" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-indigo-600/20 transition-all">Filtrer</button>
+            </div>
+        </div>
+
+
+        <!-- TABLEAU -->
+        <div class="glass rounded-3xl overflow-hidden border border-white/5">
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-white/5 border-b border-white/5">
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Référence</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Client / Email</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Chauffeur</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Date / Trajet</th>
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Statut</th>
+                            <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">Montant Montant</th>
+                            <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {bookings?.map((b) => (
+                            <tr
+                                class="hover:bg-white/5 transition-colors group booking-row cursor-pointer"
+                                data-booking={JSON.stringify({
+                                    ...b,
+                                    notes: b.mission_note || b.notes // Backward compatibility
+                                })}
+                            >
+                                <td class="px-6 py-4">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">#{b.id?.slice(0, 8)}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-[11px] font-black uppercase text-white">
+                                        {b.display_customer_first_name} {b.display_customer_last_name || ''}
+                                    </p>
+                                    <p class="text-[9px] font-bold text-slate-500 mt-0.5">{b.display_customer_email}</p>
+                                    <a href={`tel:${b.display_customer_phone}`} class="text-[8px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors block mt-1">
+                                        {b.display_customer_phone}
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {b.driver_id ? (
+                                        <p class="text-[10px] font-black uppercase text-indigo-400">
+                                            {b.driver_first_name} {b.driver_last_name}
+                                        </p>
+                                    ) : (
+                                        <div>
+                                            <p class="text-[10px] font-black uppercase text-amber-500/80">Chauffeur (Non assigné)</p>
+                                            <p class="text-[9px] font-bold text-slate-500 mt-0.5">{b.original_tenant_name || 'Inconnu'}</p>
+                                            <p class="text-[8px] text-slate-600 truncate max-w-[120px]">{b.original_tenant_domain}</p>
+                                        </div>
+                                    )}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-[10px] font-black text-white">
+                                        {new Date(b.pickup_time).toLocaleDateString('fr-FR')} {new Date(b.pickup_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    <p class="text-[9px] font-medium text-slate-500 max-w-xs truncate mt-0.5" title={b.pickup_address}>
+                                        {b.pickup_address} &rarr; {b.dropoff_address}
+                                    </p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class={`px-3 py-1 rounded text-[10px] font-black uppercase tracking-tighter border status-badge ${getStatusBadge(b.mission_status || b.status)}`}>
+                                        {b.mission_status || b.status}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-xs font-black text-white">
+                                        {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(b.total_amount)}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button
+                                        type="button"
+                                        class="open-booking px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-white/10 transition-all"
+                                    >
+                                        Ouvrir
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                        {bookings?.length === 0 && (
+                            <tr>
+                                <td colspan="7" class="px-6 py-20 text-center">
+                                    <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Aucune réservation trouvée</p>
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MODAL: Détails Course + Workflow Terrain -->
+        <div id="booking-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div class="relative glass max-w-2xl w-full rounded-[2.5rem] border border-white/10 shadow-[0_0_100px_rgba(79,70,229,0.12)] overflow-hidden bg-[#0A0A0B]">
+                <div class="p-8">
+                    <div class="flex items-start justify-between gap-6 mb-6">
+                        <div class="min-w-0">
+                            <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Détails Course</p>
+                            <h2 class="text-2xl font-black uppercase text-white tracking-tighter truncate">
+                                <span id="m-client">---</span>
+                            </h2>
+                            <p class="text-[10px] font-bold text-slate-500 mt-1 truncate" id="m-email">---</p>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-slate-600 mt-2" id="m-ref">REF: #---</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-3 shrink-0">
+                            <div id="m-status" class="px-4 py-2 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest text-indigo-400 text-center">
+                                ---
+                            </div>
+                            <button id="m-close" type="button" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-white/10 transition-all">
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Départ</p>
+                                <p id="m-pickup" class="text-xs font-bold text-white mt-2 truncate">---</p>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Arrivée</p>
+                                <p id="m-dropoff" class="text-xs font-bold text-white mt-2 truncate">---</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="min-w-0">
+                                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Heure</p>
+                                    <p id="m-time" class="text-xs font-black text-white mt-2">---</p>
+                                    <p id="m-lock" class="text-[10px] font-bold text-slate-500 mt-1">---</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Montant</p>
+                                    <p id="m-amount" class="text-lg font-black text-white mt-1 tabular-nums">---</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+                            <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Notes / Log</p>
+                            <pre id="m-notes" class="mt-3 text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed">---</pre>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-indigo-500/[0.03] border border-indigo-500/20">
+                            <p class="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">Workflow Terrain</p>
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <button id="a-enroute" type="button" class="px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                                    Je suis en route
+                                </button>
+                                <button id="a-onboard" type="button" class="px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all">
+                                    Client à bord
+                                </button>
+                                <button id="a-completed" type="button" class="px-4 py-3 rounded-2xl bg-indigo-600 border border-indigo-500 text-[10px] font-black uppercase tracking-widest text-white hover:bg-indigo-500 transition-all">
+                                    Course terminée
+                                </button>
+                            </div>
+                            <p id="m-error" class="mt-3 text-[10px] font-bold text-rose-400 hidden"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGINATION -->
+        {totalPages > 1 && (
+            <div class="mt-8 flex items-center justify-between">
+                <div class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    Page <span class="text-white">{page}</span> sur <span class="text-white">{totalPages}</span>
+                </div>
+                <div class="flex gap-2">
+                    {page > 1 && (
+                        <a
+                            href={getPaginationUrl(page - 1)}
+                            class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-white/10 transition-all"
+                        > Précédent </a>
+                    )}
+
+                    <div class="flex gap-1">
+                        {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                            let pageNum = page;
+                            if (page < 3) pageNum = i + 1;
+                            else if (page > totalPages - 2) pageNum = totalPages - 4 + i;
+                            else pageNum = page - 2 + i;
+
+                            if (pageNum < 1 || pageNum > totalPages) return null;
+
+                            return (
+                                <a
+                                    href={getPaginationUrl(pageNum)}
+                                    class={`w-10 h-10 flex items-center justify-center rounded-xl text-[10px] font-black transition-all border ${page === pageNum ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'}`}
+                                >
+                                    {pageNum}
+                                </a>
+                            );
+                        })}
+                    </div>
+
+                    {page < totalPages && (
+                        <a
+                            href={getPaginationUrl(page + 1)}
+                            class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-white/10 transition-all"
+                        > Suivant </a>
+                    )}
+                </div>
+            </div>
+        )}
+    </div>
+
+    <script>
+        const modal = document.getElementById('booking-modal');
+        const closeBtn = document.getElementById('m-close');
+        const errorEl = document.getElementById('m-error');
+
+        const el = (id) => document.getElementById(id);
+        const setText = (id, v) => { const n = el(id); if (n) n.textContent = v ?? '---'; };
+
+        let currentBooking = null;
+        let currentRow = null;
+
+        const formatMoney = (n) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(n || 0));
+        const formatDateTime = (iso) => {
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return '---';
+            return `${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+        };
+
+        const computeLock = (pickupIso) => {
+            const pickup = new Date(pickupIso);
+            const pickupMs = pickup.getTime();
+            if (Number.isNaN(pickupMs)) return { locked: false, availableAt: null };
+            const availableAtMs = pickupMs - 15 * 60 * 1000;
+            const locked = Date.now() < availableAtMs;
+            return { locked, availableAt: new Date(availableAtMs) };
+        };
+
+        const openModal = (booking, row) => {
+            currentBooking = booking;
+            currentRow = row;
+            if (errorEl) { errorEl.classList.add('hidden'); errorEl.textContent = ''; }
+
+            setText('m-client', `${booking.display_customer_first_name || ''} ${booking.display_customer_last_name || ''}`.trim() || 'Client');
+            setText('m-email', booking.display_customer_email || '---');
+            setText('m-ref', `REF: #${(booking.id || '').slice(0, 8).toUpperCase()}`);
+            setText('m-status', booking.mission_status || booking.status || '---');
+            setText('m-pickup', booking.pickup_address || '---');
+            setText('m-dropoff', booking.dropoff_address || '---');
+            setText('m-time', formatDateTime(booking.pickup_time));
+            setText('m-amount', formatMoney(booking.total_amount));
+            setText('m-notes', booking.notes || 'Aucune note particulière.');
+
+            const { locked, availableAt } = computeLock(booking.pickup_time);
+            const lockText = locked && availableAt
+                ? `Démarrage disponible à ${availableAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} (H-15)`
+                : `Démarrage autorisé (H-15)`;
+            setText('m-lock', lockText);
+
+            const btnEnRoute = el('a-enroute');
+            if (btnEnRoute) btnEnRoute.disabled = !!locked;
+
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        };
+
+        const closeModal = () => {
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentBooking = null;
+            currentRow = null;
+        };
+
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+        document.querySelectorAll('.booking-row').forEach(row => {
+            const openBtn = row.querySelector('.open-booking');
+            const handler = (e) => {
+                e?.preventDefault?.();
+                e?.stopPropagation?.();
+                const booking = JSON.parse(row.getAttribute('data-booking') || '{}');
+                openModal(booking, row);
+            };
+            row.addEventListener('click', handler);
+            if (openBtn) openBtn.addEventListener('click', handler);
+        });
+
+        const applyUpdateToRow = (updated) => {
+            if (!currentRow || !currentBooking) return;
+            currentBooking.mission_status = updated.mission_status ?? updated.status ?? currentBooking.mission_status;
+            currentBooking.mission_note = updated.mission_note ?? updated.notes ?? currentBooking.mission_note;
+            currentRow.setAttribute('data-booking', JSON.stringify(currentBooking));
+            const badge = currentRow.querySelector('.status-badge');
+            if (badge) {
+                badge.textContent = currentBooking.mission_status || currentBooking.status || '---';
+                // Trigger color update if needed, but easier to just reload if status changes significantly
+            }
+            setText('m-status', currentBooking.mission_status || currentBooking.status || '---');
+            setText('m-notes', currentBooking.mission_note || 'Aucune note particulière.');
+        };
+
+        const doAction = async (action) => {
+            if (!currentBooking?.id) return;
+            if (errorEl) { errorEl.classList.add('hidden'); errorEl.textContent = ''; }
+            try {
+                const res = await fetch('/api/admin/terrain-transition', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ booking_id: currentBooking.id, action }),
+                });
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    const msg = json?.available_at
+                        ? `${json?.error || 'Erreur'} (dispo: ${formatDateTime(json.available_at)})`
+                        : (json?.error || 'Erreur');
+                    if (errorEl) { errorEl.textContent = msg; errorEl.classList.remove('hidden'); }
+                    return;
+                }
+                if (json?.booking) applyUpdateToRow(json.booking);
+            } catch (e) {
+                if (errorEl) { errorEl.textContent = 'Erreur réseau'; errorEl.classList.remove('hidden'); }
+            }
+        };
+
+        const btnEnRoute = el('a-enroute');
+        const btnOnBoard = el('a-onboard');
+        const btnCompleted = el('a-completed');
+
+        if (btnEnRoute) btnEnRoute.addEventListener('click', () => doAction('en_route'));
+        if (btnOnBoard) btnOnBoard.addEventListener('click', () => doAction('on_board'));
+        if (btnCompleted) btnCompleted.addEventListener('click', () => doAction('completed'));
+    </script>
+</AdminLayout>

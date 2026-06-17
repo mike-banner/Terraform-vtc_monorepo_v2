@@ -1,0 +1,151 @@
+---
+// src/pages/admin/settings.astro
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { requirePlatformAdmin } from "../../lib/guards/platform";
+import { createAdminClient } from "../../lib/supabase/server";
+
+const { profile } = Astro.locals;
+
+// Protection
+try {
+  await requirePlatformAdmin(profile);
+} catch {
+  return Astro.redirect("/login");
+}
+
+const supabaseAdmin = createAdminClient();
+let message = "";
+let errorMsg = "";
+
+// 1️⃣ Fetch Initial Settings
+const { data: settings } = await supabaseAdmin
+  .from("platform_settings")
+  .select("*")
+  .single();
+
+// 2️⃣ Handle Update
+if (Astro.request.method === "POST") {
+    try {
+        const formData = await Astro.request.formData();
+        const platformRate = parseFloat(formData.get("platform_rate") as string);
+        const tenantRate = parseFloat(formData.get("tenant_rate") as string);
+
+        const { error } = await supabaseAdmin
+            .from("platform_settings")
+            .update({
+                default_platform_commission_rate: platformRate,
+                default_tenant_commission_rate: tenantRate,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", settings.id);
+
+        if (error) throw error;
+        message = "Paramètres mis à jour avec succès !";
+
+        // Refresh data after update
+        return Astro.redirect("/admin/settings?success=true");
+    } catch (e: any) {
+        errorMsg = "Erreur : " + e.message;
+    }
+}
+
+const success = Astro.url.searchParams.get("success") === "true";
+if (success) message = "Paramètres mis à jour avec succès !";
+---
+
+<AdminLayout title="Configuration Générale">
+    <div class="max-w-5xl">
+
+        {message && (
+            <div class="mb-8 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-3 w-fit">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {message}
+            </div>
+        )}
+
+        {errorMsg && (
+            <div class="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-3 w-fit">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {errorMsg}
+            </div>
+        )}
+
+        <form method="POST" class="space-y-16 text-left">
+            <!-- SECTION : TAUX DE COMMISSION -->
+            <section class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                <div class="lg:col-span-4">
+                    <h2 class="text-2xl font-black uppercase text-white tracking-tight">Commissions</h2>
+                    <p class="text-slate-500 text-xs font-medium mt-2 leading-relaxed">
+                        Définit les taux de prélèvement par défaut appliqués lors du calcul des revenus dans le Ledger.
+                    </p>
+                </div>
+
+                <div class="lg:col-span-8 flex flex-col gap-8">
+                    <div class="glass p-10 rounded-[2.5rem] border border-white/5 bg-white/[0.01] grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Commission Plateforme -->
+                        <div class="space-y-3">
+                            <label class="block">
+                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-3 block">Prélèvement Plateforme</span>
+                                <div class="relative group">
+                                    <input
+                                        type="number"
+                                        name="platform_rate"
+                                        step="0.01"
+                                        value={settings?.default_platform_commission_rate}
+                                        class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-indigo-500/50 outline-none transition-all tabular-nums"
+                                        placeholder="0.00"
+                                    />
+                                    <div class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600 font-black text-xs">%</div>
+                                </div>
+                                <p class="text-[8px] text-slate-600 mt-3 font-bold uppercase tracking-wider">Frais de service globaux</p>
+                            </label>
+                        </div>
+
+                        <!-- Commission Tenant -->
+                        <div class="space-y-3">
+                            <label class="block">
+                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-3 block">Com. Partenaire Défaut</span>
+                                <div class="relative group">
+                                    <input
+                                        type="number"
+                                        name="tenant_rate"
+                                        step="0.01"
+                                        value={settings?.default_tenant_commission_rate}
+                                        class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:border-indigo-500/50 outline-none transition-all tabular-nums"
+                                        placeholder="0.00"
+                                    />
+                                    <div class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-600 font-black text-xs">%</div>
+                                </div>
+                                <p class="text-[8px] text-slate-600 mt-3 font-bold uppercase tracking-wider">Appliqué aux partenaires externes</p>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-8">
+                        <div class="max-w-md p-6 rounded-3xl border border-indigo-500/10 bg-indigo-500/5">
+                            <p class="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-tighter">
+                                <span class="text-indigo-500">Note :</span> Ces taux servent de Fallback. Ils peuvent être surchargés individuellement par partenaire.
+                            </p>
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="px-10 py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-600/20 transition-all active:scale-[0.95] whitespace-nowrap"
+                        >
+                            Sauvegarder les taux
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ESPACE POUR FUTURES SECTIONS -->
+            <div class="pt-16 border-t border-white/5 opacity-20">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-700">Autres réglages bientôt disponibles...</p>
+            </div>
+        </form>
+    </div>
+</AdminLayout>

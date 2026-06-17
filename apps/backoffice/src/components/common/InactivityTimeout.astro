@@ -1,0 +1,21 @@
+---
+// src/components/common/InactivityTimeout.astro
+/**
+ * Ce composant gère la déconnexion automatique en cas d'inactivité.
+ * Il surveille les mouvements de souris, clics, touches clavier et scroll.
+ */
+interface Props {
+    timeoutMinutes?: number;
+}
+
+const { timeoutMinutes = 30 } = Astro.props;
+const timeoutMs = timeoutMinutes * 60 * 1000;
+
+---
+
+<script define:vars={{ timeoutMs }}>
+    window.__INACTIVITY_TIMEOUT_MS__ = timeoutMs;
+</script>
+<script>
+    import "../../scripts/inactivity-timeout.ts";
+</script>

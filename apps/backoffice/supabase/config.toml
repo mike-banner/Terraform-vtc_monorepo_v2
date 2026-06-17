@@ -1,0 +1,88 @@
+
+[functions.handle_stripe_webhook]
+enabled = true
+verify_jwt = true
+import_map = "./functions/handle_stripe_webhook/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/handle_stripe_webhook/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/handle_stripe_webhook/*.html" ]
+
+[functions.create_refund]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create_refund/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create_refund/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create_refund/*.html" ]
+
+[functions.stripe_webhook]
+enabled = true
+verify_jwt = true
+import_map = "./functions/stripe_webhook/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/stripe_webhook/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/stripe_webhook/*.html" ]
+
+[functions.create-connect-account]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-connect-account/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create-connect-account/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create-connect-account/*.html" ]
+
+[functions.create-account-link]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-account-link/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create-account-link/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create-account-link/*.html" ]
+
+[functions.create-stripe-onboarding]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-stripe-onboarding/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create-stripe-onboarding/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create-stripe-onboarding/*.html" ]
+
+[functions.create_customer]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create_customer/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create_customer/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create_customer/*.html" ]
+
+[functions.accept-booking]
+enabled = true
+verify_jwt = true
+import_map = "./functions/accept-booking/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/accept-booking/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/accept-booking/*.html" ]

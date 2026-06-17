@@ -1,0 +1,958 @@
+---
+// src/pages/app/bookings.astro
+import Badge from "../../components/ui/Badge.astro";
+import Button from "../../components/ui/Button.astro";
+import Card from "../../components/ui/Card.astro";
+import AppLayout from "../../layouts/AppLayout.astro";
+
+const { profile, user, supabase: supabaseServer } = Astro.locals as any;
+
+if (!profile || !user) {
+    return Astro.redirect("/login");
+}
+
+const safeProfile = profile;
+
+const currentStatus = Astro.url.searchParams.get("status") || "all";
+const currentType = Astro.url.searchParams.get("type") || "all";
+const PAGE_SIZE = 10;
+const currentPage = Math.max(1, parseInt(Astro.url.searchParams.get("page") || "1", 10));
+
+/**
+ * 🎯 LOGIQUE SÉCURISÉE (BACKEND SSR)
+ */
+let query = supabaseServer
+    .from("bookings")
+    .select("*, customers(*)", { count: "exact" })
+    .eq("current_tenant_id", profile.tenant_id as string);
+
+const CANCELLED_STATUSES = ["cancelled", "cancelled_no_refund", "cancelled_pending_refund", "cancelled_refunded", "deprecated_refunded"] as const;
+
+if (currentStatus === "cancelled") {
+    query = query.in("status", CANCELLED_STATUSES as unknown as string[]);
+} else if (currentStatus !== "all") {
+    query = query.eq("mission_status", currentStatus as any).not("status", "in", `(${CANCELLED_STATUSES.join(",")})`);
+} else {
+    query = query.not("status", "in", `(${CANCELLED_STATUSES.join(",")})`);
+}
+
+if (currentType !== "all") {
+    query = query.eq("booking_type", currentType as any);
+}
+
+let driverId = null;
+if (profile.tenant_role === "driver") {
+    const { data: driver } = await supabaseServer
+        .from("drivers")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("tenant_id", profile.tenant_id!)
+        .limit(1)
+        .maybeSingle();
+
+    if (driver) {
+        driverId = driver.id;
+        query = query.eq("driver_id", driver.id);
+    } else {
+        query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+}
+
+// 🎯 Fetch Vehicles for manual assignment
+const { data: vehicles } = await supabaseServer
+    .from("vehicles")
+    .select("*")
+    .eq("tenant_id", profile.tenant_id!);
+
+const activeVehicle = vehicles?.[0]; // Default to first found for now
+
+// 🎯 Fetch Fixed Routes (Forfaits)
+const { data: fixedRoutes } = await supabaseServer
+    .from("fixed_routes")
+    .select("*, pickup_zone:pickup_zone_id(id, name), dropoff_zone:dropoff_zone_id(id, name)")
+    .eq("tenant_id", profile.tenant_id!)
+    .eq("active", true);
+
+// 🎯 Fetch Pricing Rules for dynamic calculations
+const { data: pricingRules } = await supabaseServer
+    .from("pricing_rules")
+    .select("*")
+    .eq("tenant_id", profile.tenant_id!)
+    .eq("active", true);
+
+const offset = (currentPage - 1) * PAGE_SIZE;
+
+const { data: bookings, error, count } = await query
+    .order("created_at", { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1);
+
+const totalCount = count ?? 0;
+const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+if (error) console.error("Bookings Fetch Error:", error);
+console.log(`[Bookings] page=${currentPage}/${totalPages} — ${bookings?.length || 0} bookings`);
+
+const tabs = [
+    { id: 'all', label: 'Toutes' },
+    { id: 'to_validate', label: 'À Valider' },
+    { id: 'not_started', label: 'Non Démarré' },
+    { id: 'in_progress', label: 'En Cours' },
+    { id: 'completed', label: 'Terminée' },
+    { id: 'cancelled', label: 'Annulées' },
+];
+
+const STATUS_LABELS_FR: Record<string, string> = {
+    pending: "En attente",
+    accepted: "Confirmée",
+    accepted_pending_payment: "En attente de paiement",
+    paid: "Payée",
+    completed: "Terminée",
+    cancelled: "Annulée",
+    cancelled_pending_refund: "Remboursement en cours",
+    cancelled_refunded: "Remboursée",
+    cancelled_no_refund: "Annulée",
+    deprecated_refunded: "Remboursée",
+    no_show: "Non présentation",
+    expired_payment: "Paiement expiré",
+    refund_failed: "Échec remboursement"
+};
+
+const typeFilters = [
+    { id: 'all', label: 'Tous les bookings' },
+    { id: 'transfer', label: 'Transferts' },
+    { id: 'hourly', label: 'Mises à Dispo' },
+];
+
+// Helper to build URLs with multiple filters — réinitialise la page si filtre change
+const getFilterUrl = (params: Record<string, string>) => {
+    const url = new URL(Astro.url.href);
+    const isPageOnly = Object.keys(params).every(k => k === 'page');
+    if (!isPageOnly) url.searchParams.delete('page'); // reset pagination on filter change
+    Object.entries(params).forEach(([key, value]) => {
+        if (value === 'all' || value === '') {
+            url.searchParams.delete(key);
+        } else {
+            url.searchParams.set(key, value);
+        }
+    });
+    return url.pathname + url.search;
+};
+---
+
+<AppLayout title="Mes Courses">
+    <div class="flex flex-col px-6 py-10 md:px-12 md:py-16 bg-brand-dark">
+        <!-- FIXED HEADER -->
+        <div class="flex-shrink-0 border-b border-white/5 pb-5 mb-6">
+            <!-- Row 1: Badge + CTA -->
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <Badge variant="emerald">
+                    {safeProfile.tenant_role === "driver" ? "Mes Courses" : "Toutes les Courses"}
+                </Badge>
+
+                <Button id="open-new-booking" variant="primary" class="shadow-lg shadow-indigo-600/20 gap-2 shrink-0">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nouvelle Course
+                </Button>
+            </div>
+
+            <!-- Row 2: Filters side-by-side (even on mobile) -->
+            <div class="flex gap-2">
+                <!-- STATUS FILTER -->
+                <div class="relative flex-1" id="status-dropdown-container">
+                    <button id="status-dropdown-button" class="w-full h-10 bg-white/5 border border-white/10 rounded-lg px-3 text-[10px] font-black uppercase tracking-wider text-slate-400 hover:bg-white/10 hover:text-white transition-all flex items-center justify-between gap-2">
+                        <span class="truncate">{tabs.find(t => t.id === currentStatus)?.label || 'Tout statut'}</span>
+                        <svg class="w-3 h-3 opacity-40 flex-shrink-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div id="status-dropdown-menu" class="absolute top-full left-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-50 min-w-[160px] w-max">
+                        {tabs.map(tab => (
+                            <a
+                                href={getFilterUrl({ status: tab.id })}
+                                class={`block px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors ${
+                                    currentStatus === tab.id
+                                    ? "bg-white/10 text-white"
+                                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                                }`}
+                            >
+                                {tab.label}
+                            </a>
+                        ))}
+                    </div>
+                </div>
+
+                <!-- TYPE FILTER -->
+                <div class="relative flex-1" id="type-dropdown-container">
+                    <button id="type-dropdown-button" class="w-full h-10 bg-white/5 border border-white/10 rounded-lg px-3 text-[10px] font-black uppercase tracking-wider text-slate-400 hover:bg-white/10 hover:text-white transition-all flex items-center justify-between gap-2">
+                        <span class="truncate">{typeFilters.find(f => f.id === currentType)?.label || 'Tous les types'}</span>
+                        <svg class="w-3 h-3 opacity-40 flex-shrink-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div id="type-dropdown-menu" class="absolute top-full right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-50 min-w-[160px] w-max">
+                        {typeFilters.map(filter => (
+                            <a
+                                href={getFilterUrl({ type: filter.id })}
+                                class={`block px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors ${
+                                    currentType === filter.id
+                                    ? "bg-white/10 text-white"
+                                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                                }`}
+                            >
+                                {filter.label}
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCROLLABLE CONTENT -->
+        <div class="pb-20">
+            {
+                bookings && bookings.length > 0 ? (
+                    <div class="space-y-4">
+                        <!-- MOBILE VIEW: CARDS -->
+                        <div class="md:hidden space-y-3">
+                            {bookings.map((booking: any) => (
+                                <Card
+                                    padding="sm"
+                                    rounded="xl"
+                                    hover={true}
+                                    class="relative overflow-hidden group transition-all active:scale-[0.98] booking-row cursor-pointer"
+                                    data-booking={encodeURIComponent(JSON.stringify(booking))}
+                                >
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div class="max-w-[170px]">
+                                            <p class="text-sm font-bold text-white truncate leading-tight">
+                                                {booking.customers?.first_name || ""} {booking.customers?.last_name || ""}
+                                            </p>
+                                            <p class="text-[10px] font-medium text-slate-500 mt-0.5 truncate">
+                                                {booking.customers?.email || "Email inconnu"}
+                                            </p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xl font-black text-white tabular-nums leading-none">
+                                                {Number(booking.total_amount).toFixed(0)}€
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <Badge variant={(booking.booking_type as any) === 'hourly' ? 'amber' : 'indigo'}>
+                                            {(booking.booking_type as any) === 'hourly' ? 'Mise à Dispo' : 'Transfert'}
+                                        </Badge>
+                                        <Badge variant={
+                                            String(booking.status).startsWith("cancel") ? "rose" :
+                                            booking.mission_status === "completed" ? "emerald" :
+                                            booking.mission_status === "in_progress" ? "indigo" :
+                                            booking.mission_status === "to_validate" ? "amber" :
+                                            "slate"
+                                        }>
+                                            {String(booking.status).startsWith("cancel") ? 'Annulée' :
+                                             booking.mission_status === 'to_validate' ? 'À Valider' :
+                                             booking.mission_status === 'not_started' ? 'Non Démarré' :
+                                             booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
+                                        </Badge>
+                                    </div>
+
+                                    <div class="space-y-1.5 pb-3 border-b border-white/5 mb-3">
+                                        <div class="flex items-start gap-2">
+                                            <div class="w-1 h-1 rounded-full bg-indigo-500 mt-1 shrink-0" />
+                                            <p class="text-[10px] font-bold text-slate-400 truncate tracking-tight">{booking.pickup_address}</p>
+                                        </div>
+                                        {(booking.booking_type as any) === 'transfer' && (
+                                            <div class="flex items-start gap-2">
+                                                <div class="w-1 h-1 rounded-full bg-rose-500 mt-1 shrink-0" />
+                                                <p class="text-[10px] font-bold text-slate-400 truncate tracking-tight">{booking.dropoff_address}</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] font-black text-white tabular-nums">
+                                                {new Date(booking.pickup_time).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                                            </span>
+                                            <span class="w-1 h-1 rounded-full bg-white/10" />
+                                            <span class="text-[10px] text-slate-500 font-bold tabular-nums">
+                                                {new Date(booking.pickup_time).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        <!-- DESKTOP VIEW: TABLE -->
+                        <Card padding="none" rounded="3xl" class="hidden md:block overflow-hidden shadow-xl">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse min-w-[700px]">
+                                    <thead class="bg-white/5 sticky top-0 z-10">
+                                        <tr class="border-b border-white/5">
+                                            <th class="px-8 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                Client / Détails
+                                            </th>
+                                            <th class="px-8 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                Date & Heure
+                                            </th>
+                                            <th class="px-8 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                Type
+                                            </th>
+                                            <th class="px-8 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                Statut
+                                            </th>
+                                            <th class="px-8 py-3 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                Montant
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-white/5">
+                                        {bookings.map((booking: any) => (
+                                            <tr
+                                                class="hover:bg-white/[0.03] transition-colors group cursor-pointer booking-row"
+                                                data-booking={encodeURIComponent(JSON.stringify(booking))}
+                                            >
+                                                <td class="px-8 py-4">
+                                                    <div class="font-black text-white uppercase tracking-tighter text-lg leading-tight">
+                                                        {booking.customers?.first_name || ""} {booking.customers?.last_name || ""}
+                                                        {(!booking.customers?.first_name && !booking.customers?.last_name) && "Client"}
+                                                    </div>
+                                                    <div class="text-[10px] font-bold text-slate-500 mt-0.5">
+                                                        {booking.customers?.email || "Email inconnu"}
+                                                    </div>
+                                                    <div class="mt-4 flex flex-col gap-1.5 pt-4 border-t border-white/5">
+                                                        <div class="flex items-start gap-2">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1"></span>
+                                                            <div>
+                                                                <div class="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none mb-1">Départ</div>
+                                                                <div class="text-[11px] font-bold text-slate-300 uppercase tracking-tight line-clamp-1">{booking.pickup_address}</div>
+                                                            </div>
+                                                        </div>
+                                                        {(booking.booking_type as any) === 'transfer' ? (
+                                                            <div class="flex items-start gap-2 mt-2">
+                                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1"></span>
+                                                                <div>
+                                                                    <div class="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none mb-1">Arrivée</div>
+                                                                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-tight line-clamp-1">{booking.dropoff_address}</div>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div class="flex items-start gap-2 mt-2 bg-amber-500/5 p-2 rounded-lg border border-amber-500/10">
+                                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1"></span>
+                                                                <div>
+                                                                    <div class="text-[10px] text-amber-500 font-black uppercase tracking-widest leading-none mb-1">Service</div>
+                                                                    <div class="text-[11px] font-black text-amber-400 uppercase tracking-tighter">Mise à Disposition</div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td class="px-8 py-4 font-medium">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-sm text-white font-black tabular-nums">
+                                                            {new Date(booking.pickup_time).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                                                        </span>
+                                                        <span class="text-[11px] text-slate-500 font-bold mt-1">
+                                                            {new Date(booking.pickup_time).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-8 py-4">
+                                                    <Badge variant={(booking.booking_type as any) === 'hourly' ? 'amber' : 'indigo'}>
+                                                        {(booking.booking_type as any) === 'hourly' ? 'Mise à Dispo' : 'Transfert'}
+                                                    </Badge>
+                                                </td>
+                                                <td class="px-8 py-4">
+                                                    <Badge variant={
+                                                        String(booking.status).startsWith("cancel") ? "rose" :
+                                                        booking.mission_status === "completed" ? "emerald" :
+                                                        booking.mission_status === "in_progress" ? "indigo" :
+                                                        booking.mission_status === "to_validate" ? "amber" :
+                                                        "slate"
+                                                    }>
+                                                        {String(booking.status).startsWith("cancel") ? 'Annulée' :
+                                                         booking.mission_status === 'to_validate' ? 'À Valider' :
+                                                         booking.mission_status === 'not_started' ? 'Non Démarré' :
+                                                         booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
+                                                    </Badge>
+                                                </td>
+                                                <td class="px-8 py-4 text-right">
+                                                    <div class="flex flex-col items-end">
+                                                        <span class="text-2xl font-black text-white tabular-nums leading-none">
+                                                            {Number(booking.total_amount).toFixed(0)}€
+                                                        </span>
+                                                        <div class={`mt-2 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${
+                                                            String(booking.status).startsWith("cancel") ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
+                                                            booking.status === "completed" || booking.status === "paid" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                                                            booking.status === "pending" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                                                            "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                                                        }`}>
+                                                            {STATUS_LABELS_FR[booking.status] || booking.status}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </div>
+                ) : (
+                    <div class="h-full flex flex-col items-center justify-center text-center pb-20">
+                        <div class="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-8 border border-white/5 shadow-2xl">
+                            <svg
+                                class="w-10 h-10 text-slate-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="1.5"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-black uppercase tracking-wider text-slate-100 mb-2">
+                            Historique vide
+                        </h3>
+                        <p class="text-slate-500 max-w-xs font-medium leading-relaxed">
+                            Vos réservations passées et futures s'afficheront
+                            ici.
+                        </p>
+                    </div>
+                )
+            }
+
+            {/* PAGINATION — visible seulement si plus d'une page */}
+            {totalPages > 1 && (
+                <div class="flex items-center justify-between gap-4 pt-6 mt-2 border-t border-white/5">
+                    <a
+                        href={currentPage > 1 ? getFilterUrl({ page: String(currentPage - 1) }) : "#"}
+                        aria-disabled={currentPage <= 1}
+                        class={`flex items-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                            currentPage <= 1
+                                ? "text-slate-700 pointer-events-none"
+                                : "text-slate-400 hover:text-white hover:bg-white/5 border border-white/5"
+                        }`}
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Préc.
+                    </a>
+
+                    <div class="flex items-center gap-1.5">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                            <a
+                                href={getFilterUrl({ page: String(p) })}
+                                class={`w-8 h-8 flex items-center justify-center rounded-lg text-[10px] font-black tabular-nums transition-all ${
+                                    p === currentPage
+                                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                                        : "text-slate-500 hover:bg-white/5 hover:text-white"
+                                }`}
+                            >
+                                {p}
+                            </a>
+                        ))}
+                    </div>
+
+                    <a
+                        href={currentPage < totalPages ? getFilterUrl({ page: String(currentPage + 1) }) : "#"}
+                        aria-disabled={currentPage >= totalPages}
+                        class={`flex items-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                            currentPage >= totalPages
+                                ? "text-slate-700 pointer-events-none"
+                                : "text-slate-400 hover:text-white hover:bg-white/5 border border-white/5"
+                        }`}
+                    >
+                        Suiv.
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+            )}
+        </div>
+    </div>
+
+    {/* 🎭 MODAL: NOUVELLE COURSE MANUELLE */}
+    <div slot="modals" id="new-booking-modal" class="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 transition-all duration-300" style="display: none;">
+        <div class="absolute inset-0 bg-black/85 backdrop-blur-sm modal-overlay"></div>
+        <div class="relative max-w-xl w-full rounded-2xl md:rounded-3xl border border-white/8 shadow-2xl bg-[#0A0A0B] overflow-y-auto overflow-x-hidden max-h-[94dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+
+            <!-- Modal header -->
+            <div class="sticky top-0 z-10 bg-[#0A0A0B] border-b border-white/5 px-5 py-4 sm:px-8 flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-black uppercase tracking-wide text-white leading-none">Nouvelle course</h2>
+                    <p class="text-[10px] text-slate-500 mt-0.5 font-medium">Saisie manuelle</p>
+                </div>
+                <button id="close-new-booking" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <form id="new-booking-form" class="px-5 sm:px-8 py-6 space-y-7" data-fixed-routes={JSON.stringify(fixedRoutes)} data-pricing-rules={JSON.stringify(pricingRules)}>
+
+                <!-- SECTION: TYPE + VÉHICULE -->
+                <div class="space-y-3">
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Mission</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                        <!-- TYPE DE COURSE -->
+                        <div class="relative">
+                            <button type="button" id="type-custom-btn" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-200 hover:bg-white/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                                <span id="type-custom-label" class="truncate">Transfert</span>
+                                <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <input type="hidden" name="booking_type" id="booking_type_hidden" value="transfer" />
+                            <div id="type-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210]">
+                                <button type="button" data-value="transfer" data-label="Transfert" class="custom-option w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors flex items-center gap-3">
+                                    <span class="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0"></span>Transfert
+                                </button>
+                                <button type="button" data-value="hourly" data-label="Mise à Disposition" class="custom-option w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors flex items-center gap-3">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>Mise à Disposition
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- VÉHICULE -->
+                        <div class="relative">
+                            <button type="button" id="vehicle-custom-btn" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-200 hover:bg-white/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                                <span id="vehicle-custom-label" class="truncate">
+                                    {activeVehicle ? `${activeVehicle.brand} ${activeVehicle.model} — ${activeVehicle.plate_number}` : 'Sélectionner'}
+                                </span>
+                                <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <input type="hidden" name="vehicle_id" id="vehicle_id_hidden" value={activeVehicle?.id || ""} />
+                            <input type="hidden" id="vehicle_category_hidden" value={activeVehicle?.category || ""} />
+                            <input type="hidden" name="driver_id" value={driverId || ""} />
+                            <div id="vehicle-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210] max-h-52 overflow-y-auto custom-scrollbar">
+                                {vehicles?.map((v: any) => (
+                                    <button type="button" data-value={v.id} data-category={v.category} data-label={`${v.brand} ${v.model} — ${v.plate_number}`} class="custom-option-vehicle w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">
+                                        {v.brand} {v.model} <span class="text-slate-500">— {v.plate_number}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FORFAIT — transfert uniquement -->
+                    <div id="forfait-selector-container" class="relative">
+                        <button type="button" id="forfait-custom-btn" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-200 hover:bg-white/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                            <span id="forfait-custom-label" class="truncate text-slate-400">Aucun forfait</span>
+                            <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <input type="hidden" name="fixed_route_id" id="fixed_route_id_hidden" value="" />
+                        <div id="forfait-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210] max-h-52 overflow-y-auto custom-scrollbar">
+                            <button type="button" data-value="" data-label="Aucun forfait" class="custom-option-forfait w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white text-left transition-colors">
+                                Aucun forfait
+                            </button>
+                            {fixedRoutes?.map((r: any) => (
+                                <button type="button" data-value={r.id} data-label={`${r.pickup_zone?.name} → ${r.dropoff_zone?.name}`} class="custom-option-forfait w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">
+                                    {r.pickup_zone?.name} → {r.dropoff_zone?.name}
+                                    <span class="text-slate-500 text-xs ml-1.5">{r.vehicle_category.toUpperCase()}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <!-- MODE FACTURATION — mise à dispo uniquement -->
+                    <div class="hidden" id="mads-mode-container">
+                        <div class="relative">
+                            <button type="button" id="mads-mode-btn" class="w-full bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3.5 text-sm text-amber-300 hover:bg-amber-500/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                                <span id="mads-mode-label" class="truncate">Choisir un mode</span>
+                                <svg class="w-4 h-4 text-amber-600/50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <input type="hidden" id="mads_mode_hidden" value="" />
+                            <div id="mads-mode-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210]">
+                                <button type="button" data-value="km" data-label="Au kilomètre" class="custom-option-mads w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">Au kilomètre</button>
+                                <button type="button" data-value="hour" data-label="À l'heure" class="custom-option-mads w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">À l'heure</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: PASSAGERS & BAGAGES -->
+                <div class="space-y-3">
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Capacité</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-semibold text-slate-500">Passagers (max 8)</label>
+                            <input type="number" name="passenger_count" value="1" min="1" max="8" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-semibold text-slate-500">Bagages</label>
+                            <input type="number" name="luggage_count" value="0" min="0" max="12" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: CLIENT -->
+                <div class="space-y-3">
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Client</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input type="text" name="client_name" placeholder="Nom complet" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" />
+                        <input type="email" name="client_email" placeholder="Email" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" />
+                    </div>
+                </div>
+
+                <!-- SECTION: ITINÉRAIRE -->
+                <div class="space-y-3">
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Itinéraire</p>
+                    <div class="space-y-3">
+                        <input type="text" name="pickup" placeholder="Adresse de départ" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" />
+                        <input id="dropoff-input" type="text" name="dropoff" placeholder="Adresse d'arrivée" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" />
+                        <div class="relative">
+                            <input type="datetime-local" name="pickup_time" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pr-11 text-sm text-black focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium" />
+                            <div class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- KM / HEURES — visibles seulement pour mise à dispo après sélection du mode -->
+                        <div id="distance-km-container" class="hidden items-center gap-3 bg-white/[0.02] border border-white/8 rounded-xl px-4 py-3">
+                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest whitespace-nowrap flex-shrink-0">Distance (km)</label>
+                            <input type="number" id="distance_km" name="distance_km" value="" min="0" step="0.1" placeholder="0.0" class="flex-1 min-w-0 bg-transparent text-sm text-white focus:outline-none font-bold tabular-nums placeholder:text-slate-600" />
+                        </div>
+                        <div id="duration-hours-container" class="hidden items-center gap-3 bg-white/[0.02] border border-white/8 rounded-xl px-4 py-3">
+                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest whitespace-nowrap flex-shrink-0">Durée (heures)</label>
+                            <input type="number" id="duration_hours" name="duration_hours" value="1" min="1" max="24" class="flex-1 min-w-0 bg-transparent text-sm text-white focus:outline-none font-bold tabular-nums" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: FACTURATION -->
+                <div class="space-y-3">
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Facturation</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="relative">
+                            <input type="number" name="manual_total" placeholder="Montant" required class="w-full bg-white border border-emerald-500/30 rounded-xl px-4 py-3 pr-8 text-xl text-emerald-600 font-black tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500/40 font-black text-lg">€</span>
+                        </div>
+                        <div class="relative">
+                            <button type="button" id="payment-custom-btn" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-200 hover:bg-white/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                                <span id="payment-custom-label" class="truncate">Espèces</span>
+                                <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <input type="hidden" name="payment_mode" id="payment_mode_hidden" value="cash" />
+                            <div id="payment-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210]">
+                                <button type="button" data-value="cash" data-label="Espèces" class="custom-option-payment w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">Espèces</button>
+                                <button type="button" data-value="card" data-label="Lien Stripe" class="custom-option-payment w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">Lien Stripe</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 pb-2">
+                    <Button type="submit" variant="emerald" class="w-full shadow-2xl shadow-emerald-500/20">
+                        Confirmer la réservation
+                    </Button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🎭 MODAL: ÉDITION COURSE (pré-mission) -->
+    <div slot="modals" id="edit-booking-modal" style="display: none;" class="fixed inset-0 z-[300] flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md edit-modal-overlay"></div>
+        <div id="edit-modal-inner" class="relative max-w-lg w-full rounded-2xl md:rounded-3xl border border-white/8 shadow-2xl bg-[#0A0A0B] overflow-y-auto max-h-[90dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+            <div class="sticky top-0 z-10 bg-[#0A0A0B] border-b border-white/5 px-5 py-4 flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-black uppercase tracking-wide text-white leading-none">Modifier la course</h2>
+                    <p class="text-[10px] text-slate-500 mt-0.5 font-medium">Le tarif est recalculé automatiquement</p>
+                </div>
+                <button id="close-edit-modal" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <form id="edit-booking-form" class="px-5 py-6 space-y-5" data-pricing-rules={JSON.stringify(pricingRules)}>
+                <input type="hidden" id="edit-booking-id" name="booking_id" />
+                <input type="hidden" id="edit-booking-type" />
+                <input type="hidden" id="edit-vehicle-id" />
+
+                <!-- Date / heure -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Date et heure de prise en charge</label>
+                    <div class="relative">
+                        <input type="datetime-local" id="edit-pickup-time" name="pickup_time" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors" style="color-scheme: dark;" />
+                        <div class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adresse départ -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Adresse de départ</label>
+                    <input type="text" id="edit-pickup-address" name="pickup_address" required placeholder="Adresse de départ" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors placeholder:text-slate-600" />
+                </div>
+
+                <!-- Adresse arrivée (transfert uniquement) -->
+                <div id="edit-dropoff-container" class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Adresse d'arrivée</label>
+                    <input type="text" id="edit-dropoff-address" name="dropoff_address" placeholder="Adresse d'arrivée" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors placeholder:text-slate-600" />
+                </div>
+
+                <!-- Distance / durée -->
+                <div id="edit-distance-container" class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Distance (km)</label>
+                    <input type="number" id="edit-distance-km" name="distance_km" min="0" step="0.1" placeholder="0.0" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors placeholder:text-slate-600" />
+                </div>
+                <div id="edit-duration-container" class="hidden space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Durée (heures)</label>
+                    <input type="number" id="edit-duration-hours" name="duration_hours" min="1" max="24" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors" />
+                </div>
+
+                <!-- Aperçu tarif -->
+                <div class="flex items-center justify-between p-4 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Tarif estimé</p>
+                        <p class="text-[9px] text-slate-600 mt-0.5">Calculé côté serveur à la validation</p>
+                    </div>
+                    <p id="edit-price-preview" class="text-2xl font-black text-white tabular-nums">---€</p>
+                </div>
+
+                <button type="submit" id="edit-submit-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95 shadow-lg shadow-indigo-600/20">
+                    Enregistrer les modifications
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🎭 MODAL: DÉTAILS MISSION ELITE -->
+    <div slot="modals" id="detail-booking-modal" data-driver-id={driverId} class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-500" style="display: none;">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md modal-overlay"></div>
+        <div class="relative glass max-w-2xl w-full max-h-[90vh] rounded-[3rem] border border-white/10 shadow-[0_0_100px_rgba(79,70,229,0.1)] overflow-y-auto overflow-x-hidden custom-scrollbar transform scale-95 transition-all duration-500 bg-[#0A0A0B]" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+            <div class="p-8 sm:p-12">
+                <!-- Header Modal -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-10 border-b border-white/5">
+                    <div class="flex items-center gap-5">
+                        <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-600/40 transform -rotate-3">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-black uppercase text-white tracking-tighter leading-none mb-2">Détails <span class="text-indigo-500">Mission</span></h2>
+                            <div class="flex items-center gap-2">
+                                <p id="modal-booking-ref" class="text-slate-600 text-[10px] font-black uppercase tracking-widest leading-none">REF: #---</p>
+                                <span id="modal-booking-type" class="px-2 py-0.5 rounded-[4px] text-[10px] font-black uppercase tracking-widest border border-white/10 text-slate-500 leading-none">---</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="modal-status-badge" class="px-4 py-2 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest text-indigo-400 text-center">
+                        ---
+                    </div>
+                </div>
+
+                <div class="space-y-12">
+                    <!-- CLIENT INFO -->
+                    <div class="relative">
+                        <div class="absolute -left-6 top-0 bottom-0 w-1 bg-indigo-500 rounded-full opacity-50"></div>
+                        <p class="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-4">Passager Premium</p>
+                        <div class="flex items-center justify-between gap-6">
+                            <h3 id="modal-client-name" class="text-2xl font-black text-white uppercase tracking-tighter leading-none">---</h3>
+                            <div class="flex gap-2">
+                                <a id="modal-client-phone-link" href="#" class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 hover:bg-emerald-500/20 transition-all">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ITINÉRAIRE -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div class="space-y-8">
+                            <div class="relative pl-6 space-y-8">
+                                 <div class="absolute left-1 top-2 bottom-2 w-0.5 border-l-2 border-dashed border-white/10"></div>
+                                 <div class="relative">
+                                    <div class="absolute -left-[23px] top-1 w-3 h-3 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.5)]"></div>
+                                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Point de Prise en charge</p>
+                                    <p id="modal-pickup" class="text-sm font-bold text-slate-200 leading-tight">---</p>
+                                 </div>
+                                 <div class="relative">
+                                    <div class="absolute -left-[23px] top-1 w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_100px_rgba(244,63,94,0.5)]"></div>
+                                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Destination Finale</p>
+                                    <p id="modal-dropoff" class="text-sm font-bold text-slate-200 leading-tight">---</p>
+                                 </div>
+                            </div>
+                            <a id="modal-map-link" href="#" target="_blank" class="flex items-center justify-center gap-3 px-6 py-4 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A2 2 0 013 15.382V5.618a2 2 0 011.106-1.789L9 1.118l6 3 5.447-2.724A2 2 0 0121 3.236v9.764a2 2 0 01-1.106 1.789L15 17.382l-6 2.618z" /></svg>
+                                Ouvrir dans Google Maps
+                            </a>
+                        </div>
+
+                        <div class="glass p-8 rounded-[2.5rem] border border-white/5 bg-indigo-500/[0.03] flex flex-col items-center justify-center text-center">
+                            <p class="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em] mb-2">Heure du RDV</p>
+                            <h4 id="modal-time" class="text-5xl font-black text-white tracking-tighter leading-none mb-2 tabular-nums">---</h4>
+                            <p id="modal-date" class="text-[10px] font-black uppercase text-slate-500 tracking-widest underline decoration-indigo-500/30 underline-offset-4">---</p>
+                        </div>
+                    </div>
+
+                    <!-- CARACTÉRISTIQUES -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass p-5 rounded-[2rem] border border-white/5 flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-indigo-400">
+                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black uppercase text-slate-500 mb-0.5">Passagers</p>
+                                <span id="modal-passengers" class="text-lg font-black text-white">---</span>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-[2rem] border border-white/5 flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-indigo-400">
+                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black uppercase text-slate-500 mb-0.5">Valises</p>
+                                <span id="modal-luggage" class="text-lg font-black text-white">---</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🕹️ MISSION COCKPIT CONTAINER -->
+                    <div id="mission-cockpit-root"></div>
+
+                    <!-- NOTES -->
+                    <div class="glass p-6 rounded-[2rem] border border-white/5">
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Instructions Chauffeur</p>
+                        <p id="modal-notes" class="text-xs text-slate-500 font-medium leading-relaxed">---</p>
+                    </div>
+
+                    <!-- AVIS & QR CODE -->
+                    <div id="modal-rating-section" class="glass p-6 rounded-[2rem] border border-white/5 hidden">
+                        <!-- Cas 1: avis existant -->
+                        <div id="modal-rating-display" class="hidden">
+                            <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-3">Avis Passager</p>
+                            <div id="modal-rating-stars" class="flex gap-1.5 mb-3"></div>
+                            <p id="modal-rating-comment" class="text-xs text-slate-400 font-medium leading-relaxed"></p>
+                        </div>
+                        <!-- Cas 2: pas encore noté -->
+                        <div id="modal-qr-section" class="hidden">
+                            <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-3">Recueillir l'Avis Passager</p>
+                            <div class="flex flex-col sm:flex-row items-center gap-6">
+                                <canvas id="modal-qr-canvas" class="w-28 h-28 rounded-2xl bg-white p-1.5 flex-shrink-0"></canvas>
+                                <div class="text-center sm:text-left">
+                                    <p class="text-xs font-bold text-slate-300">Faites scanner ce QR code au passager</p>
+                                    <p class="text-[10px] text-slate-600 mt-1">Généré localement — aucune donnée envoyée à des tiers</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FINANCES & ACTION -->
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center justify-between p-6 bg-indigo-600 rounded-[2rem] shadow-2xl shadow-indigo-600/20">
+                            <div>
+                                <p class="text-[10px] font-black uppercase text-white/50 mb-0.5">Montant Mission</p>
+                                <h4 id="modal-amount" class="text-3xl font-black text-white leading-none tabular-nums">---€</h4>
+                            </div>
+                            <div class="text-white/30">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3 mt-4">
+                            <button id="modal-accept-btn" class="hidden flex-1 py-5 bg-white text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl active:scale-95 disabled:opacity-50">
+                                Prendre la main sur la course
+                            </button>
+                            <button id="modal-edit-btn" class="hidden flex-1 py-5 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/10 active:scale-95">
+                                Modifier
+                            </button>
+                            <button class="close-detail-modal flex-1 py-5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/5 active:scale-95">
+                                Fermer
+                            </button>
+                        </div>
+
+                        <!-- Annulation chauffeur (pré-mission uniquement) -->
+                        <div id="cancel-section" class="hidden mt-2">
+                            <div id="cancel-trigger-area">
+                                <button id="cancel-booking-btn" class="w-full py-4 bg-rose-500/5 hover:bg-rose-500/10 text-rose-400/60 hover:text-rose-400 border border-rose-500/10 hover:border-rose-500/20 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95">
+                                    Annuler la course
+                                </button>
+                            </div>
+                            <div id="cancel-form-area" class="hidden mt-3 space-y-3">
+                                <div class="flex items-start gap-3 p-4 bg-rose-500/5 border border-rose-500/15 rounded-2xl">
+                                    <svg class="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                    </svg>
+                                    <p class="text-[11px] text-rose-300/70 font-medium leading-relaxed">Convention VTC — un motif d'annulation est obligatoire et sera conservé dans le dossier.</p>
+                                </div>
+                                <textarea id="cancel-reason" placeholder="Décrivez le motif d'annulation…" rows="3" class="w-full bg-white/5 border border-rose-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/40 resize-none transition-colors"></textarea>
+                                <div class="flex gap-3">
+                                    <button id="cancel-confirm-btn" class="flex-1 py-4 bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95">
+                                        Confirmer l'annulation
+                                    </button>
+                                    <button id="cancel-back-btn" class="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/5 active:scale-95">
+                                        Retour
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</AppLayout>
+
+<style>
+    /* Styling for the dropdown arrow rotation and shadow refinement */
+    #type-dropdown-container:focus-within #type-dropdown-button svg {
+        rotate: 180deg;
+    }
+
+    #new-booking-modal {
+        opacity: 0;
+    }
+
+    #new-booking-modal.is-active {
+        opacity: 1;
+    }
+
+    #new-booking-modal > div:last-child {
+        transform: scale(0.95);
+    }
+
+    #new-booking-modal.is-active > div:last-child {
+        transform: scale(1);
+    }
+
+    #detail-booking-modal {
+        opacity: 0;
+    }
+
+    #detail-booking-modal:not(.opacity-0) {
+        opacity: 1;
+    }
+
+    /* Style Premium pour le sélecteur de date */
+    input[type="datetime-local"] {
+        position: relative;
+    }
+
+    /* Cacher l'icône native pour afficher la nôtre et rendre toute la zone cliquable */
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    import "../../scripts/bookings.ts";
+</script>

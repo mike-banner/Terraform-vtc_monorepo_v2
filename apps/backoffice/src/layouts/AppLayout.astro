@@ -1,0 +1,418 @@
+---
+// src/layouts/AppLayout.astro
+import "../styles/global.css";
+import { isTenant, isPlatform } from "../lib/guards";
+import InactivityTimeout from "../components/common/InactivityTimeout.astro";
+
+interface Props {
+    title: string;
+}
+
+const { title } = Astro.props;
+const { profile } = Astro.locals;
+const pathname = new URL(Astro.request.url).pathname;
+
+if (!isTenant(profile)) {
+    return Astro.redirect("/onboarding");
+}
+
+const safeProfile = profile!;
+
+const navItems = [
+    {
+        label: "Tableau de bord",
+        href: "/app/dashboard",
+        roles: ["owner", "manager", "driver"],
+    },
+    {
+        label: "Courses",
+        href: "/app/bookings",
+        roles: ["owner", "manager", "driver"],
+    },
+    {
+        label: "Fiscal",
+        href: "/app/ledger",
+        roles: ["owner", "manager"],
+    },
+];
+
+const { data: tenant } = await Astro.locals.supabase
+    .from("tenants")
+    .select("name")
+    .eq("id", safeProfile.tenant_id!)
+    .maybeSingle();
+
+const tenantName = tenant?.name || "VTC HUB";
+
+---
+
+<!doctype html>
+<html lang="fr" class="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="generator" content={Astro.generator} />
+        <title>{title} | VTC App</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <!--
+            FIX iOS SAFARI : window.innerHeight = seule valeur fiable pour la hauteur visible.
+            Script inline bloquant = s'exécute avant tout rendu, donc pas de flash.
+            Fallback CSS 100vh si JS désactivé (rare).
+        -->
+        <script is:inline>
+        (function () {
+            function setAppHeight() {
+                var h = window.innerHeight + 'px';
+                document.documentElement.style.setProperty('--app-h', h);
+                /* Inline style takes priority over any stylesheet cascade issue */
+                document.documentElement.style.height = h;
+                document.documentElement.style.overflow = 'hidden';
+            }
+            setAppHeight();
+            window.addEventListener('resize', setAppHeight, { passive: true });
+            window.addEventListener('orientationchange', setAppHeight, { passive: true });
+            /* Set body once it's available */
+            document.addEventListener('DOMContentLoaded', function () {
+                var h = window.innerHeight + 'px';
+                document.body.style.height = h;
+                document.body.style.overflow = 'hidden';
+            }, { once: true });
+        })();
+        </script>
+    </head>
+
+    <body class="bg-brand-dark text-slate-50 selection:bg-indigo-500/30 font-inter flex flex-col">
+
+        <!-- ═══════════════════════════════════
+             MOBILE HEADER — in-flow, flex-shrink-0
+             ═══════════════════════════════════ -->
+        <header class="md:hidden flex-shrink-0 h-16 z-[60] bg-[#050505]/98 border-b border-white/5 flex items-center justify-between gap-3 px-5">
+            <h1 class="text-sm font-black uppercase tracking-wider text-white truncate min-w-0 flex-1">
+                {title}
+            </h1>
+            <span class="text-[10px] font-semibold tracking-wider uppercase text-slate-400 truncate flex-shrink-0 max-w-[100px]">{tenantName}</span>
+        </header>
+
+        <!-- ═══════════════════════════════════
+             ZONE CENTRALE — sidebar + contenu
+             flex-1 min-h-0 : remplit l'espace entre header et footer
+             overflow-hidden : empêche tout débordement visuel
+             ═══════════════════════════════════ -->
+        <div class="flex-1 min-h-0 flex overflow-hidden">
+
+            <!-- DESKTOP SIDEBAR — in-flow, flex-shrink-0 -->
+            <aside class="hidden md:flex w-72 flex-shrink-0 bg-[#080808] border-r border-white/5 flex-col p-6 overflow-y-auto custom-scrollbar">
+                <nav class="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+                    {
+                        navItems.map(
+                            (item) =>
+                                item.roles.includes(
+                                    safeProfile.tenant_role || "",
+                                ) && (
+                                    <a
+                                        href={item.href}
+                                        class={`flex items-center px-4 py-3.5 rounded-2xl text-fluid-sm font-bold transition-all ${
+                                            pathname === item.href
+                                                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                                                : "text-slate-400 hover:bg-white/5 hover:text-white"
+                                        }`}
+                                    >
+                                        {item.label === "Fiscal" && (
+                                            <svg class="w-5 h-5 mr-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        )}
+                                        {item.label}
+                                    </a>
+                                ),
+                        )
+                    }
+                </nav>
+
+                <div class="pt-6 mt-6 border-t border-white/5 space-y-2">
+                    <a
+                        href="/app/profile"
+                        class={`flex items-center gap-3 px-4 py-4 rounded-2xl text-xs font-semibold uppercase tracking-wider transition-all ${
+                            pathname === "/app/profile"
+                                ? "bg-white/10 text-white border border-white/10"
+                                : "text-slate-500 hover:bg-white/5 hover:text-white"
+                        }`}
+                    >
+                        <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Profil
+                    </a>
+                    {
+                        safeProfile.tenant_role === "owner" && (
+                            <a
+                                href="/app/settings"
+                                class={`flex items-center gap-3 px-4 py-4 rounded-2xl text-xs font-semibold uppercase tracking-wider transition-all ${
+                                    pathname === "/app/settings" || pathname === "/app/pricing" || pathname === "/app/vehicles"
+                                        ? "bg-white/10 text-white border border-white/10"
+                                        : "text-slate-500 hover:bg-white/5 hover:text-white"
+                                }`}
+                            >
+                                <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Entreprise
+                            </a>
+                        )
+                    }
+                    {isPlatform(safeProfile) && (
+                        <a
+                            href="/admin/dashboard"
+                            class="flex items-center gap-3 px-4 py-4 rounded-2xl text-xs font-semibold uppercase tracking-wider transition-all text-indigo-400/70 hover:bg-indigo-500/10 hover:text-indigo-400 border border-indigo-500/10"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                            </svg>
+                            Backoffice Admin
+                        </a>
+                    )}
+                    <button
+                        id="logout-btn"
+                        class="w-full flex items-center px-4 py-4 rounded-2xl hover:bg-red-500/10 text-[10px] font-black uppercase tracking-widest text-red-500/80 hover:text-red-500 transition-all text-left group"
+                    >
+                        <span>Se déconnecter</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- ═══════════════════════════════════
+                 MAIN — flex-1, contient desktop header + slot
+                 ═══════════════════════════════════ -->
+            <main class="flex-1 min-h-0 bg-[#050505] flex flex-col">
+
+                <!-- DESKTOP HEADER — in-flow, flex-shrink-0 -->
+                <header class="hidden md:flex h-20 flex-shrink-0 items-center justify-between px-10 border-b border-white/5 bg-[#050505]/98 z-20">
+                    <div class="flex items-center gap-4">
+                        <h1 class="text-xl font-black uppercase tracking-tighter text-white">
+                            {title}
+                        </h1>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs font-semibold uppercase text-indigo-400 tracking-wider">{tenantName}</span>
+                            <span class="text-[10px] font-medium text-slate-500 uppercase tracking-wide">{safeProfile.tenant_role} mode</span>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- SLOT — seule zone scrollable -->
+                <div class="flex-1 min-h-0 overflow-y-auto">
+                    <slot />
+                </div>
+                <!-- PORTAL MODALS — outside overflow-y-auto so position:fixed works on iOS Safari -->
+                <slot name="modals" />
+
+            </main>
+        </div>
+
+        <!-- ═══════════════════════════════════
+             MISSION COMPLETION BANNER — sticky above mobile nav
+             Visible uniquement sur mobile, uniquement si mission in_progress
+             JS retire la classe "hidden" quand une mission active est détectée
+             ═══════════════════════════════════ -->
+        <div id="mission-banner" class="hidden flex-shrink-0 bg-gradient-to-r from-green-950/90 to-emerald-950/70 border-t border-green-500/25 px-4 py-3">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <span class="relative flex-shrink-0">
+                        <span class="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-[9px] font-black uppercase tracking-widest text-green-400 leading-none mb-0.5">Mission en cours</p>
+                        <p id="mission-banner-addr" class="text-[11px] text-slate-300 truncate font-medium leading-none"></p>
+                    </div>
+                </div>
+                <button id="mission-complete-btn" class="text-[9px] font-black uppercase tracking-widest bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 px-3 py-2 rounded-xl transition-all active:scale-95 whitespace-nowrap flex-shrink-0">
+                    Terminer la course
+                </button>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════
+             MOBILE FOOTER NAV — in-flow, flex-shrink-0
+             Toujours visible, jamais scrollable
+             ═══════════════════════════════════ -->
+        <nav class="md:hidden flex-shrink-0 z-50 flex justify-around items-stretch bg-black/70 backdrop-blur-xl border-t border-white/5" style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
+            <a href="/app/dashboard" class={`flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 transition-colors ${pathname === "/app/dashboard" ? "text-indigo-400" : "text-slate-500"}`}>
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span class="text-[10px] font-semibold uppercase tracking-tight leading-none truncate w-full text-center">Accueil</span>
+            </a>
+            <a href="/app/bookings" class={`flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 transition-colors ${pathname === "/app/bookings" ? "text-indigo-400" : "text-slate-500"}`}>
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="text-[10px] font-semibold uppercase tracking-tight leading-none truncate w-full text-center">Courses</span>
+            </a>
+            {(safeProfile.tenant_role === "owner" || safeProfile.tenant_role === "manager") && (
+                <a href="/app/ledger" class={`flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 transition-colors ${pathname === "/app/ledger" ? "text-indigo-400" : "text-slate-500"}`}>
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="text-[10px] font-semibold uppercase tracking-tight leading-none truncate w-full text-center">Fiscal</span>
+                </a>
+            )}
+            <a href="/app/profile" class={`flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 transition-colors ${pathname === "/app/profile" ? "text-indigo-400" : "text-slate-500"}`}>
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span class="text-[10px] font-semibold uppercase tracking-tight leading-none truncate w-full text-center">Profil</span>
+            </a>
+            {safeProfile.tenant_role === "owner" && (
+                <a href="/app/settings" class={`flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 transition-colors ${pathname === "/app/settings" || pathname === "/app/pricing" || pathname === "/app/vehicles" ? "text-indigo-400" : "text-slate-500"}`}>
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="text-[10px] font-semibold uppercase tracking-tight leading-none truncate w-full text-center">Entreprise</span>
+                </a>
+            )}
+        </nav>
+
+        <!-- Logout Confirmation Modal (position: fixed — OK pour les modals) -->
+        <div id="logout-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-300">
+            <div class="absolute inset-0 bg-black/80 backdrop-blur-sm modal-overlay"></div>
+            <div class="relative glass max-w-sm w-full rounded-[2.5rem] border border-white/10 shadow-2xl p-8 transform scale-95 transition-all duration-300 text-center sm:text-left">
+                <div class="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center text-red-500 mb-6 mx-auto sm:mx-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </div>
+                <h3 class="text-fluid-2xl font-black uppercase text-white mb-2 tracking-tighter">Déconnexion</h3>
+                <p class="text-slate-400 text-sm font-medium mb-8 leading-relaxed">
+                    Es-tu sûr de vouloir te déconnecter ? Toutes les sessions actives seront fermées.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 font-black uppercase text-[10px] tracking-widest">
+                    <button id="confirm-logout" class="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-lg shadow-red-600/20 active:scale-95">
+                        Déconnexion
+                    </button>
+                    <button id="cancel-logout" class="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl transition-all border border-white/5 active:scale-95">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Correction datetime modal (mission complétée en retard) -->
+        <div id="correction-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-300">
+            <div class="absolute inset-0 bg-black/80 backdrop-blur-sm correction-overlay"></div>
+            <div class="relative glass max-w-sm w-full rounded-[2.5rem] border border-white/10 shadow-2xl p-8 transform scale-95 transition-all duration-300">
+                <div class="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400 mb-6">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-fluid-2xl font-black uppercase text-white mb-2 tracking-tighter">Fin de course</h3>
+                <p class="text-slate-400 text-sm font-medium mb-6 leading-relaxed">
+                    La mission est en cours depuis plus de 4h. Quelle était l'heure réelle de fin ?
+                </p>
+                <div class="mb-6">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Heure réelle de fin</label>
+                    <input
+                        id="correction-datetime"
+                        type="datetime-local"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors"
+                    />
+                </div>
+                <div class="flex flex-col gap-3 font-black uppercase text-[10px] tracking-widest">
+                    <button id="correction-confirm" class="py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+                        Confirmer l'heure corrigée
+                    </button>
+                    <button id="correction-now" class="py-4 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl transition-all border border-white/5 active:scale-95">
+                        Utiliser l'heure actuelle
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <style is:global>
+            /*
+             * --app-h est défini par le script inline dans <head> : window.innerHeight + 'px'
+             * C'est la seule valeur 100% fiable sur iOS Safari (viewport visible réel).
+             * Fallback 100vh si JS désactivé.
+             * overflow:hidden : empêche le body de scroller nativement.
+             * Seul le slot wrapper (.overflow-y-auto) défile.
+             */
+            html, body {
+                height: var(--app-h, 100vh);
+                overflow: hidden !important;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 10px;
+            }
+
+            #logout-modal.is-active,
+            #correction-modal.is-active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            #logout-modal.is-active > div:last-child,
+            #correction-modal.is-active > div:last-child {
+                transform: scale(1);
+            }
+
+            #correction-datetime {
+                color-scheme: dark;
+            }
+
+            /*
+             * iOS Safari: empêche le délai de 300ms sur les taps pour tous
+             * les éléments interactifs natifs. touch-action:manipulation
+             * indique au browser que l'élément ne gère pas le double-tap-zoom
+             * → les clicks se déclenchent immédiatement.
+             */
+            button, a, [role="button"], input, select, textarea, label, [tabindex] {
+                touch-action: manipulation;
+            }
+
+            @keyframes toast-in {
+                from { opacity: 0; transform: translateY(10px) scale(0.95); }
+                to   { opacity: 1; transform: translateY(0)    scale(1); }
+            }
+            @keyframes toast-out {
+                from { opacity: 1; transform: translateY(0)   scale(1); }
+                to   { opacity: 0; transform: translateY(-6px) scale(0.97); }
+            }
+            .toast-enter { animation: toast-in  0.28s cubic-bezier(0.16, 1, 0.3, 1) both; }
+            .toast-exit  { animation: toast-out 0.22s cubic-bezier(0.4, 0, 1, 1) both; }
+            @media (prefers-reduced-motion: reduce) {
+                .toast-enter, .toast-exit { animation: none; }
+                .toast-exit { opacity: 0; }
+            }
+
+            /* Scroll fluide dans le conteneur principal sur iOS */
+            .overflow-y-auto {
+                -webkit-overflow-scrolling: touch;
+            }
+        </style>
+
+        <!-- TOAST CONTAINER — au-dessus de la nav mobile, centré -->
+        <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"
+             class="fixed bottom-[4.75rem] md:bottom-6 inset-x-0 flex flex-col items-center gap-2 z-[200] pointer-events-none px-4">
+        </div>
+
+        <script>
+            import "../scripts/app-layout.ts";
+        </script>
+        <InactivityTimeout timeoutMinutes={30} />
+    </body>
+</html>

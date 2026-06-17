@@ -1,0 +1,156 @@
+---
+// src/pages/login.astro
+import MainLayout from "../layouts/MainLayout.astro";
+---
+
+<MainLayout title="Connexion" hideFooter>
+    <div class="flex-1 flex items-center justify-center px-4">
+        <div class="glass p-8 rounded-3xl w-full max-w-sm shadow-2xl border border-white/10 relative">
+
+            <!-- Lien retour accueil -->
+            <a
+                href="/"
+                class="absolute top-5 left-5 flex items-center gap-1.5 text-slate-500 hover:text-white transition-colors text-xs font-medium"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                Accueil
+            </a>
+
+            <div class="text-center mb-6 pt-4">
+                <h1 class="text-2xl font-extrabold mb-1 text-white">
+                    Bon retour
+                </h1>
+                <p class="text-slate-400 text-sm">Connectez-vous à votre espace</p>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div class="space-y-1.5">
+                    <label for="email" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        placeholder="nom@entreprise.fr"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm"
+                    />
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center">
+                        <label for="password" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Mot de passe</label>
+                        <a href="#" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">Oublié ?</a>
+                    </div>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            placeholder="••••••••"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm"
+                        />
+                        <button type="button" id="toggle-password" aria-label="Afficher le mot de passe" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors p-1">
+                            <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <svg id="eye-off-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 hidden">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    id="submit-btn"
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black min-h-[44px] py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden group mt-2"
+                >
+                    <span class="btn-text transition-all duration-300 text-xs uppercase tracking-wider">Se connecter</span>
+                    <div class="loader-container hidden absolute inset-0 flex items-center justify-center bg-indigo-600">
+                        <svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </form>
+
+            <div class="mt-5 pt-5 border-t border-white/5 text-center">
+                <p class="text-slate-500 text-xs">
+                    Pas encore de compte ?
+                    <a href="/signup" class="text-indigo-400 font-bold hover:text-indigo-300 transition-colors">Créer un compte</a>
+                </p>
+            </div>
+
+            <div id="message" role="alert" aria-live="polite" class="mt-4 text-center text-sm font-medium min-h-[16px]"></div>
+        </div>
+    </div>
+</MainLayout>
+
+<script>
+    import { supabase } from "@/lib/supabase/client";
+
+    const form = document.querySelector("#login-form") as HTMLFormElement;
+    const messageEl = document.querySelector("#message") as HTMLDivElement;
+    const submitBtn = document.querySelector("#submit-btn") as HTMLButtonElement;
+    const loader = document.querySelector(".loader-container") as HTMLDivElement;
+    const btnText = document.querySelector(".btn-text") as HTMLSpanElement;
+
+    const toggleBtn = document.querySelector("#toggle-password") as HTMLButtonElement;
+    const passwordInput = document.querySelector("#password") as HTMLInputElement;
+    const eyeIcon = document.querySelector("#eye-icon") as SVGElement;
+    const eyeOffIcon = document.querySelector("#eye-off-icon") as SVGElement;
+
+    toggleBtn?.addEventListener("click", () => {
+        const isHidden = passwordInput.type === "password";
+        passwordInput.type = isHidden ? "text" : "password";
+        eyeIcon.classList.toggle("hidden", isHidden);
+        eyeOffIcon.classList.toggle("hidden", !isHidden);
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reason') === 'inactivity' && messageEl) {
+        messageEl.textContent = "Vous avez été déconnecté pour inactivité.";
+        messageEl.className = "mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center text-xs font-medium text-amber-500";
+    }
+
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
+
+        submitBtn.disabled = true;
+        loader.classList.remove("hidden");
+        btnText.style.opacity = "0";
+        messageEl.textContent = "";
+
+        try {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                messageEl.textContent = "Erreur : " + error.message;
+                messageEl.className = "mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-center text-xs font-medium text-red-400";
+                submitBtn.disabled = false;
+                loader.classList.add("hidden");
+                btnText.style.opacity = "1";
+            } else {
+                messageEl.textContent = "Connexion réussie ! Redirection...";
+                messageEl.className = "mt-4 text-center text-xs font-medium text-emerald-400";
+                window.location.href = "/dashboard";
+            }
+        } catch (err) {
+            console.error(err);
+            messageEl.textContent = "Une erreur technique est survenue.";
+            messageEl.className = "mt-4 text-center text-xs font-medium text-red-400";
+            submitBtn.disabled = false;
+            loader.classList.add("hidden");
+            btnText.style.opacity = "1";
+        }
+    });
+</script>

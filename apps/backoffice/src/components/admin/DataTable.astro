@@ -1,0 +1,63 @@
+---
+// src/components/admin/DataTable.astro
+interface Props {
+    title: string;
+    description?: string;
+    headers: string[];
+    data: any[];
+    emptyMessage?: string;
+}
+
+const { title, description, headers, data, emptyMessage = "Aucune donnée trouvée." } = Astro.props;
+---
+
+<div class="mb-12">
+    <div class="flex items-end justify-between mb-8">
+        <div>
+            <h2 class="text-3xl font-black uppercase tracking-tighter text-white">
+                {title}
+            </h2>
+            {description && (
+                <p class="text-sm font-bold tracking-widest uppercase text-slate-500 mt-2">
+                    {description}
+                </p>
+            )}
+        </div>
+        <div class="flex items-center gap-4 text-xs font-black uppercase tracking-widest text-[#555]">
+            Total: {data.length}
+        </div>
+    </div>
+
+    <div class="overflow-hidden border border-white/5 bg-white/5 rounded-3xl backdrop-blur-3xl shadow-2xl relative">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none"></div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr class="bg-white/10 border-b border-white/5">
+                        {headers.map((header) => (
+                            <th class="px-6 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                {header}
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {data.length > 0 ? data.map((row) => (
+                        <tr class="group hover:bg-white/5 transition-colors duration-200">
+                            <slot name="row" row={row} />
+                        </tr>
+                    )) : (
+                        <tr>
+                            <td colspan={headers.length} class="px-12 py-24 text-center">
+                                <span class="text-sm font-bold tracking-widest uppercase text-slate-600 block mb-4">
+                                    {emptyMessage}
+                                </span>
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

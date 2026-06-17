@@ -1,0 +1,342 @@
+---
+// src/pages/app/ledger.astro
+import AppLayout from "../../layouts/AppLayout.astro";
+import { MonthDetail } from "../../components/fiscal/MonthDetail";
+
+const { profile, user, supabase } = Astro.locals as any;
+
+if (!profile || !user) {
+    return Astro.redirect("/login");
+}
+
+const now = new Date();
+const currentYear = parseInt(Astro.url.searchParams.get("year") || now.getFullYear().toString());
+const currentMonth = Astro.url.searchParams.get("month")
+    ? parseInt(Astro.url.searchParams.get("month")!)
+    : null;
+
+const FIRST_YEAR = 2026;
+const years = Array.from(
+    { length: Math.max(1, now.getFullYear() - FIRST_YEAR + 1) },
+    (_, i) => FIRST_YEAR + i
+);
+
+const MONTH_SHORT = ["Janv.", "Févr.", "Mars", "Avr.", "Mai", "Juin", "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc."];
+const MONTH_FULL  = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
+// Monthly aggregates from ledger view
+const { data: summaryRaw } = await supabase
+    .from("tenant_accounting_ledger" as any)
+    .select("*")
+    .eq("tenant_id", profile.tenant_id as string)
+    .eq("year", currentYear) as any;
+
+const summaryRows: any[] = summaryRaw || [];
+
+// 12-month skeleton — always render all months, fill gaps with zeros
+const monthlyData = Array.from({ length: 12 }, (_, i) => {
+    const m = i + 1;
+    const found = summaryRows.find((r: any) => r.month === m);
+    const isReachable =
+        currentYear < now.getFullYear() ||
+        (currentYear === now.getFullYear() && m <= now.getMonth() + 1);
+    return {
+        month: m,
+        short: MONTH_SHORT[i],
+        full: MONTH_FULL[i],
+        gross: found?.gross_revenue ?? 0,
+        net: found?.net_revenue ?? 0,
+        vat: found?.vat_collected ?? 0,
+        count: found?.booking_count ?? 0,
+        hasData: !!(found && (found.booking_count ?? 0) > 0),
+        isReachable,
+    };
+});
+
+// Annual KPI totals (always full year for the overview)
+const annualTotals = summaryRows.reduce(
+    (acc: any, curr: any) => ({
+        gross:    acc.gross    + (curr.gross_revenue   ?? 0),
+        net:      acc.net      + (curr.net_revenue     ?? 0),
+        vat:      acc.vat      + (curr.vat_collected   ?? 0),
+        bookings: acc.bookings + (curr.booking_count   ?? 0),
+    }),
+    { gross: 0, net: 0, vat: 0, bookings: 0 }
+);
+
+// Transaction detail — only fetched when a month is selected
+let movements: any[] = [];
+let monthTotals = { gross: 0, net: 0, vat: 0, bookings: 0 };
+
+if (currentMonth !== null) {
+    const startOfMonth = new Date(currentYear, currentMonth - 1, 1).toISOString();
+    const endOfMonth   = new Date(currentYear, currentMonth, 0, 23, 59, 59).toISOString();
+    const { data: movData, error: mErr } = await supabase
+        .from("financial_movements")
+        .select(`
+            *,
+            bookings!inner (
+                id, pickup_time, payment_mode,
+                customers!inner (first_name, last_name, company_name)
+            )
+        `)
+        .eq("tenant_id", profile.tenant_id as string)
+        .gte("created_at", startOfMonth)
+        .lte("created_at", endOfMonth)
+        .order("created_at", { ascending: false });
+    if (mErr) console.error("movements error:", mErr);
+    movements = movData || [];
+
+    // Month-scoped KPIs from summary
+    const mRow = summaryRows.find((r: any) => r.month === currentMonth);
+    monthTotals = {
+        gross:    mRow?.gross_revenue   ?? movements.reduce((s: number, m: any) => s + (m.gross_amount ?? 0), 0),
+        net:      mRow?.net_revenue     ?? movements.reduce((s: number, m: any) => s + (m.net_amount   ?? 0), 0),
+        vat:      mRow?.vat_collected   ?? movements.reduce((s: number, m: any) => s + (m.vat_amount   ?? 0), 0),
+        bookings: mRow?.booking_count   ?? movements.length,
+    };
+}
+
+// URL builder
+const getUrl = (params: Record<string, string | number | null>) => {
+    const url = new URL(Astro.url.href);
+    Object.entries(params).forEach(([k, v]) => {
+        if (v === null) url.searchParams.delete(k);
+        else url.searchParams.set(k, String(v));
+    });
+    return url.pathname + url.search;
+};
+
+const fmt = (n: number) =>
+    n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+---
+
+<AppLayout title="Fiscal">
+<div class="px-4 sm:px-6 md:px-8 py-6 md:py-8 pb-24 md:pb-10 max-w-full">
+
+    {currentMonth !== null ? (
+        /* ══════════════════════════════════════════════════════
+           MONTH DETAIL — full-page view
+           ══════════════════════════════════════════════════════ */
+        <div>
+            <!-- Header: back nav (left) + month title + year pills (right) -->
+            <div class="flex items-center justify-between gap-4 mb-6">
+                <a
+                    href={getUrl({ month: null })}
+                    class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors flex-shrink-0"
+                >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Exercice {currentYear}
+                </a>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <h2 class="text-xl font-black uppercase tracking-tighter text-white leading-none">
+                        {MONTH_FULL[currentMonth - 1]}
+                    </h2>
+                    {years.length > 1 && (
+                        <div class="flex items-center gap-2">
+                            {years.map(y => (
+                                <a
+                                    href={getUrl({ year: y, month: null })}
+                                    class={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                        y === currentYear
+                                        ? "bg-indigo-600 text-white"
+                                        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/5"
+                                    }`}
+                                >
+                                    {y}
+                                </a>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <!-- Inline month KPIs (compact 3-stat strip, label above) -->
+            <div class="flex items-center gap-5 px-5 py-4 bg-white/[0.03] border border-white/[0.06] rounded-2xl mb-6">
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Course{monthTotals.bookings > 1 ? "s" : ""}</span>
+                    <span class="text-xl font-black text-white tabular-nums tracking-tighter leading-none">{monthTotals.bookings}</span>
+                </div>
+                <div class="w-px h-7 bg-white/[0.06]"></div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">CA HT</span>
+                    <span class="text-xl font-black text-white tabular-nums tracking-tighter leading-none">{fmt(monthTotals.net)} €</span>
+                </div>
+                <div class="w-px h-7 bg-white/[0.06]"></div>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">TVA</span>
+                    <span class="text-xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none">{fmt(monthTotals.vat)} €</span>
+                </div>
+            </div>
+
+            <!-- React island: filterable transaction table -->
+            <MonthDetail
+                client:load
+                movements={movements}
+                monthLabel={`${MONTH_FULL[currentMonth - 1]} ${currentYear}`}
+            />
+        </div>
+    ) : (
+        /* ══════════════════════════════════════════════════════
+           ANNUAL OVERVIEW
+           ══════════════════════════════════════════════════════ */
+        <div>
+            <!-- Period header -->
+            <div class="flex items-start sm:items-center justify-between gap-4 mb-6">
+                <div class="flex flex-col gap-1 min-w-0">
+                    <h2 class="text-xl font-black uppercase tracking-tighter text-white leading-none">
+                        Exercice {currentYear}
+                    </h2>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    {years.map(y => (
+                        <a
+                            href={getUrl({ year: y, month: null })}
+                            class={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                                y === currentYear
+                                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                                : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/5"
+                            }`}
+                        >
+                            {y}
+                        </a>
+                    ))}
+                </div>
+            </div>
+
+            <!-- KPI strip -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4 md:p-5">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Courses</div>
+                    <div class="text-2xl md:text-3xl font-black text-white tabular-nums tracking-tighter">
+                        {annualTotals.bookings}
+                    </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4 md:p-5">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">CA HT</div>
+                    <div class="text-2xl md:text-3xl font-black text-white tabular-nums tracking-tighter">
+                        {fmt(annualTotals.net)} €
+                    </div>
+                    <div class="text-[10px] text-slate-600 font-medium mt-1">Hors taxes</div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4 md:p-5">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">TVA collectée</div>
+                    <div class="text-2xl md:text-3xl font-black text-emerald-400 tabular-nums tracking-tighter">
+                        {fmt(annualTotals.vat)} €
+                    </div>
+                    <div class="text-[10px] text-slate-600 font-medium mt-1">À reverser</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 md:p-5 shadow-xl shadow-indigo-500/5">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total TTC</div>
+                    <div class="text-2xl md:text-3xl font-black text-slate-900 tabular-nums tracking-tighter">
+                        {fmt(annualTotals.gross)} €
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-medium mt-1">Chiffre d'affaires brut</div>
+                </div>
+            </div>
+
+            <!-- Bilan mensuel -->
+            <div class="mb-6">
+                <div class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">
+                    Bilan mensuel {currentYear}
+                </div>
+
+                <div class="table-container rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden">
+                    <table class="w-full text-left" style="min-width: 380px">
+                        <thead>
+                            <tr class="border-b border-white/5 bg-white/[0.02]">
+                                <th class="px-3 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest w-[72px]">Mois</th>
+                                <th class="px-2 py-2.5 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest w-[48px]">Nb</th>
+                                <th class="px-3 py-2.5 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest">CA HT</th>
+                                <th class="px-3 py-2.5 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest">TVA</th>
+                                <th class="px-3 py-2.5 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest">TTC</th>
+                                <th class="px-2 py-2.5 w-6"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/[0.04]">
+                            {monthlyData.map(m => {
+                                const isFuture = !m.isReachable;
+                                return (
+                                    <tr
+                                        class={`transition-colors ${
+                                            isFuture
+                                                ? "opacity-30"
+                                                : m.hasData
+                                                    ? "hover:bg-white/[0.03] cursor-pointer"
+                                                    : "hover:bg-white/[0.02] cursor-pointer"
+                                        }`}
+                                        data-href={m.isReachable ? getUrl({ month: m.month }) : undefined}
+                                    >
+                                        <td class="px-3 py-3">
+                                            <span class={`text-sm font-black tracking-tight ${isFuture ? "text-slate-600" : "text-white"}`}>
+                                                {m.short}
+                                            </span>
+                                        </td>
+                                        <td class="px-2 py-3 text-center w-[48px]">
+                                            {isFuture ? (
+                                                <span class="text-slate-700 text-xs">—</span>
+                                            ) : m.hasData ? (
+                                                <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 text-[11px] font-black tabular-nums">
+                                                    {m.count}
+                                                </span>
+                                            ) : (
+                                                <span class="text-slate-700 text-xs tabular-nums">0</span>
+                                            )}
+                                        </td>
+                                        <td class="px-3 py-3 text-right">
+                                            {isFuture ? (
+                                                <span class="text-slate-700 text-xs">—</span>
+                                            ) : (
+                                                <span class={`text-sm tabular-nums font-semibold ${m.hasData ? "text-slate-300" : "text-slate-700"}`}>
+                                                    {fmt(m.net)} €
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td class="px-3 py-3 text-right">
+                                            {isFuture ? (
+                                                <span class="text-slate-700 text-xs">—</span>
+                                            ) : (
+                                                <span class={`text-sm tabular-nums font-semibold ${m.hasData && m.vat > 0 ? "text-emerald-500" : "text-slate-700"}`}>
+                                                    {m.hasData ? `${fmt(m.vat)} €` : "0,00 €"}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td class="px-3 py-3 text-right">
+                                            {isFuture ? (
+                                                <span class="text-slate-700 text-xs">À venir</span>
+                                            ) : (
+                                                <span class={`text-sm tabular-nums font-black ${m.hasData ? "text-white" : "text-slate-700"}`}>
+                                                    {fmt(m.gross)} €
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td class="px-1 py-3 w-6">
+                                            {m.isReachable && (
+                                                <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                </svg>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    )}
+
+</div>
+
+<script>
+    document.querySelectorAll<HTMLElement>("tr[data-href]").forEach(row => {
+        row.addEventListener("click", () => {
+            const href = row.dataset.href;
+            if (href) window.location.href = href;
+        });
+    });
+</script>
+</AppLayout>

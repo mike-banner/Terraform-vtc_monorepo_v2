@@ -1,0 +1,200 @@
+---
+// src/pages/rate/[id].astro
+import MainLayout from '../../layouts/MainLayout.astro';
+import { createAdminClient } from '../../lib/supabase/server';
+
+const supabaseAdmin = createAdminClient();
+
+const { id } = Astro.params;
+
+// 1️⃣ Vérifier la réservation
+const { data: booking, error } = await supabaseAdmin
+    .from('bookings')
+    .select('*, tenants(name, logo_url, google_reviews_url)')
+    .eq('id', id)
+    .single();
+
+if (error || !booking) {
+    return Astro.redirect('/404');
+}
+
+// 2️⃣ Vérifier si déjà noté
+const alreadyRated = booking.rating !== null;
+
+const tenantName = (booking.tenants as any)?.name || 'VTC HUB';
+const tenantLogo = (booking.tenants as any)?.logo_url;
+const googleReviewsUrl = (booking.tenants as any)?.google_reviews_url || null;
+---
+
+<MainLayout title={`Évaluer votre trajet - ${tenantName}`}>
+    <div class="min-h-screen flex items-center justify-center p-6 bg-[#050505]">
+        <div class="max-w-md w-full glass p-10 rounded-[3rem] border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-700">
+
+            <!-- Header Branding -->
+            <div class="flex flex-col items-center text-center mb-10">
+                {tenantLogo ? (
+                    <img src={tenantLogo} alt={tenantName} class="h-12 w-auto mb-6 object-contain" />
+                ) : (
+                    <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-indigo-500 mb-6 border border-white/5 shadow-xl">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                    </div>
+                )}
+                <h1 class="text-fluid-2xl font-black uppercase text-white tracking-widest leading-tight">
+                    Notez votre course
+                </h1>
+                <p class="text-fluid-xs font-bold text-slate-500 uppercase tracking-widest mt-2 opacity-60">
+                    {tenantName} vous invite à évaluer votre trajet terminé
+                </p>
+            </div>
+
+            {alreadyRated ? (
+                <div class="text-center p-8 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem]">
+                    <div class="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-4">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <p class="text-white font-black uppercase tracking-widest text-sm">Merci !</p>
+                    <p class="text-slate-500 text-[10px] mt-2 leading-relaxed">Votre avis a bien été enregistré. Bonne journée !</p>
+                </div>
+            ) : (
+                <form id="rating-form" class="space-y-8">
+                    <!-- Rating Stars -->
+                    <div class="flex justify-center gap-3">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                type="button"
+                                data-star={star}
+                                class="star-btn w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-700 hover:text-rose-500 hover:border-rose-500/30 transition-all focus:outline-none"
+                            >
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 15l-5.878 3.09 1.123-6.545-4.756-4.635 6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                            </button>
+                        ))}
+                    </div>
+                    <input type="hidden" name="rating" id="rating-input" required />
+
+                    <!-- Comment -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">Un commentaire ? (Optionnel)</label>
+                        <textarea
+                            name="comment"
+                            rows="4"
+                            placeholder="Partagez votre expérience..."
+                            class="w-full bg-white/5 border border-white/10 rounded-[2rem] px-6 py-5 text-white placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all resize-none"
+                        ></textarea>
+                    </div>
+
+                    <button
+                        type="submit"
+                        id="submit-btn"
+                        class="w-full py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-xl shadow-white/5 active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                        disabled
+                    >
+                        Envoyer mon avis
+                    </button>
+                </form>
+
+                <!-- Success: Interne (1-3 étoiles) -->
+                <div id="success-internal" class="hidden text-center p-8 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] animate-in fade-in zoom-in duration-500">
+                    <div class="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-4">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <p class="text-white font-black uppercase tracking-widest text-sm">Merci pour votre retour !</p>
+                    <p class="text-slate-500 text-[10px] mt-2 leading-relaxed">Votre avis a bien été transmis. Nous en tiendrons compte pour améliorer notre service.</p>
+                </div>
+
+                <!-- Success: Google (4-5 étoiles) -->
+                <div id="success-google" class="hidden text-center p-8 bg-indigo-500/10 border border-indigo-500/20 rounded-[2rem] animate-in fade-in zoom-in duration-500">
+                    <div class="w-14 h-14 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400 mx-auto mb-4">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                    </div>
+                    <p class="text-white font-black uppercase tracking-widest text-sm">Vous avez adoré votre trajet !</p>
+                    <p class="text-slate-400 text-xs mt-2 mb-6 leading-relaxed">Votre avis positif aide d'autres passagers à nous découvrir. Partagez-le sur Google en un clic.</p>
+                    <a id="google-reviews-link" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-indigo-500 hover:text-white transition-all shadow-xl shadow-white/10 active:scale-95">
+                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        Publier sur Google
+                    </a>
+                </div>
+            )}
+        </div>
+    </div>
+
+    <script define:vars={{ bookingId: id, googleReviewsUrl }}>
+        const stars = document.querySelectorAll('.star-btn');
+        const ratingInput = document.getElementById('rating-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const form = document.getElementById('rating-form');
+        const successInternal = document.getElementById('success-internal');
+        const successGoogle = document.getElementById('success-google');
+        const googleLink = document.getElementById('google-reviews-link');
+
+        if (googleLink && googleReviewsUrl) {
+            googleLink.href = googleReviewsUrl;
+        }
+
+        stars.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.dataset.star;
+                ratingInput.value = val;
+                submitBtn.disabled = false;
+
+                stars.forEach(s => {
+                    if (parseInt(s.dataset.star) <= parseInt(val)) {
+                        s.classList.add('text-rose-500', 'border-rose-500/30', 'bg-rose-500/10');
+                        s.classList.remove('text-slate-700', 'border-white/5', 'bg-white/5');
+                    } else {
+                        s.classList.remove('text-rose-500', 'border-rose-500/30', 'bg-rose-500/10');
+                        s.classList.add('text-slate-700', 'border-white/5', 'bg-white/5');
+                    }
+                });
+            });
+        });
+
+        form?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const rating = parseInt(formData.get('rating'));
+            const comment = formData.get('comment');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'ENVOI EN COURS...';
+
+            try {
+                const { error } = await fetch('/api/submit-rating', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookingId, rating, comment })
+                }).then(r => r.json());
+
+                if (error) throw new Error(error);
+
+                form.classList.add('hidden');
+
+                // Smart routing: 4-5 étoiles → Google, 1-3 → interne
+                if (rating >= 4 && googleReviewsUrl) {
+                    successGoogle?.classList.remove('hidden');
+                } else {
+                    successInternal?.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Une erreur est survenue lors de l'envoi.");
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ENVOYER MON AVIS';
+            }
+        });
+    </script>
+</MainLayout>

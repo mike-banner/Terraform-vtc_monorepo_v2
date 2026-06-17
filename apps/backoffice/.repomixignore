@@ -1,0 +1,57 @@
+# Repomix Ignore
+
+# Dependency directories
+node_modules/
+bower_components/
+
+# Build outputs
+dist/
+build/
+.next/
+.astro/
+.cache/
+.wrangler/
+
+# Version control
+.git/
+.svn/
+.hg/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Locks
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Temporary files
+*.log
+tmp/
+temp/
+
+# Medias
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.mp4
+*.webm
+*.pdf
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+
+# Project specific
+stripe.tar.gz
+schema.json

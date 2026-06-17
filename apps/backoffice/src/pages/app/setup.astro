@@ -1,0 +1,585 @@
+---
+// src/pages/app/setup.astro
+import AppLayout from "../../layouts/AppLayout.astro";
+import Badge from "../../components/ui/Badge.astro";
+import Button from "../../components/ui/Button.astro";
+import Card from "../../components/ui/Card.astro";
+import { createAdminClient } from "../../lib/supabase/server";
+
+const { profile, supabase: supabaseAdmin } = Astro.locals;
+
+if (!profile) return Astro.redirect("/login");
+
+// Fetch current tenant data
+const { data: tenant } = await supabaseAdmin
+    .from("tenants")
+    .select("*")
+    .eq("id", profile.tenant_id!)
+    .maybeSingle();
+
+if (!tenant) return Astro.redirect("/login");
+if (tenant.setup_completed) return Astro.redirect("/app/dashboard");
+
+// Handling POST request on the same page
+if (Astro.request.method === "POST") {
+    try {
+        const body = await Astro.request.json();
+        const adminClient = createAdminClient();
+
+        const { legal, vehicle, pricing } = body;
+
+        let driverId = null;
+        if (vehicle.is_primary_driver) {
+            // Upsert Driver
+            const { data: driver, error: driverError } = await adminClient
+                .from("drivers")
+                .upsert({
+                    user_id: profile.id,
+                    tenant_id: profile.tenant_id!,
+                    first_name: profile.first_name || '',
+                    last_name: profile.last_name || '',
+                    phone: tenant.phone || '',
+                    license_number: legal.vtc_license_number
+                }, { onConflict: 'user_id' })
+                .select("id")
+                .single();
+
+            if (driverError) throw driverError;
+            driverId = driver.id;
+        }
+
+        // 1. Update Tenant (Exclure vtc_license_number qui va dans la table drivers)
+        const { vtc_license_number, ...tenantData } = legal;
+        const { error: tenantError } = await adminClient
+            .from("tenants")
+            .update({
+                ...tenantData,
+                setup_completed: true
+            })
+            .eq("id", profile.tenant_id!);
+        if (tenantError) throw tenantError;
+
+        // 2. Insert First Vehicle
+        const { error: vehicleError } = await adminClient
+            .from("vehicles")
+            .insert({
+                tenant_id: profile.tenant_id!,
+                driver_id: driverId,
+                brand: vehicle.brand,
+                model: vehicle.model,
+                plate_number: vehicle.plate_number,
+                category: vehicle.category,
+                capacity: parseInt(vehicle.capacity),
+                luggage_capacity: parseInt(vehicle.luggage_capacity),
+                status: 'active'
+            });
+        if (vehicleError) throw vehicleError;
+
+        // 3. Insert Default Pricing Rule
+        const { error: pricingError } = await adminClient
+            .from("pricing_rules")
+            .insert({
+                tenant_id: profile.tenant_id!,
+                service_category: vehicle.category,
+                base_price: parseFloat(pricing.base_price),
+                price_per_km: parseFloat(pricing.price_per_km),
+                price_per_minute: parseFloat(pricing.price_per_minute || 0.5),
+                minimum_fare: parseFloat(pricing.minimum_fare),
+                active: true
+            });
+        if (pricingError) throw pricingError;
+
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+    } catch (err: any) {
+        console.error("Setup Error:", err);
+        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    }
+}
+
+// Initial values based on legal_form
+const initialLegalForm = tenant.legal_form || (tenant.company_type === 'auto_entrepreneur' ? 'auto_entrepreneur' : 'sasu');
+const initialVatExempt = initialLegalForm === 'auto_entrepreneur';
+---
+
+<AppLayout title="Configuration Cockpit | VTC HUB">
+    <div class="min-h-screen bg-[#050505] text-white py-12 px-6 lg:px-20 overflow-y-auto">
+        <div class="w-full max-w-[1400px] mx-auto">
+            <!-- Step Indicators -->
+            <div class="flex justify-between mb-16 relative px-4 max-w-2xl">
+                <div class="absolute top-1/2 left-0 w-full h-0.5 bg-white/5 -translate-y-1/2"></div>
+                <div id="progress-bar" class="absolute top-1/2 left-0 h-0.5 bg-indigo-500 -translate-y-1/2 transition-all duration-500 ease-in-out" style="width: 0%"></div>
+                {
+                    [1, 2, 3].map((step) => (
+                        <Card
+                            padding="none"
+                            rounded="2xl"
+                            class="step-dot w-12 h-12 flex items-center justify-center text-xs font-black z-10 transition-all duration-500"
+                            data-step={step}
+                        >
+                            {step}
+                        </Card>
+                    ))
+                }
+            </div>
+
+            <div class="mb-12">
+                <div class="step-header" data-step="1">
+                    <h1 class="text-fluid-4xl font-black uppercase tracking-tighter leading-none mb-3">Identité Légale</h1>
+                    <p class="text-slate-500 text-fluid-xs font-bold uppercase tracking-widest opacity-80">Validation des informations juridiques</p>
+                </div>
+                <div class="step-header hidden" data-step="2">
+                    <h1 class="text-fluid-4xl font-black uppercase tracking-tighter leading-none mb-3">Ton Véhicule</h1>
+                    <p class="text-slate-500 text-fluid-xs font-bold uppercase tracking-widest opacity-80">Configuration de ta monture principale</p>
+                </div>
+                <div class="step-header hidden" data-step="3">
+                    <h1 class="text-fluid-4xl font-black uppercase tracking-tighter leading-none mb-3">Tarification</h1>
+                    <p class="text-slate-500 text-fluid-xs font-bold uppercase tracking-widest opacity-80">Configuration de ta rentabilité</p>
+                </div>
+            </div>
+
+            <!-- Setup Form -->
+            <form id="setup-form" class="space-y-10">
+                <!-- Step 1: Legal -->
+                <div class="step-content space-y-10" data-step="1">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <Card padding="lg" rounded="3xl" class="space-y-8">
+                            <div class="flex items-center gap-4">
+                                <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Identité Entreprise</h2>
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Forme Juridique</label>
+                                <select name="legal_form" id="legal_form" required class="w-full bg-white/5 border border-white/10 rounded-[1.5rem] px-8 py-5 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none appearance-none cursor-pointer">
+                                    <option value="auto_entrepreneur" selected={initialLegalForm === 'auto_entrepreneur'}>Auto-entrepreneur</option>
+                                    <option value="sasu" selected={initialLegalForm === 'sasu'}>SASU</option>
+                                    <option value="eurl">EURL</option>
+                                    <option value="sarl">SARL</option>
+                                    <option value="sas">SAS</option>
+                                    <option value="ei">Entreprise Individuelle</option>
+                                </select>
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">SIRET</label>
+                                <input type="text" name="siret" id="siret_input" required value={tenant.siret} placeholder="123 456 789 00012" pattern="[0-9 ]{14,18}" maxlength="18" class="w-full bg-white/5 border border-white/10 rounded-[1.5rem] px-8 py-5 text-white focus:ring-2 focus:ring-indigo-500/50" />
+                            </div>
+                        </div>
+
+                        <Card padding="lg" rounded="3xl" class="space-y-8">
+                            <div class="flex items-center gap-4">
+                                <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Immatriculation</h2>
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">N° RCS</label>
+                                <input type="text" name="rcs_number" id="rcs_input" required placeholder="RCS PARIS 123 456 789" pattern="RCS [A-ZÀ-ÿ\-\s]+ [0-9 ]{9,14}" maxlength="30" class="w-full bg-white/5 border border-white/10 rounded-[1.5rem] px-8 py-5 text-white focus:ring-2 focus:ring-indigo-500/50" />
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">N° Carte Pro VTC (12 chiffres)</label>
+                                <input type="text" name="vtc_license_number" id="vtc_input" required placeholder="123 456 789 012" pattern="[0-9 ]{14,15}" maxlength="15" class="w-full bg-white/5 border border-white/10 rounded-[1.5rem] px-8 py-5 text-white focus:ring-2 focus:ring-indigo-500/50" />
+                            </div>
+                            <div id="capital-container" class={initialLegalForm === 'auto_entrepreneur' ? "hidden space-y-3" : "space-y-3"}>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Capital Social (€)</label>
+                                <input type="number" name="capital_social" id="capital_input" min="0" required={initialLegalForm !== 'auto_entrepreneur'} placeholder="1000" class="w-full bg-white/5 border border-white/10 rounded-[1.5rem] px-8 py-5 text-white" />
+                            </div>
+                        </div>
+
+                        <Card padding="lg" rounded="3xl" class="space-y-8">
+                            <div class="flex items-center gap-4">
+                                <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Fiscalité</h2>
+                            </div>
+                            <div id="vat-exempt-container" class={initialLegalForm === 'auto_entrepreneur' ? "p-8 bg-white/5 rounded-[1.5rem] border border-white/10 flex items-center justify-between" : "hidden p-8 bg-white/5 rounded-[1.5rem] border border-white/10 flex items-center justify-between"}>
+                                <p class="text-[10px] font-black text-white uppercase tracking-widest">Franchise TVA</p>
+                                <input type="checkbox" name="is_vat_exempt" id="is_vat_exempt" class="w-6 h-6 rounded bg-indigo-500" checked={initialVatExempt} />
+                            </div>
+                            <div id="vat-container" class={initialVatExempt ? "hidden space-y-3" : "space-y-3"}>
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">N° TVA Intracommunautaire</label>
+                                <input type="text" name="vat_number" id="vat_input" required={!initialVatExempt} pattern="FR [0-9 ]{11,14}" placeholder="FR 12 345 678 901" class="w-full bg-white/5 border border-white/10 rounded-[1.5rem] px-8 py-5 text-white" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Vehicle -->
+                <div class="step-content hidden space-y-10" data-step="2">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <Card padding="lg" rounded="3xl" class="space-y-8">
+                            <div class="flex items-center gap-4">
+                                <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Détails Véhicule</h2>
+                            </div>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Marque</label>
+                                    <input type="text" name="brand" required placeholder="Mercedes-Benz" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4" />
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Modèle</label>
+                                    <input type="text" name="model" required placeholder="Classe E" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4" />
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Immatriculation</label>
+                                <input type="text" name="plate_number" id="plate_input" required placeholder="AA-123-BB" pattern="[A-Z0-9-]{7,10}" maxlength="10" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4" />
+                            </div>
+                        </div>
+
+                        <Card padding="lg" rounded="3xl" class="space-y-8">
+                            <div class="flex items-center gap-4">
+                                <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Configuration Service</h2>
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Catégorie de Service</label>
+                                <select name="category" required class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none appearance-none">
+                                    <option value="berline">Berline Standard</option>
+                                    <option value="business">Business Class</option>
+                                    <option value="van">Van / 7 Places</option>
+                                    <option value="first">First Class</option>
+                                </select>
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Capacité Passagers</label>
+                                <input type="number" name="capacity" required value="4" min="1" max="8" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4" />
+                            </div>
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Capacité Bagages (Sacs standard)</label>
+                                <input type="number" name="luggage_capacity" required value="3" min="1" max="10" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4" />
+                            </div>
+                            <label class="flex items-center gap-4 p-6 bg-indigo-500/5 rounded-2xl border border-indigo-500/10 cursor-pointer hover:bg-indigo-500/10 transition-all group">
+                                <div class="relative w-6 h-6">
+                                    <input type="checkbox" name="is_primary_driver" checked class="peer sr-only" />
+                                    <div class="w-6 h-6 rounded-lg bg-white/5 border border-white/10 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 transition-all flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+                                            <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest group-hover:text-indigo-300 transition-all">Je suis le premier chauffeur de mon entreprise</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Pricing -->
+                <div class="step-content hidden animate-in fade-in slide-in-from-bottom-4 duration-500" data-step="3">
+                    <Card padding="lg" rounded="3xl" class="space-y-10 max-w-4xl shadow-2xl relative overflow-hidden group">
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-1000"></div>
+
+                        <div class="flex items-center gap-4 relative z-10">
+                            <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1c.538-.1 1.074-.339 1.599-.666M12 16c-1.11 0-2.08-.402-2.599-1M12 16v1m0-1v-8m0 0v1m-.599 1c-.538.1-1.074.339-1.599.666" />
+                                </svg>
+                            </div>
+                            <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-white">Grille Tarifaire (TTC)</h2>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 relative z-10">
+                            <!-- Prise en charge -->
+                            <div class="glass p-6 md:p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group/card">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">Prise en charge</label>
+                                <div class="flex items-center justify-between">
+                                    <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-indigo-400 group-hover/card:scale-110 transition-transform">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                        </svg>
+                                    </div>
+                                    <div class="flex items-end gap-2">
+                                        <input type="number" name="base_price" required value="15" min="0" step="0.5" class="bg-transparent text-3xl md:text-5xl font-black text-white w-24 text-right outline-none focus:text-indigo-400 transition-colors" />
+                                        <span class="text-xl font-bold text-slate-600 mb-1">€</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Prix au KM -->
+                            <div class="glass p-6 md:p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group/card">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">Prix au Kilomètre</label>
+                                <div class="flex items-center justify-between">
+                                    <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-indigo-400 group-hover/card:scale-110 transition-transform">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="flex items-end gap-2">
+                                        <input type="number" name="price_per_km" required value="2.5" min="0" step="0.1" class="bg-transparent text-3xl md:text-5xl font-black text-white w-24 text-right outline-none focus:text-indigo-400 transition-colors" />
+                                        <span class="text-xl font-bold text-slate-600 mb-1">/km</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Prix à la minute -->
+                            <div class="glass p-6 md:p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group/card">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">Prix à la Minute</label>
+                                <div class="flex items-center justify-between">
+                                    <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-indigo-400 group-hover/card:scale-110 transition-transform">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="flex items-end gap-2">
+                                        <input type="number" name="price_per_minute" required value="0.5" min="0" step="0.1" class="bg-transparent text-3xl md:text-5xl font-black text-white w-24 text-right outline-none focus:text-indigo-400 transition-colors" />
+                                        <span class="text-xl font-bold text-slate-600 mb-1">/min</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Minimum -->
+                            <div class="glass p-6 md:p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group/card">
+                                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">Minimum de course</label>
+                                <div class="flex items-center justify-between">
+                                    <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-emerald-400 group-hover/card:scale-110 transition-transform">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="flex items-end gap-2">
+                                        <input type="number" name="minimum_fare" required value="45" min="0" step="1" class="bg-transparent text-3xl md:text-5xl font-black text-white w-24 text-right outline-none focus:text-emerald-400 transition-colors" />
+                                        <span class="text-xl font-bold text-slate-600 mb-1">€</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-6 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 relative z-10">
+                            <div class="flex gap-4">
+                                <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-[10px] font-bold text-emerald-400/80 uppercase tracking-widest leading-relaxed">
+                                    Le calcul par défaut est : **Prise en charge + (KM × Prix KM) + (Minute × Prix Minute)**.
+                                    Le montant final ne pourra être inférieur au **Minimum de course**.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <Card padding="md" rounded="3xl" class="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-8 sticky bottom-4 z-50 bg-slate-900/50 backdrop-blur-xl shadow-2xl">
+                    <Button type="button" id="prev-btn" variant="outline" class="w-full sm:w-auto px-8 py-4 opacity-0 pointer-events-none">Retour</Button>
+                    <div class="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-4">
+                        <Button type="button" id="next-btn" variant="primary" class="w-full sm:w-auto px-10 py-4">Suivant</Button>
+                        <Button type="submit" id="final-btn" variant="emerald" class="hidden w-full sm:w-auto px-10 py-4">Valider mon cockpit</Button>
+                    </div>
+                </Card>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        const form = document.getElementById('setup-form') as HTMLFormElement;
+        const contents = document.querySelectorAll('.step-content');
+        const headers = document.querySelectorAll('.step-header');
+        const dots = document.querySelectorAll('.step-dot');
+        const progressBar = document.getElementById('progress-bar') as HTMLDivElement;
+        const prevBtn = document.getElementById('prev-btn') as HTMLButtonElement;
+        const nextBtn = document.getElementById('next-btn') as HTMLButtonElement;
+        const finalBtn = document.getElementById('final-btn') as HTMLButtonElement;
+
+        function updateUI() {
+            contents.forEach((el, index) => {
+                el.classList.toggle('hidden', index + 1 !== currentStep);
+            });
+            headers.forEach((el, index) => {
+                el.classList.toggle('hidden', index + 1 !== currentStep);
+            });
+            dots.forEach((dot, index) => {
+                if (index + 1 <= currentStep) {
+                    dot.classList.add('border-indigo-500', 'text-indigo-400');
+                    dot.classList.remove('opacity-50');
+                } else {
+                    dot.classList.remove('border-indigo-500', 'text-indigo-400');
+                    dot.classList.add('opacity-50');
+                }
+            });
+
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            prevBtn.style.opacity = currentStep === 1 ? '0' : '1';
+            prevBtn.style.pointerEvents = currentStep === 1 ? 'none' : 'auto';
+
+            if (currentStep === totalSteps) {
+                nextBtn.classList.add('hidden');
+                finalBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                finalBtn.classList.add('hidden');
+            }
+        }
+
+        nextBtn.addEventListener('click', () => {
+            const inputs = contents[currentStep - 1].querySelectorAll('input, select');
+            let valid = true;
+            inputs.forEach((input: any) => {
+                if (!input.checkValidity()) {
+                    input.reportValidity();
+                    valid = false;
+                }
+            });
+            if (valid && currentStep < totalSteps) {
+                currentStep++;
+                updateUI();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        });
+
+        // Form Formatters
+        const siretInput = document.getElementById('siret_input') as HTMLInputElement;
+        const vatInput = document.getElementById('vat_input') as HTMLInputElement;
+        const rcsInput = document.getElementById('rcs_input') as HTMLInputElement;
+        const vtcInput = document.getElementById('vtc_input') as HTMLInputElement;
+        const plateInput = document.getElementById('plate_input') as HTMLInputElement;
+        const vatToggle = document.getElementById('is_vat_exempt') as HTMLInputElement;
+        const legalFormSelect = document.getElementById('legal_form') as HTMLSelectElement;
+
+        const formatInput = (input: HTMLInputElement, spacing: number) => {
+            if (!input) return;
+            input.addEventListener("input", (e: any) => {
+                let cursorPosition = e.target.selectionStart;
+                let value = e.target.value.replace(/[^0-9]/g, "");
+                let formatted = "";
+                for (let i = 0; i < value.length; i++) {
+                    if (i > 0 && i % spacing === 0) formatted += " ";
+                    formatted += value[i];
+                }
+                const oldLength = e.target.value.length;
+                e.target.value = formatted;
+                const newLength = formatted.length;
+                if (cursorPosition) {
+                    cursorPosition += (newLength - oldLength);
+                    e.target.setSelectionRange(cursorPosition, cursorPosition);
+                }
+            });
+        };
+        formatInput(siretInput, 3);
+        formatInput(vtcInput, 3);
+
+        // RCS Formatter: RCS PARIS 123 456 789
+        rcsInput?.addEventListener('input', (e: any) => {
+            let val = e.target.value.toUpperCase();
+            if (val.length > 0 && !val.startsWith("RCS ")) {
+                val = "RCS " + val.replace(/^RCS\s*/, "");
+            }
+
+            // Format numbers at the end if present
+            let sirenMatch = val.match(/\d+$/);
+            if (sirenMatch) {
+                let siren = sirenMatch[0].replace(/\s/g, "");
+                let formattedSiren = "";
+                for (let i = 0; i < siren.length && i < 9; i++) {
+                    if (i > 0 && i % 3 === 0) formattedSiren += " ";
+                    formattedSiren += siren[i];
+                }
+                val = val.substring(0, sirenMatch.index) + formattedSiren;
+            }
+            e.target.value = val;
+        });
+
+        // VAT Formatter: FR 12 345 678 901
+        vatInput?.addEventListener('input', (e: any) => {
+            let value = e.target.value.replace(/[^0-9]/g, "").substring(0, 11);
+            let formatted = "FR ";
+            for (let i = 0; i < value.length; i++) {
+                if (i === 2 || i === 5 || i === 8) formatted += " ";
+                formatted += value[i];
+            }
+            e.target.value = formatted;
+        });
+
+        // Plate Formatter: AA-123-BB
+        plateInput?.addEventListener('input', (e: any) => {
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            let formatted = "";
+            for (let i = 0; i < value.length; i++) {
+                if ((i === 2 || i === 5) && value.length > i) formatted += "-";
+                formatted += value[i];
+            }
+            e.target.value = formatted.substring(0, 9);
+        });
+
+        vatToggle?.addEventListener('change', () => {
+            document.getElementById('vat-container')?.classList.toggle('hidden', vatToggle.checked);
+            if (vatInput) vatInput.required = !vatToggle.checked;
+        });
+
+        legalFormSelect?.addEventListener('change', () => {
+            const isAuto = legalFormSelect.value === 'auto_entrepreneur';
+            document.getElementById('capital-container')?.classList.toggle('hidden', isAuto);
+            document.getElementById('vat-exempt-container')?.classList.toggle('hidden', !isAuto);
+            if (isAuto) {
+                vatToggle.checked = true;
+                vatToggle.dispatchEvent(new Event('change'));
+            }
+        });
+
+        form?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            finalBtn.disabled = true;
+            finalBtn.innerHTML = 'Initialisation...';
+
+            const formData = new FormData(form);
+            const payload = {
+                legal: {
+                    legal_form: formData.get('legal_form'),
+                    is_vat_exempt: formData.get('is_vat_exempt') === 'on',
+                    siret: (formData.get('siret') as string).replace(/[^0-9]/g, ""),
+                    rcs_number: formData.get('rcs_number'),
+                    vat_number: (formData.get('vat_number') as string)?.replace(/[^0-9]/g, "") || null,
+                    vtc_license_number: formData.get('vtc_license_number'),
+                    capital_social: formData.get('capital_social') ? parseFloat(formData.get('capital_social') as string) : null,
+                },
+                vehicle: {
+                    brand: formData.get('brand'),
+                    model: formData.get('model'),
+                    plate_number: formData.get('plate_number'),
+                    category: formData.get('category'),
+                    capacity: formData.get('capacity'),
+                    luggage_capacity: formData.get('luggage_capacity'),
+                    is_primary_driver: formData.get('is_primary_driver') === 'on'
+                },
+                pricing: {
+                    base_price: formData.get('base_price'),
+                    price_per_km: formData.get('price_per_km'),
+                    price_per_minute: formData.get('price_per_minute'),
+                    minimum_fare: formData.get('minimum_fare')
+                }
+            };
+
+            try {
+                const response = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    window.location.href = '/app/dashboard';
+                } else {
+                    const data = await response.json();
+                    alert('Erreur : ' + (data.error || 'Inconnue'));
+                    finalBtn.disabled = false;
+                    finalBtn.innerHTML = 'Activer mon cockpit';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erreur réseau.');
+                finalBtn.disabled = false;
+            }
+        });
+
+        updateUI();
+    </script>
+</AppLayout>
+

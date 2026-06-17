@@ -1,0 +1,55 @@
+---
+// src/pages/admin/stripe-monitoring.astro
+import DataTable from "../../components/admin/DataTable.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { requirePlatformAdmin } from "../../lib/guards/platform";
+import { createAdminClient } from "../../lib/supabase/server";
+
+const { profile } = Astro.locals;
+
+// Protection d'accès plateforme
+try {
+  await requirePlatformAdmin(profile);
+} catch {
+  return Astro.redirect("/login");
+}
+
+const supabaseAdmin = createAdminClient();
+
+const { data: errors, error: fetchError } = await supabaseAdmin
+    .from("stripe_webhook_errors")
+    .select("*")
+    .order("received_at", { ascending: false });
+
+
+
+const headers = ["ID", "Type d'événement", "Date de réception", "Message d'erreur"];
+---
+
+<AdminLayout title="Stripe Monitoring">
+    <DataTable
+        title="Webhooks Stripe"
+        description="Suivi des erreurs lors du traitement des webhooks Stripe."
+        headers={headers}
+        data={errors || []}
+    >
+        {errors?.map((err) => (
+            <tr slot="row" class="group hover:bg-white/5 transition-colors duration-200">
+                <td class="px-6 py-4 text-xs font-mono text-slate-500">#{err.id.slice(0,8)}</td>
+                <td class="px-6 py-4">
+                    <span class="px-3 py-1 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-red-500/20">
+                        {err.event_type}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-400">
+                    {new Date(err.received_at).toLocaleString('fr-FR')}
+                </td>
+                <td class="px-6 py-4">
+                    <p class="text-[10px] font-bold text-slate-500 max-w-lg truncate group-hover:whitespace-normal">
+                        {err.error_message}
+                    </p>
+                </td>
+            </tr>
+        ))}
+    </DataTable>
+</AdminLayout>

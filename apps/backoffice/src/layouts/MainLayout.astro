@@ -1,0 +1,103 @@
+---
+// src/layouts/MainLayout.astro
+import "../styles/global.css";
+
+interface Props {
+    title: string;
+    hideFooter?: boolean;
+}
+
+const { title, hideFooter = false } = Astro.props;
+const { user } = Astro.locals;
+---
+
+<!doctype html>
+<html lang="fr" class="dark h-full overflow-hidden">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1, maximum-scale=1, 
+  user-scalable=no" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="generator" content={Astro.generator} />
+        <title>{title} | VTC Premium</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body
+        class="premium-gradient h-full flex flex-col overflow-hidden text-slate-50 selection:bg-indigo-500/30"
+    >
+        <div
+            class="fixed inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] pointer-events-none opacity-20"
+        >
+        </div>
+
+        <nav
+            class="flex-none z-50 w-full glass border-b border-white/5 px-6 py-4"
+        >
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <a
+                    href="/"
+                    class="flex items-center gap-2 group transition-opacity hover:opacity-80"
+                >
+                    <div
+                        class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform"
+                    >
+                        <span class="text-white font-bold text-xl">V</span>
+                    </div>
+                    <span
+                        class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400"
+                    >
+                        VTC HUB
+                    </span>
+                </a>
+
+                <div class="flex items-center gap-6">
+                    {
+                        user ? (
+                            <button
+                                id="logout-btn"
+                                class="text-sm font-bold text-red-400/80 hover:text-red-400 transition-colors"
+                            >
+                                Déconnexion
+                            </button>
+                        ) : (
+                            <a
+                                href="/login"
+                                class="text-sm font-bold text-slate-400 hover:text-white transition-colors"
+                            >
+                                Connexion
+                            </a>
+                        )
+                    }
+                </div>
+            </div>
+        </nav>
+
+        <main class="flex-1 flex flex-col min-h-0 overflow-y-auto relative z-10">
+            <slot />
+        </main>
+
+        {!hideFooter && (
+            <footer class="flex-none border-t border-white/5 py-3 px-6 glass">
+                <div class="max-w-7xl mx-auto flex justify-between items-center text-slate-600 text-[11px]">
+                    <span>&copy; {new Date().getFullYear()} VTC HUB &mdash; Précision. Luxe. Excellence.</span>
+                </div>
+            </footer>
+        )}
+
+        <script>
+            import { supabase } from "@/lib/supabase/client";
+
+            const logoutBtn = document.querySelector("#logout-btn");
+
+            logoutBtn?.addEventListener("click", async () => {
+                await supabase.auth.signOut();
+                window.location.href = "/";
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,32 @@
+#repomix
+repomix.config.json
+.repomixignore
+
+
+
+# deps
+node_modules/
+
+# builds
+dist/
+build/
+.astro/
+.next/
+.nuxt/
+.svelte-kit/
+out/
+
+# caches
+.cache/
+.parcel-cache/
+.turbo/
+.vercel/
+.netlify/
+.pnpm-store/
+.yarn/
+coverage/
+
+# misc generated
+*.log
+repomix-output.md
+.ai_global/repo_context.xml*

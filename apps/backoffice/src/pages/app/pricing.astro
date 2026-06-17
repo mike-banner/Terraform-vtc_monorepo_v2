@@ -1,0 +1,406 @@
+---
+// src/pages/app/pricing.astro
+import AppLayout from "../../layouts/AppLayout.astro";
+import Badge from "../../components/ui/Badge.astro";
+import Button from "../../components/ui/Button.astro";
+import Card from "../../components/ui/Card.astro";
+import { requireTenantRole } from "../../lib/guards";
+import { TransferManager } from "@/components/pricing/TransferManager";
+
+const { profile, supabase } = Astro.locals;
+
+// Protection Guard : Owner + Manager
+try {
+    requireTenantRole(profile, ["owner", "manager"]);
+} catch (e) {
+    return Astro.redirect("/app/dashboard");
+}
+
+// 1️ Récupérer les règles réelles du tenant
+const { data: rules, error } = await supabase
+    .from("pricing_rules")
+    .select("*")
+    .eq("tenant_id", profile!.tenant_id)
+    .order("service_category", { ascending: true });
+
+// 2️ Récupérer les infos onboarding pour l'initialisation éventuelle
+const { data: onboarding } = await supabase
+    .from("onboarding")
+    .select("*")
+    .eq("profile_id", profile!.id)
+    .maybeSingle();
+
+if (error) {
+    console.error("Pricing fetch error:", error);
+}
+---
+
+<AppLayout title="Gestion Pricing">
+    <div class="flex flex-col px-6 py-10 md:px-12 md:py-16">
+        <!-- BACK LINK -->
+        <a href="/app/settings" class="inline-flex items-center gap-2 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors mb-8 flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour aux réglages
+        </a>
+        <!-- HEADER -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 flex-shrink-0">
+            <div>
+                <Badge variant="indigo">Configuration Financière</Badge>
+                <p class="text-slate-500 mt-2 font-medium">Gérez vos forfaits et vos tarifs au kilomètre.</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- TABS -->
+                <div class="flex bg-white/5 p-1 rounded-xl md:rounded-2xl border border-white/5">
+                   <button id="tab-standard" class="px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl text-[10px] md:text-[10px] font-black uppercase tracking-widest transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">Standard</button>
+                   <button id="tab-transfer" class="px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl text-[10px] md:text-[10px] font-black uppercase tracking-widest transition-all text-slate-500 hover:text-white">Transferts</button>
+                </div>
+
+                <!-- HEADER ACTIONS (TABS ONLY NOW) -->
+                <div id="actions-transfer" class="hidden"></div>
+            </div>
+        </div>
+
+        <!-- SCROLLABLE CONTENT -->
+        <div class="pb-20">
+
+            <!-- SECTION 1: STANDARD PRICING -->
+            <div id="section-standard" class="space-y-8 animate-in fade-in duration-500">
+                <div class="flex items-center justify-between gap-4">
+                    <h3 class="text-lg md:text-xl font-black uppercase tracking-tighter text-white leading-none">Grille KM / MIN</h3>
+                    <Button id="add-rule-btn">
+                        + Ajouter
+                    </Button>
+                </div>
+
+                <div class="space-y-4">
+                    {rules?.length
+                        ? rules.map((r) => (
+                            <Card padding="sm" rounded="xl" hover={true} class="group">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class={`w-2 h-2 rounded-full ${r.active ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-700'}`}></div>
+                                        <span class="font-black text-white uppercase tracking-tighter text-base md:text-xl">{r.service_category}</span>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        class="edit-rule-btn px-4 py-2"
+                                        data-rule={JSON.stringify(r)}
+                                    >
+                                        Modifier
+                                    </Button>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 border-t border-white/5">
+                                    <div class="flex items-center gap-1.5">
+                                        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Base</p>
+                                        <p class="text-xs md:text-lg font-black text-white tabular-nums leading-none">{r.base_price?.toFixed(2)}€</p>
+                                    </div>
+                                    <span class="w-1 h-1 rounded-full bg-white/10 hidden sm:block"></span>
+                                    <div class="flex items-center gap-1.5">
+                                        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">KM</p>
+                                        <p class="text-xs md:text-lg font-black text-indigo-400 tabular-nums leading-none">{r.price_per_km?.toFixed(2)}€</p>
+                                    </div>
+                                    <span class="w-1 h-1 rounded-full bg-white/10 hidden sm:block"></span>
+                                    <div class="flex items-center gap-1.5">
+                                        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">HR</p>
+                                        <p class="text-xs md:text-lg font-black text-amber-400 tabular-nums leading-none">{r.price_per_hour?.toFixed(2)}€</p>
+                                    </div>
+                                    <span class="w-1 h-1 rounded-full bg-white/10 hidden sm:block"></span>
+                                    <div class="flex items-center gap-1.5">
+                                        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Seuil</p>
+                                        <p class="text-xs md:text-lg font-black text-slate-400 tabular-nums leading-none">{r.minimum_fare?.toFixed(2)}€</p>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))
+                        : (
+                        <div class="glass p-10 rounded-[2rem] border border-white/5 text-center text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                            Aucun tarif configuré
+                        </div>
+                        )}
+                </div>
+            </div>
+
+            <!-- SECTION 2: TRANSFERS -->
+            <div id="section-transfer" class="hidden space-y-8 animate-in fade-in duration-500">
+                <div class="flex items-center justify-between gap-4">
+                    <h3 class="text-lg md:text-xl font-black uppercase tracking-tighter text-white leading-none">Forfaits</h3>
+                    <div class="flex gap-2">
+                        <Button id="btn-new-transfer-content">
+                            + Nouveau
+                        </Button>
+                        <Button id="btn-manage-zones">
+                            Zones
+                        </Button>
+                    </div>
+                </div>
+                <TransferManager client:only="react" tenantId={profile!.tenant_id!} />
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT/ADD -->
+    <div id="pricing-modal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6 pb-16 sm:pb-0 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm modal-overlay"></div>
+        <div class="relative glass w-full sm:max-w-lg rounded-t-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300 flex flex-col max-h-[76dvh] sm:max-h-[90vh] overflow-hidden">
+
+            <!-- HEADER (fixe) -->
+            <div class="flex-shrink-0 flex items-center justify-between gap-4 px-6 pt-6 pb-5 border-b border-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30 flex-shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 id="modal-title" class="text-lg font-black uppercase text-white tracking-tighter leading-none">Édition Tarif</h2>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Grille financière du service</p>
+                    </div>
+                </div>
+                <button type="button" class="close-modal w-8 h-8 flex items-center justify-center rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-all flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- FORM : englobe body scrollable + footer pour que le submit fonctionne -->
+            <form id="pricing-form" class="flex flex-col flex-1 min-h-0" data-tenant-id={profile?.tenant_id}>
+                <input type="hidden" name="rule_id" id="rule-id">
+
+                <!-- SCROLLABLE BODY -->
+                <div class="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-6 py-6 space-y-6">
+
+                    <!-- Identité -->
+                    <div class="space-y-3">
+                        <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-600">Identité</p>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-1">
+                                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2 block">Nom du service</label>
+                                <input type="text" name="service_category" id="service-category" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold text-sm" placeholder="Ex: BUSINESS">
+                            </div>
+                            <div class="flex-shrink-0 pt-6">
+                                <label class="relative inline-flex items-center cursor-pointer gap-2">
+                                    <input type="checkbox" name="active" id="is-active" class="sr-only peer">
+                                    <div class="w-10 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 peer-checked:text-white transition-colors whitespace-nowrap">Actif</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarification -->
+                    <div class="space-y-3">
+                        <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-600">Tarification</p>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Base (€)</label>
+                                <input type="number" step="0.01" min="0" name="base_price" id="base-price" required class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">/ km (€)</label>
+                                <input type="number" step="0.01" min="0" name="price_per_km" id="price-per-km" required class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">/ heure (€)</label>
+                                <input type="number" step="0.01" min="0" name="price_per_hour" id="price-per-hour" required class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seuil minimum -->
+                    <div class="space-y-3">
+                        <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-600">Seuil minimum</p>
+                        <div>
+                            <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Montant minimum (€)</label>
+                            <input type="number" step="0.01" min="0" name="minimum_fare" id="minimum-fare" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold tabular-nums text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER (fixe) — dans la form pour que type="submit" fonctionne -->
+                <div class="flex-shrink-0 flex flex-row gap-3 px-6 py-5 border-t border-white/5">
+                    <button type="button" class="close-modal px-5 py-4 glass border border-white/10 rounded-xl font-black uppercase tracking-widest text-[10px] text-slate-500 hover:text-white transition-all">
+                        Annuler
+                    </button>
+                    <button type="submit" id="save-rule-btn" class="flex-1 px-5 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-indigo-600/30 active:scale-95">
+                        Sauvegarder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</AppLayout>
+
+<style is:global>
+    .glass {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+    #pricing-modal.is-active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    /* mobile: slide up from bottom */
+    #pricing-modal.is-active > div:last-child {
+        transform: translateY(0);
+    }
+    /* desktop: scale in */
+    @media (min-width: 640px) {
+        #pricing-modal > div:last-child {
+            transform: scale(0.95);
+        }
+        #pricing-modal.is-active > div:last-child {
+            transform: scale(1);
+        }
+    }
+</style>
+
+<script>
+    import { supabase } from "@/lib/supabase/client";
+
+    const modal = document.getElementById('pricing-modal');
+    const form = document.getElementById('pricing-form') as HTMLFormElement;
+    const addBtn = document.getElementById('add-rule-btn');
+    const editBtns = document.querySelectorAll('.edit-rule-btn');
+    const closeBtns = document.querySelectorAll('.close-modal');
+    const overlay = document.querySelector('.modal-overlay');
+
+    const btnStandard = document.getElementById('tab-standard');
+    const btnTransfer = document.getElementById('tab-transfer');
+    const secStandard = document.getElementById('section-standard');
+    const secTransfer = document.getElementById('section-transfer');
+
+    const actTransfer = document.getElementById('actions-transfer');
+
+    const toggleTabs = (mode: 'standard' | 'transfer') => {
+        if (mode === 'standard') {
+            btnStandard?.classList.add('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+            btnStandard?.classList.remove('text-slate-500');
+            btnTransfer?.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+            btnTransfer?.classList.add('text-slate-500');
+
+            secStandard?.classList.remove('hidden');
+            secTransfer?.classList.add('hidden');
+
+            actTransfer?.classList.add('hidden');
+        } else {
+            btnTransfer?.classList.add('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+            btnTransfer?.classList.remove('text-slate-500');
+            btnStandard?.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+            btnStandard?.classList.add('text-slate-500');
+
+            secTransfer?.classList.remove('hidden');
+            secStandard?.classList.add('hidden');
+
+            actTransfer?.classList.remove('hidden');
+        }
+    }
+
+    btnStandard?.addEventListener('click', () => toggleTabs('standard'));
+    btnTransfer?.addEventListener('click', () => toggleTabs('transfer'));
+
+    // TRANSFER ACTIONS LINKING
+    const openTransfer = () => window.dispatchEvent(new CustomEvent('pricing:open-transfer-modal'));
+
+    document.getElementById('btn-new-transfer-content')?.addEventListener('click', openTransfer);
+
+    document.getElementById('btn-manage-zones')?.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('pricing:open-zone-modal'));
+    });
+
+    const modalTitle = document.getElementById('modal-title');
+    const ruleIdInput = document.getElementById('rule-id') as HTMLInputElement;
+    const serviceInput = document.getElementById('service-category') as HTMLInputElement;
+    const baseInput = document.getElementById('base-price') as HTMLInputElement;
+    const kmInput = document.getElementById('price-per-km') as HTMLInputElement;
+    const hourInput = document.getElementById('price-per-hour') as HTMLInputElement;
+    const minInput = document.getElementById('minimum-fare') as HTMLInputElement;
+    const activeInput = document.getElementById('is-active') as HTMLInputElement;
+
+    const toggleModal = () => {
+        modal?.classList.toggle('is-active');
+        document.body.classList.toggle('overflow-hidden');
+    };
+
+    // ADD Mode
+    addBtn?.addEventListener('click', () => {
+        if (modalTitle) modalTitle.innerText = "Nouveau Service";
+        if (ruleIdInput) ruleIdInput.value = "";
+        form?.reset();
+        if (activeInput) activeInput.checked = true;
+        toggleModal();
+    });
+
+    // EDIT Mode
+    editBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const rule = JSON.parse(btn.getAttribute('data-rule') || '{}');
+            if (modalTitle) modalTitle.innerText = "Édition Tarif";
+            if (ruleIdInput) ruleIdInput.value = rule.id;
+            if (serviceInput) serviceInput.value = rule.service_category;
+            if (baseInput) baseInput.value = rule.base_price;
+            if (kmInput) kmInput.value = rule.price_per_km;
+            if (hourInput) hourInput.value = rule.price_per_hour ?? "0";
+            if (minInput) minInput.value = rule.minimum_fare;
+            if (activeInput) activeInput.checked = rule.active;
+            toggleModal();
+        });
+    });
+
+    closeBtns.forEach(btn => btn.addEventListener('click', toggleModal));
+    overlay?.addEventListener('click', toggleModal);
+
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saveBtn = document.getElementById('save-rule-btn') as HTMLButtonElement;
+        const tenantId = form.dataset.tenantId;
+
+        if (!tenantId) {
+            alert("Erreur: Tenant ID manquant");
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = "SAUVEGARDE...";
+
+        const formData = new FormData(form);
+        const id = formData.get('rule_id');
+        const payload = {
+            tenant_id: tenantId,
+            service_category: String(formData.get('service_category') || '').toUpperCase(),
+            base_price: parseFloat(String(formData.get('base_price') || '0')),
+            price_per_km: parseFloat(String(formData.get('price_per_km') || '0')),
+            price_per_hour: parseFloat(String(formData.get('price_per_hour') || '0')),
+            minimum_fare: parseFloat(String(formData.get('minimum_fare') || '0')),
+            active: formData.get('active') === 'on'
+        };
+
+        try {
+            let error;
+            if (id) {
+                const { error: err } = await supabase.from('pricing_rules').update(payload).eq('id', String(id));
+                error = err;
+            } else {
+                const { error: err } = await supabase.from('pricing_rules').insert(payload);
+                error = err;
+            }
+
+            if (error) throw error;
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors de la sauvegarde.");
+            saveBtn.disabled = false;
+            saveBtn.innerText = "Sauvegarder";
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal?.classList.contains('is-active')) {
+            toggleModal();
+        }
+    });
+</script>

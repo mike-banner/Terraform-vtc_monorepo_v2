@@ -1,0 +1,79 @@
+---
+// src/pages/admin/tenants.astro
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { requirePlatformAdmin } from "../../lib/guards/platform";
+import { createAdminClient } from "../../lib/supabase/server";
+
+const { profile } = Astro.locals;
+
+// Protection d'accès plateforme
+try {
+  await requirePlatformAdmin(profile);
+} catch {
+  return Astro.redirect("/login");
+}
+
+const supabaseAdmin = createAdminClient();
+
+// Récupération via la vue agrégée Ledger
+const { data: tenants, error } = await supabaseAdmin
+  .from('admin_tenants_overview')
+  .select('*')
+  .order('joined_at', { ascending: false });
+
+if (error) console.error("Tenants Fetch Error:", error);
+---
+
+<AdminLayout title="Gestion des Partenaires">
+    <div class="mb-10">
+        <h1 class="text-4xl font-black uppercase tracking-tighter text-white">
+            Partenaires & Véhicules
+        </h1>
+        <p class="text-slate-500 text-sm font-medium mt-2">Vision consolidée basée sur le Ledger financier.</p>
+    </div>
+
+    <div class="glass rounded-3xl overflow-hidden border border-white/5 bg-white/[0.01]">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-white/5 border-b border-white/5">
+                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Compagnie</th>
+                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Volume</th>
+                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">CA Brut</th>
+                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Net Plateforme</th>
+                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Com. Moyenne</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+                {tenants?.map((t) => (
+                    <tr class="hover:bg-white/5 transition-colors group">
+                        <td class="px-6 py-4">
+                            <p class="text-[11px] font-black uppercase text-white">{t.tenant_name}</p>
+                            <p class="text-[9px] font-bold text-slate-500 mt-0.5">{t.primary_domain}</p>
+                            <p class="text-[8px] text-slate-600 mt-1">ID: {t.tenant_id.slice(0,8)}</p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-black text-slate-300">
+                                {t.total_bookings} courses
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-black text-white">
+                                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(t.total_gross_revenue || 0)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-black text-green-400">
+                                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(t.total_net_revenue || 0)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-[10px] font-black text-indigo-400">
+                                {(Number(t.avg_commission_rate) * 100).toFixed(1)}%
+                            </span>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+</AdminLayout>

@@ -1,0 +1,31 @@
+{
+  "name": "@vtc/backoffice",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "gen:types": "supabase gen types typescript --project-id kpnkhmtxzigxtfnkmzru > ../../packages/database/src/database.types.ts"
+  },
+  "dependencies": {
+    "@vtc/database": "workspace:*",
+    "@ark-ui/react": "^5.31.0",
+    "@astrojs/cloudflare": "^12.6.12",
+    "@astrojs/node": "^9.5.3",
+    "@astrojs/react": "^5.0.0",
+    "@astrojs/tailwind": "^6.0.2",
+    "@park-ui/tailwind-plugin": "^0.20.1",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.95.3",
+    "@types/qrcode": "^1.5.6",
+    "astro": "^5.17.1",
+    "lucide-react": "^0.564.0",
+    "qrcode": "^1.5.4",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^3.4.19"
+  }
+}

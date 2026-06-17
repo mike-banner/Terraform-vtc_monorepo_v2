@@ -1,0 +1,53 @@
+---
+// src/components/admin/KPIGrid.astro
+interface Props {
+    title: string;
+    items: {
+        label: string;
+        value: string | number;
+        icon: string;
+        trend?: string;
+        trendColor?: string;
+    }[];
+}
+
+const { title, items } = Astro.props;
+---
+
+<div class="mb-12">
+    <div class="flex items-center justify-between mb-8">
+        <h2 class="text-3xl font-black uppercase tracking-tighter text-white">
+            {title}
+        </h2>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+            <div class="relative p-6 transition-all border group bg-white/5 border-white/5 rounded-2xl hover:bg-white/[0.08] hover:border-indigo-500/30 overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 blur-3xl opacity-10 bg-indigo-500/30 translate-x-16 -translate-y-16 group-hover:opacity-20 transition-opacity"></div>
+
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm font-bold tracking-widest uppercase text-slate-500 mb-2">
+                            {item.label}
+                        </p>
+                        <p class="text-4xl font-black tracking-tighter text-white">
+                            {item.value}
+                        </p>
+                    </div>
+                    <div class="p-3 border rounded-xl bg-indigo-500/10 border-indigo-500/20 text-indigo-400">
+                        <svg class="w-6 h-6 outline-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" set:html={item.icon}></svg>
+                    </div>
+                </div>
+
+                {item.trend && (
+                    <div class="flex items-center gap-1 mt-6">
+                        <span class={`text-xs font-bold tracking-widest uppercase ${item.trendColor || 'text-indigo-400'}`}>
+                            {item.trend}
+                        </span>
+                    </div>
+                )}
+            </div>
+        ))}
+    </div>
+</div>
