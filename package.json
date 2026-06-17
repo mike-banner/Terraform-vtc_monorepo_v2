@@ -9,6 +9,7 @@
     "format": "turbo run format"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
     "turbo": "^2.0.0"
   },
   "dependencies": {
