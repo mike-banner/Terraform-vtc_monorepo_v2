@@ -33,3 +33,4 @@ claude-mem.db*
 # OS
 .DS_Store
 Thumbs.db
+graphify-out/
