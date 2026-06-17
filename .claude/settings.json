@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__claude_ai_Supabase__list_tables|mcp__claude_ai_Supabase__execute_sql|mcp__claude_ai_Supabase__apply_migration",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/home/mike/.nvm/versions/node/v20.20.0/bin/node\" \"/home/mike/.claude/hooks/gsd-supabase-schema-cache.js\"",
+            "timeout": 8
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/home/mike/.nvm/versions/node/v20.20.0/bin/node\" \"/home/mike/.claude/hooks/gsd-migration-auto-list.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
