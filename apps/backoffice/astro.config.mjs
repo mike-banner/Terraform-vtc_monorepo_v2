@@ -15,10 +15,6 @@ export default defineConfig({
     react(),
   ],
   vite: {
-    resolve: {
-      alias: {
-        "react-dom/server": "react-dom/server.edge",
-      },
-    },
+    // Suppression de l'alias react-dom/server.edge qui cause l'erreur "require is not defined"
   },
 });

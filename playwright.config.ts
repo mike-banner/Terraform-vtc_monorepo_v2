@@ -25,10 +25,10 @@ export default defineConfig({
     },
     {
       name: 'drivers-front',
-      testMatch: /seo\.spec\.ts/,
+      testMatch: /.*\.spec\.ts/,
       use: { 
         ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:4322'
+        baseURL: 'http://localhost:4321'
       },
     },
   ],

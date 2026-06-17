@@ -15,6 +15,7 @@ const steps = [
     <!-- Ligne de progression -->
     <div class='absolute top-4 left-0 right-0 h-0.5 bg-zinc-200 -z-10'></div>
     <div
+      id="progress-bar-line"
       class={`absolute top-4 left-0 h-0.5 ${color} -z-10 transition-all duration-500`}
       style={`width: ${((currentStep - 1) / (totalSteps - 1)) * 100}%`}>
     </div>
@@ -24,18 +25,20 @@ const steps = [
       steps.slice(0, totalSteps).map((step) => (
         <div class='flex flex-col items-center relative'>
           <div
-            class={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300
+            data-step={step.number}
+            class={`progress-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300
             ${
               step.number < currentStep
-                ? `${color} text-white`
+                ? `bg-black text-white`
                 : step.number === currentStep
-                  ? `${color} text-white ring-4 ring-black/5`
+                  ? `bg-black text-white ring-4 ring-black/5`
                   : 'bg-zinc-200 text-zinc-500'
             }`}>
             {step.number}
           </div>
           <span
-            class={`mt-2 text-xs font-medium text-center transition-colors duration-300
+            data-step={step.number}
+            class={`progress-step-label mt-2 text-xs font-medium text-center transition-colors duration-300
             ${step.number <= currentStep ? 'text-zinc-900' : 'text-zinc-500'}`}>
             {step.label}
           </span>

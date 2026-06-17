@@ -1,0 +1,11 @@
+---
+// src/components/ui/InlineError.astro
+export interface Props {
+  id: string;
+  class?: string;
+}
+
+const { id, class: className = '' } = Astro.props;
+---
+
+<p id={id} class={`text-red-500 text-sm mt-1.5 hidden font-medium ${className}`}></p>

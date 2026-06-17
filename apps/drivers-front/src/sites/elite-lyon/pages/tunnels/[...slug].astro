@@ -32,7 +32,7 @@ if (!normalizedSlug) {
 
 // Composants disponibles (mapping dynamique)
 const tunnelComponents: Record<string, () => Promise<{ default: any }>> = {
-  transfert: () => import('../../../../components/tunnels/AirportTunnel.astro'),
+  transfert: () => import('../../../../components/tunnels/TransfertTunnel.astro'),
   longDistance: () => import('../../../../components/tunnels/LongDistanceTunnel.astro'),
   business: () => import('../../../../components/tunnels/BusinessTunnel.astro'),
   availability: () => import('../../../../components/tunnels/AvailabilityTunnel.astro'),

@@ -31,7 +31,7 @@ Ce projet utilise un **Monorepo Turborepo** pour partager la logique métier ent
 2.  **Gestion de l'environnement SSR :** Implémentation d'un polyfill `ws` au niveau du package base de données pour assurer la stabilité du `RealtimeClient` Supabase dans les environnements Node.js >= 20.
 3.  **Edge Rendering :** L'utilisation d'Astro avec le déploiement sur Cloudflare permet une distribution au plus près des utilisateurs avec des temps de réponse minimaux.
 
-## Scripts Utiles
+# Scripts Utiles
 
 ```bash
 # Installation des dépendances
@@ -39,6 +39,11 @@ pnpm install
 
 # Démarrer l'environnement de développement (toutes les applications)
 pnpm dev
+
+# Lancer une application spécifique (très utile pour éviter de surcharger le terminal)
+pnpm dev --filter @vtc/backoffice     # Lancer le Backoffice
+pnpm dev --filter superadmin          # Lancer le Superadmin
+pnpm dev --filter @vtc/drivers-front  # Lancer le tunnel de réservation public
 
 # Compiler pour la production
 pnpm build
