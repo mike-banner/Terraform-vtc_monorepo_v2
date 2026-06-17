@@ -1,0 +1,22 @@
+{
+  "name": "@vtc/drivers-front",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@vtc/database": "workspace:*",
+    "@astrojs/cloudflare": "^12.6.13",
+    "@iconify-json/ri": "^1.2.10",
+    "@supabase/supabase-js": "^2.99.0",
+    "@tailwindcss/vite": "^4.2.1",
+    "astro": "^5.17.1",
+    "astro-icon": "^1.1.5",
+    "daisyui": "^5.5.19",
+    "tailwindcss": "^4.2.1"
+  }
+}

@@ -1,0 +1,86 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import defaultClasseVImage from '../../sites/elite-lyon/assets/images/elite-classe-v.png';
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  image?: string | ImageMetadata;
+  features?: string[];
+  vehicleLabel?: string;
+  vehicleBadge?: string;
+}
+
+const {
+  title = 'Van VIP',
+  subtitle = "L'excellence du Van",
+  description = 'Espace, confort et discrétion pour vos déplacements de groupe ou délégations business.',
+  image = defaultClasseVImage,
+  features = ['7 Passagers', 'Wi-Fi 5G'],
+  vehicleLabel = 'Classe V',
+  vehicleBadge = 'Space & Business',
+} = Astro.props;
+---
+
+<div class='flex flex-col lg:flex-row-reverse items-center gap-24 font-sans'>
+  <div class='lg:w-1/2 relative'>
+    {
+      typeof image === 'string' ? (
+        <img
+          class='rounded-none shadow-2xl relative z-10 w-full h-[500px] object-cover'
+          src={image}
+          alt={title}
+        />
+      ) : (
+        <Image
+          class='rounded-none shadow-2xl relative z-10 w-full h-[500px] object-cover'
+          src={image}
+          alt={title}
+          width={1000}
+          height={500}
+          format='webp'
+        />
+      )
+    }
+    <div
+      class='absolute bottom-4 left-4 lg:-bottom-8 lg:-left-8 bg-black p-8 rounded-none shadow-2xl z-20 border-t-2 border-elite-accent'>
+      <p class='font-headline font-bold text-white text-2xl uppercase tracking-tighter'>
+        {vehicleLabel}
+      </p>
+      <p class='text-[9px] font-label text-elite-accent uppercase tracking-[0.3em] font-bold mt-2'>
+        {vehicleBadge}
+      </p>
+    </div>
+  </div>
+  <div class='lg:w-1/2 flex flex-col items-center text-center lg:text-left lg:items-start'>
+    <span class='text-elite-accent font-label font-bold tracking-[0.3em] uppercase text-[10px]'
+      >Pure Elegance</span
+    >
+    <h2
+      class='text-black font-headline text-4xl md:text-6xl font-extrabold tracking-tighter mt-4 mb-8 uppercase'>
+      {
+        title.split(' ').map((word, i) => (
+          <span>
+            {word}
+            {i === 0 && title.includes(' ') && <br />}
+          </span>
+        ))
+      }
+    </h2>
+    <p class='text-black/50 text-base leading-relaxed mb-10 max-w-md mx-auto lg:mx-0'>
+      {description}
+    </p>
+    <div
+      class='grid grid-cols-2 gap-8 font-bold text-[10px] uppercase tracking-widest text-black/80 w-full'>
+      {
+        features.map((feature) => (
+          <div class='flex items-center justify-center lg:justify-start gap-3'>
+            <span class='material-symbols-outlined text-elite-accent text-sm'>check</span> {feature}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</div>

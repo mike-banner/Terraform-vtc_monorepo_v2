@@ -1,0 +1,197 @@
+---
+// src/pages/services-vtc-paris.astro
+import HeroForm from '../../../components/booking/BookingHeroSlim.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const { tenant } = Astro.locals;
+
+// Métadonnées SEO
+const title = "Chauffeur Privé Paris — Service VTC Luxe & Haut de Gamme";
+const description = `Réservez votre chauffeur privé à Paris avec ${tenant.name}. Service VTC haut de gamme, tarifs fixes garantis et flotte de luxe Mercedes-Benz. Disponible 24/7.`;
+
+const rates = [
+  { destination: "Paris ↔ Aéroport CDG", price: "À partir de 160€" },
+  { destination: "Paris ↔ Aéroport Orly", price: "À partir de 130€" },
+  { destination: "Paris ↔ Disneyland", price: "À partir de 180€" },
+  { destination: "Mise à disposition (4h)", price: "À partir de 450€" }
+];
+---
+
+<BaseLayout title={title}>
+  <main class="bg-white text-black">
+    {/* Hero Section - Refined for Article style */}
+    <header class="bg-black py-16 text-white relative overflow-hidden">
+      <div class="absolute inset-0 opacity-20">
+        <img src="https://images.unsplash.com/photo-1549413247-a773d5a43058?auto=format&fit=crop&q=80&w=2000" alt="Paris by night" class="w-full h-full object-cover" />
+      </div>
+      <div class="max-w-4xl mx-auto px-6 relative z-10">
+        <div class="inline-block px-4 py-1 border border-primary/30 text-[10px] uppercase tracking-widest text-primary font-black mb-6">
+          Guide Transport Paris
+        </div>
+        <p class="text-xl md:text-2xl text-white/90 font-light leading-relaxed">
+          Comprendre les différences entre les services de transport à Paris pour faire le meilleur choix.
+        </p>
+      </div>
+    </header>
+
+    {/* Articles Meta Info Bar - Fidélité Absolute à la Source */}
+    <section class="border-b border-black/5 py-10 bg-white">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="flex flex-wrap items-center gap-2 text-[11px] md:text-xs font-medium text-zinc-500 mb-8">
+                <span>Mis à jour le 1er mars 2026</span>
+                <span class="px-1 text-zinc-300">·</span>
+                <span>Par <span class="text-black font-bold">{tenant.name.toUpperCase()}</span></span>
+                <span class="text-zinc-400">— Service chauffeur privé professionnel depuis 2019</span>
+                <span class="px-1 text-zinc-300">·</span>
+                <span>Lecture : 6 min</span>
+            </div>
+
+            {/* Titre Article sur une seule ligne */}
+            <h1 class="text-3xl md:text-7xl font-black uppercase tracking-tighter leading-none text-black flex items-baseline flex-wrap gap-x-4">
+                <span>VTC</span> <span class="text-zinc-300 italic text-2xl md:text-5xl">vs</span>
+                <span>TAXI</span> <span class="text-zinc-300 italic text-2xl md:text-5xl">vs</span>
+                <span>UBER</span>
+            </h1>
+            <p class="text-xl md:text-3xl text-black/40 mt-4 normal-case font-light tracking-tight">Le guide pour choisir votre transport à Paris</p>
+        </div>
+    </section>
+
+    {/* Booking Bar integration */}
+    <section class="bg-zinc-100 py-12 px-6">
+      <div class="max-w-7xl mx-auto">
+        <HeroForm />
+      </div>
+    </section>
+
+    {/* SECTION : TABLEAU COMPARATIF RÉEL */}
+    <section class="py-32 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <header class="mb-20">
+                <h2 class="text-[11px] uppercase tracking-[0.4em] font-black text-black/40 mb-4">Tableau Comparatif</h2>
+                <h3 class="text-4xl font-black uppercase tracking-tighter">ANALYSE DÉTAILLÉE DU SERVICE.</h3>
+            </header>
+
+            <div class="overflow-x-auto border border-black/5 shadow-2xl">
+                <table class="w-full border-collapse text-left">
+                    <thead>
+                        <tr class="bg-black text-white uppercase text-[10px] tracking-[0.2em] font-black">
+                            <th class="p-8 border-r border-white/10 w-1/4">Critères</th>
+                            <th class="p-8 border-r border-white/10 w-1/4 bg-zinc-900">VTC (Haut de Gamme)</th>
+                            <th class="p-8 border-r border-white/10 w-1/4">Taxi Parisien</th>
+                            <th class="p-8 w-1/4">Uber / Applications</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <!-- Ligne Prix -->
+                        <tr class="border-b border-black/5">
+                            <td class="p-8 font-black uppercase text-[11px] bg-zinc-50 border-r border-black/5">Tarification</td>
+                            <td class="p-8 font-bold border-r border-black/5 bg-zinc-50/50">CONNU À LA RÉSERVATION <span class="block text-[10px] font-normal text-black/40 mt-1 uppercase">FIXE APRÈS CALCUL</span></td>
+                            <td class="p-8 border-r border-black/5">AU COMPTEUR <span class="block text-[10px] font-normal text-black/40 mt-1">Varie selon le trafic</span></td>
+                            <td class="p-8 text-black/60 italic">DYNAMIQUE <span class="block text-[10px] font-normal text-black/40 mt-1">Majorations imprévisibles</span></td>
+                        </tr>
+                        <!-- Ligne Service -->
+                        <tr class="border-b border-black/5">
+                            <td class="p-8 font-black uppercase text-[11px] bg-zinc-50 border-r border-black/5">Qualité Service</td>
+                            <td class="p-8 font-bold border-r border-black/5 bg-zinc-50/50">VIP & PREMIUM <span class="block text-[10px] font-normal text-black/40 mt-1">Costume, Eau, Wi-Fi, Presse</span></td>
+                            <td class="p-8 border-r border-black/5">VARIABLE <span class="block text-[10px] font-normal text-black/40 mt-1">Selon le chauffeur</span></td>
+                            <td class="p-8 text-black/60 italic">BASIQUE <span class="block text-[10px] font-normal text-black/40 mt-1">Service minimum</span></td>
+                        </tr>
+                        <!-- Ligne Réservation -->
+                        <tr class="border-b border-black/5">
+                            <td class="p-8 font-black uppercase text-[11px] bg-zinc-50 border-r border-black/5">Réservation</td>
+                            <td class="p-8 font-bold border-r border-black/5 bg-zinc-50/50">À L'AVANCE <span class="block text-[10px] font-normal text-black/40 mt-1">Planification sereine</span></td>
+                            <td class="p-8 border-r border-black/5">STATIONS / APP <span class="block text-[10px] font-normal text-black/40 mt-1">Attente parfois longue</span></td>
+                            <td class="p-8 text-black/60 italic">IMMÉDIATE <span class="block text-[10px] font-normal text-black/40 mt-1">Risque d'annulations</span></td>
+                        </tr>
+                        <!-- Ligne Véhicule -->
+                        <tr class="border-b border-black/5">
+                            <td class="p-8 font-black uppercase text-[11px] bg-zinc-50 border-r border-black/5">Véhicules</td>
+                            <td class="p-8 font-bold border-r border-black/5 bg-zinc-50/50">MERCEDES RÉCENT <span class="block text-[10px] font-normal text-black/40 mt-1">Propriété et entretien VIP</span></td>
+                            <td class="p-8 border-r border-black/5">STANDARDS <span class="block text-[10px] font-normal text-black/40 mt-1">Âge et modèle variables</span></td>
+                            <td class="p-8 text-black/60 italic">TOUTES MARQUES <span class="block text-[10px] font-normal text-black/40 mt-1">Souvent dégradés</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    {/* Main SEO Content Content */}
+    <section class="py-32 bg-zinc-50 border-y border-black/5">
+      <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-24 font-light">
+        <div class="prose prose-lg max-w-none text-black/70">
+          <h2 class="text-3xl font-black text-black uppercase mb-8 tracking-tighter">Votre Partenaire de Confiance à Paris</h2>
+          <p>
+            Pourquoi choisir un service de chauffeur privé plutôt qu'un Uber ou un taxi ? La réponse tient en un mot : **l'Excellence**. En choisissant <strong>{tenant.name}</strong>, vous ne réservez pas simplement un trajet, vous assurez la réussite de vos déplacements.
+          </p>
+          <p>
+            Contrairement aux taxis parisiens dont le prix varie au compteur, ou aux applications type Uber dont les tarifs explosent dès qu'il commence à pleuvoir, nous vous garantissons un **tarif fixe et immuable**.
+          </p>
+
+          <h3 class="text-xl font-bold text-black mt-12 mb-4 uppercase italic">Les garanties de notre service</h3>
+          <ul class="space-y-4">
+            <li><strong>Chauffeur Dédié :</strong> Un accueil personnalisé avec tablette à votre nom.</li>
+            <li><strong>Confort First Class :</strong> Véhicules récents avec cuir, Wi-Fi et rafraîchissements.</li>
+            <li><strong>Zéro Stress :</strong> Suivi de vos vols/trains en temps réel pour une prise en charge sans attente.</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="text-3xl font-black text-black uppercase mb-8 tracking-tighter">Nos Tarifs Fixes Garantis</h2>
+          <div class="border border-black/5 rounded-sm overflow-hidden shadow-sm">
+            {rates.map((rate, index) => (
+              <div class={`flex justify-between items-center p-6 ${index % 2 === 0 ? 'bg-zinc-50' : 'bg-white'} border-b border-black/5 last:border-0`}>
+                <span class="font-bold uppercase tracking-wide text-xs">{rate.destination}</span>
+                <span class="font-black text-black">{rate.price}</span>
+              </div>
+            ))}
+          </div>
+          <p class="mt-8 text-[10px] text-black/40 italic uppercase tracking-[0.1em]">
+            * Prix incluant service personnalisé, Wi-Fi, rafraîchissements et assistance bagages.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* Vehicle Highlighting - Solo Version (STAYS AS REQUESTED) */}
+    <section class="py-32 bg-black text-white">
+      <div class="max-w-7xl mx-auto px-6 text-center mb-20">
+        <h2 class="text-[11px] uppercase tracking-[0.4em] text-white/40 mb-4 font-black">Votre Véhicule de Prestige</h2>
+        <h3 class="text-4xl md:text-6xl font-black uppercase tracking-tighter">LE PRESTIGE ALLEMAND.</h3>
+      </div>
+
+      <div class="max-w-4xl mx-auto px-6">
+        <div class="bg-white/5 p-12 hover:bg-white/10 transition-all border border-white/5 rounded-sm flex flex-col md:flex-row items-center gap-12 text-left">
+          <div class="flex-1">
+            <h4 class="text-white font-black uppercase text-xs mb-4 border-l-2 border-white pl-3">Mercedes-Benz Classe E</h4>
+            <div class="text-3xl font-black mb-4 uppercase">BERLINE EXÉCUTIVE</div>
+            <p class="text-[10px] uppercase font-bold text-white/40 mb-8 tracking-widest italic">L'élégance du transport privé</p>
+            <p class="text-lg font-light text-white/70 leading-relaxed italic pr-6 group-hover:text-white transition-colors">
+              "Un habitacle raffiné, un silence de roulement exceptionnel et tout l'équipement nécessaire pour transformer votre trajet en un moment de détente absolue."
+            </p>
+          </div>
+          <div class="hidden md:block w-[1px] h-40 bg-white/10"></div>
+          <ul class="flex-1 space-y-4 text-xs text-white/60 font-black uppercase tracking-widest">
+            <li class="flex items-center gap-3"><span class="text-white">✦</span> Sellerie cuir haute couture</li>
+            <li class="flex items-center gap-3"><span class="text-white">✦</span> Wi-Fi haute performance</li>
+            <li class="flex items-center gap-3"><span class="text-white">✦</span> Rafraîchissements</li>
+            <li class="flex items-center gap-3"><span class="text-white">✦</span> Chargeurs multimarques</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    {/* Final SEO Text Section */}
+    <section class="py-40 bg-white text-black text-center border-t border-black/5">
+      <div class="max-w-3xl mx-auto px-6">
+        <h2 class="text-4xl md:text-7xl font-black uppercase mb-12 italic tracking-tighter leading-none">PRÊT À RÉSERVER ?</h2>
+        <p class="text-black/40 mb-12 leading-relaxed text-sm font-bold uppercase tracking-widest">
+          PROFITEZ D'UN SERVICE IRREPROCHABLE POUR TOUS VOS TRAJETS PROFESSIONNELS ET PERSONNELS À PARIS.
+        </p>
+        <a href="/booking" class="inline-block px-12 py-5 bg-luxe-red text-white text-[10px] font-black uppercase tracking-[0.3em] shadow-luxe-red hover:brightness-110 transition-all">
+          Simulation de mon trajet
+        </a>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

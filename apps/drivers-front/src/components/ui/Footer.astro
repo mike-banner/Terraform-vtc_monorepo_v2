@@ -1,0 +1,81 @@
+---
+// src/components/ui/Footer.astro
+import { Icon } from 'astro-icon/components';
+const { tenant } = Astro.locals;
+---
+
+<footer class="bg-black text-white py-24 border-t border-white/5 font-sans">
+  <div class="container mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20 text-center md:text-left">
+
+      <!-- Brand -->
+      <div class="flex flex-col gap-6 items-center md:items-start">
+        <span class="text-xl font-bold tracking-tight uppercase text-white">{tenant.name}</span>
+        <p class="text-zinc-500 text-xs font-normal leading-relaxed max-w-[240px]">
+          Service de transport premium, discret et professionnel. L'excellence à votre service 24/7.
+        </p>
+        <div class="flex gap-4">
+          <a href="#" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-black hover:text-white border border-transparent hover:border-white/20 transition-all duration-300">
+            <Icon name="ri:twitter-x-fill" class="text-lg" />
+          </a>
+          <a href="#" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-black hover:text-white border border-transparent hover:border-white/20 transition-all duration-300">
+            <Icon name="ri:instagram-line" class="text-lg" />
+          </a>
+          <a href="#" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-black hover:text-white border border-transparent hover:border-white/20 transition-all duration-300">
+            <Icon name="ri:linkedin-box-fill" class="text-lg" />
+          </a>
+        </div>
+      </div>
+
+      <!-- Links 1 -->
+      <div>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-8 text-zinc-600">Services</h4>
+        <ul class="flex flex-col gap-4 text-xs font-normal text-zinc-400">
+          <li><a href="#" class="hover:text-white transition-colors">Transfert Aéroport</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Événements Corporate</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Longue distance</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Mise à disposition</a></li>
+        </ul>
+      </div>
+
+      <!-- Links 2 -->
+      <div>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-8 text-zinc-600">Compagnie</h4>
+        <ul class="flex flex-col gap-4 text-xs font-normal text-zinc-400">
+          <li><a href="#" class="hover:text-white transition-colors">À propos</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Recrutement</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Contact</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Politique VIP</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-8 text-zinc-600">Assistance</h4>
+        <ul class="flex flex-col gap-4 text-xs font-normal text-zinc-400">
+          <li>FAQ & Aide</li>
+          <li>Mentions Légales</li>
+          <li>Données personnelles</li>
+          <li class="mt-4 flex items-center gap-2">
+            <Icon name="ri:mail-line" class="text-white text-lg" />
+            <span class="text-white font-bold tracking-wide">{tenant.email || 'contact@lyon-estate.fr'}</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <Icon name="ri:phone-line" class="text-zinc-500 text-lg" />
+            <span class="text-zinc-500">{tenant.phone || '+33 6 66 64 44 44'}</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+      <p class="text-[10px] font-medium text-zinc-600 uppercase tracking-widest text-center">
+        © 2026 {tenant.name}. LUXURY CHAUFFEUR SERVICE.
+      </p>
+      <div class="flex gap-8 items-center">
+        <span class="text-[9px] font-bold text-white/20 uppercase tracking-[0.25em]">Designed for Excellence</span>
+      </div>
+    </div>
+  </div>
+</footer>

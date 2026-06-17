@@ -1,0 +1,124 @@
+---
+import { supabase } from "../core/supabase";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+
+const sessionId = Astro.url.searchParams.get("session_id");
+
+let booking = null;
+let customer = null;
+let error = null;
+
+async function wait(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+if (sessionId) {
+
+  let bookingId = null;
+
+  for (let i = 0; i < 8; i++) {
+
+    const { data: event } = await supabase
+      .from("stripe_events")
+      .select("booking_id")
+      .eq("session_id", sessionId)
+      .not("booking_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (event?.booking_id) {
+      bookingId = event.booking_id;
+      break;
+    }
+
+    await wait(1000);
+  }
+
+  if (bookingId) {
+
+    const { data: bData, error: bError } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("id", bookingId)
+      .single();
+
+    booking = bData;
+    error = bError;
+
+    if (booking) {
+      const { data: cData } = await supabase
+        .from("customers")
+        .select("first_name, email")
+        .eq("id", booking.customer_id)
+        .single();
+
+      customer = cData;
+    }
+
+  } else {
+    error = true;
+  }
+
+} else {
+  error = true;
+}
+---
+
+<BaseLayout title="Réservation Confirmée">
+  <div class="min-h-screen bg-zinc-50 flex items-center justify-center py-12 px-4 italic">
+    <div class="max-w-md w-full bg-white shadow-2xl rounded-sm p-8 border-t-8 border-green-500">
+
+      {error || !booking ? (
+        <div class="text-center">
+          <h1 class="text-2xl font-black text-red-600 mb-4 uppercase">Erreur de confirmation</h1>
+          <p class="text-zinc-600 font-bold">Nous n'avons pas trouvé votre réservation, mais le paiement a peut-être été validé. Contactez-nous.</p>
+          <a href="/booking-transfert" class="btn bg-black text-white mt-8 w-full h-14 rounded-sm uppercase font-black tracking-widest hover:bg-zinc-800 transition-colors border-none flex items-center justify-center">Retour au formulaire</a>
+        </div>
+      ) : (
+        <div class="text-center">
+          <div class="mb-6 inline-flex items-center justify-center w-16 h-16 bg-green-100 text-green-500 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          <h1 class="text-3xl font-black text-black mb-2 uppercase tracking-tighter">Merci {customer?.first_name || 'Cher client'} !</h1>
+          <p class="text-zinc-500 font-bold mb-8 uppercase text-xs tracking-widest">Votre course est officiellement réservée</p>
+
+          <div class="bg-zinc-100 p-6 rounded-sm text-left mb-8 space-y-3 font-bold text-sm uppercase">
+            <div class="flex justify-between border-b border-zinc-200 pb-2">
+              <span class="text-zinc-400">Référence</span>
+              <span class="text-black font-black">{booking.id.slice(0, 8).toUpperCase()}</span>
+            </div>
+            <div class="flex justify-between border-b border-zinc-200 pb-2 text-[10px]">
+              <span class="text-zinc-400">Prise en charge</span>
+              <span class="text-black text-right max-w-[200px] truncate">{booking.pickup_address}</span>
+            </div>
+            {booking.dropoff_address && (
+              <div class="flex justify-between border-b border-zinc-200 pb-2 text-[10px]">
+                <span class="text-zinc-400">Destination</span>
+                <span class="text-black text-right max-w-[200px] truncate">{booking.dropoff_address}</span>
+              </div>
+            )}
+            <div class="flex justify-between pt-2">
+              <span class="text-zinc-400">Total payé</span>
+              <span class="text-green-600 font-black text-lg">{booking.total_amount} €</span>
+            </div>
+          </div>
+
+          <a href="/" class="btn bg-black text-white w-full h-14 font-black uppercase tracking-widest rounded-sm hover:bg-zinc-800 transition-colors border-none flex items-center justify-center">
+            Retour à l'accueil
+          </a>
+
+          {customer?.email && (
+            <p class="mt-6 text-[10px] text-zinc-400 font-bold uppercase italic">Un email de confirmation a été envoyé à {customer.email}</p>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>
+
+

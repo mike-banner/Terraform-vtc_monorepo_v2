@@ -1,0 +1,77 @@
+---
+// src/components/home/BlacklaneHero.astro
+import heroImg from "../../sites/elite-lyon/assets/images/hero_bg.png";
+---
+
+<section class="relative h-screen min-h-[700px] w-full overflow-hidden bg-black font-sans">
+  <!-- Background Image with Overlay -->
+  <div class="absolute inset-0 z-0">
+    <img
+      src={heroImg.src}
+      alt="Luxury Car Background"
+      class="h-full w-full object-cover brightness-[0.55]"
+    />
+    <div class="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent"></div>
+  </div>
+
+  <div class="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-center px-6 lg:flex-row lg:items-center lg:gap-20">
+    <!-- Left Column: Text Content -->
+    <div class="flex-1 text-left">
+      <div class="mb-8 inline-block border-l-4 border-luxe-red pl-6">
+        <span class="text-[10px] font-bold uppercase tracking-[0.4em] text-zinc-400">Premium Chauffeur Service</span>
+      </div>
+
+      <h1 class="mb-8 text-4xl font-extrabold leading-[1.1] tracking-tight text-white md:text-6xl lg:text-7xl">
+        L'EXCELLENCE <br />
+        <span class="text-zinc-500 italic">À CHAQUE TRAJET</span>
+      </h1>
+
+      <p class="mb-12 max-w-xl text-lg font-light leading-relaxed text-zinc-400">
+        Découvrez un service de transport privé redéfini. Discrétion, ponctualité et confort absolu pour vos déplacements à Lyon et en Europe.
+      </p>
+
+      <div class="flex flex-wrap gap-6">
+        <a href="/booking" class="bg-luxe-red px-10 py-5 text-[11px] font-bold uppercase tracking-[0.3em] text-white transition-all hover:scale-105 hover:brightness-110 shadow-2xl">
+          Réserver mon trajet
+        </a>
+        <a href="/services" class="border border-white/20 bg-white/5 px-10 py-5 text-[11px] font-bold uppercase tracking-[0.3em] text-white backdrop-blur-md transition-all hover:bg-white/10">
+          Nos Services
+        </a>
+      </div>
+    </div>
+
+    <!-- Right Column: Visual Element / Social Proof -->
+    <div class="hidden flex-1 lg:block">
+      <div class="relative border-l border-white/10 p-12">
+        <div class="mb-12">
+            <span class="text-[9px] font-bold uppercase tracking-[0.3em] text-luxe-red block mb-4">Signature d'Exception</span>
+            <p class="text-3xl font-light text-zinc-300 leading-snug">
+              "Plus qu'un trajet, une expérience de sérénité absolue."
+            </p>
+        </div>
+        <div class="grid grid-cols-2 gap-8 border-t border-white/10 pt-12">
+          <div>
+            <span class="text-3xl font-bold text-white">4.9/5</span>
+            <span class="mt-2 block text-[9px] font-bold uppercase tracking-widest text-zinc-500">Note Clients</span>
+          </div>
+          <div>
+            <span class="text-3xl font-bold text-white">24/7</span>
+            <span class="mt-2 block text-[9px] font-bold uppercase tracking-widest text-zinc-500">Disponibilité</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Bar Info -->
+  <div class="absolute bottom-0 left-0 right-0 z-10 border-t border-white/5 bg-black/40 py-8 backdrop-blur-sm">
+    <div class="mx-auto max-w-7xl px-6">
+      <div class="flex flex-wrap items-center justify-between gap-8 opacity-60">
+        <span class="text-[9px] font-bold uppercase tracking-[0.4em] text-zinc-400">Transferts Aéroport</span>
+        <span class="text-[9px] font-bold uppercase tracking-[0.4em] text-zinc-400">Mise à Disposition</span>
+        <span class="text-[9px] font-bold uppercase tracking-[0.4em] text-zinc-400">Événements</span>
+        <span class="text-[9px] font-bold uppercase tracking-[0.4em] text-zinc-400">Longue Distance</span>
+      </div>
+    </div>
+  </div>
+</section>

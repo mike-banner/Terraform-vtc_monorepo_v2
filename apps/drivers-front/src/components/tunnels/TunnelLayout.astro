@@ -1,0 +1,196 @@
+---
+// src/components/tunnels/TunnelLayout.astro
+import TunnelProgress from './TunnelProgress.astro';
+import { Icon } from 'astro-icon/components';
+
+const {
+  currentStep = 1,
+  totalSteps = 4,
+  serviceType = 'airport',
+  title: propTitle,
+  icon: propIcon,
+  color: propColor,
+  accentColor = '#000000',
+} = Astro.props;
+
+const tenant = Astro.locals.tenant || { name: 'Elite Lyon', id: 'default' };
+
+// Fallback configs si les props ne sont pas fournies
+const defaultConfigs = {
+  airport: { title: 'Transfert', color: 'bg-blue-500', icon: 'ri:route-line' },
+  transfert: { title: 'Transfert', color: 'bg-blue-500', icon: 'ri:route-line' },
+  longDistance: { title: 'Longue Distance', color: 'bg-green-500', icon: 'ri:road-map-line' },
+  business: { title: 'Business & B2B', color: 'bg-purple-500', icon: 'ri:briefcase-line' },
+  availability: { title: 'Mise à Disposition', color: 'bg-orange-500', icon: 'ri:time-line' },
+};
+
+const defaultConfig =
+  defaultConfigs[serviceType as keyof typeof defaultConfigs] || defaultConfigs.airport;
+
+const config = {
+  title: propTitle || defaultConfig.title,
+  icon: propIcon || defaultConfig.icon,
+  color: propColor || defaultConfig.color,
+};
+---
+
+<style is:global define:vars={{ accentColor }}>
+  .text-accent {
+    color: var(--accentColor) !important;
+  }
+  .bg-accent {
+    background-color: var(--accentColor) !important;
+  }
+  .border-accent {
+    border-color: var(--accentColor) !important;
+  }
+  .hover\:border-accent:hover {
+    border-color: var(--accentColor) !important;
+  }
+  .peer-checked\:border-accent:checked + div {
+    border-color: var(--accentColor) !important;
+  }
+  .peer-checked\:bg-accent\/5:checked + div {
+    background-color: color-mix(in srgb, var(--accentColor), transparent 95%) !important;
+  }
+  .ring-accent\/20 {
+    --tw-ring-color: color-mix(in srgb, var(--accentColor), transparent 80%) !important;
+  }
+</style>
+
+<div class='min-h-screen bg-gradient-to-b from-zinc-50 to-white overflow-x-hidden relative'>
+  <!-- Header avec progression -->
+  <header class='fixed top-0 left-0 right-0 w-full z-50 bg-white/95 backdrop-blur-sm border-b border-zinc-200'>
+    <div class='container mx-auto px-6 py-3 md:py-4'>
+      <div class='flex items-center justify-between'>
+        <a href='/' class='text-xl font-bold text-zinc-900'>
+          {tenant.name}
+        </a>
+        <div class='flex items-center gap-4'>
+          <span class='text-sm font-medium text-zinc-600'>
+            {config.title}
+          </span>
+          <div
+            class={`w-8 h-8 rounded-full flex items-center justify-center text-white ${config.color}`}>
+            <Icon name={config.icon} class='text-lg' />
+          </div>
+        </div>
+      </div>
+
+      <!-- Barre de progression -->
+      <div class='mt-4 md:mt-6'>
+        <TunnelProgress currentStep={currentStep} totalSteps={totalSteps} />
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenu principal -->
+  <main class='container mx-auto px-6 pt-36 md:pt-40 pb-12'>
+    <slot />
+  </main>
+
+  <!-- Footer avec navigation -->
+  <footer class='border-t border-zinc-200 bg-white'>
+    <div class='container mx-auto px-6 py-8'>
+      <div class='flex justify-between items-center'>
+        <div>
+          {
+            currentStep > 1 && (
+              <button
+                onclick='window.history.back()'
+                class='text-zinc-600 hover:text-zinc-900 font-medium flex items-center gap-2'>
+                <Icon name='ri:arrow-left-line' class='text-lg' />
+                Retour
+              </button>
+            )
+          }
+        </div>
+
+        <div class='flex items-center gap-4'>
+          <span class='text-sm text-zinc-500'>
+            Étape {currentStep} sur {totalSteps}
+          </span>
+          <button
+            type='submit'
+            form='tunnel-form'
+            class='bg-black text-white px-8 py-3 font-semibold rounded-lg hover:bg-zinc-800 transition-colors'>
+            {currentStep === totalSteps ? 'Finaliser la réservation' : 'Continuer'}
+          </button>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Scripts & Styles de Flatpickr pour un calendrier Premium et Homogène -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style is:global>
+  /* Style sombre/premium pour Flatpickr */
+  .flatpickr-calendar {
+    background: #ffffff !important;
+    border: 1px solid #e4e4e7 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+    font-family: inherit !important;
+  }
+  .flatpickr-day.selected, 
+  .flatpickr-day.selected:hover, 
+  .flatpickr-day.selected:focus {
+    background: #000000 !important;
+    border-color: #000000 !important;
+    color: #ffffff !important;
+  }
+  .flatpickr-months .flatpickr-month {
+    color: #18181b !important;
+    fill: #18181b !important;
+  }
+  .flatpickr-current-month .numInputWrapper span.arrowUp:after {
+    border-bottom-color: #18181b !important;
+  }
+  .flatpickr-current-month .numInputWrapper span.arrowDown:after {
+    border-top-color: #18181b !important;
+  }
+  .flatpickr-calendar.hasTime .flatpickr-time {
+    border-top: 1px solid #e4e4e7 !important;
+  }
+  /* Cacher l'input original alternatif généré par Flatpickr (altInput) */
+  .flatpickr-input[type="hidden"] {
+    display: none !important;
+  }
+</style>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script is:inline src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+
+<script is:inline>
+  function initFlatpickr() {
+    const dateInput = document.getElementById('flatpickr-date');
+    const timeInput = document.getElementById('flatpickr-time');
+
+    if (dateInput) {
+      flatpickr(dateInput, {
+        locale: 'fr',
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'd F Y',
+        minDate: 'today',
+        disableMobile: true // Force le superbe calendrier Flatpickr au lieu du sélecteur OS natif buggé
+      });
+    }
+
+    if (timeInput) {
+      flatpickr(timeInput, {
+        locale: 'fr',
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: 'H:i',
+        time_24hr: true,
+        disableMobile: true
+      });
+    }
+  }
+
+  // Initialisation à chaque chargement de page
+  document.addEventListener('DOMContentLoaded', initFlatpickr);
+  document.addEventListener('astro:page-load', initFlatpickr);
+</script>

@@ -1,0 +1,52 @@
+---
+// src/components/home/HowToBook.astro
+---
+
+<section class="py-24 bg-zinc-50 font-sans border-y border-zinc-100">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-20">
+      <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-accent mb-4 block">PROCESSUS</span>
+      <h2 class="text-3xl md:text-5xl font-semibold tracking-tight text-zinc-900 leading-tight">
+        Votre chauffeur en <span class="text-zinc-500">trois étapes</span>
+      </h2>
+    </div>
+
+    <div class="relative max-w-5xl mx-auto">
+      <!-- Connection Line -->
+      <div class="absolute top-1/2 left-0 w-full h-[1px] bg-zinc-200 -translate-y-1/2 hidden md:block"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
+        <!-- Step 1 -->
+        <div class="bg-white p-10 rounded-sm border border-zinc-100 shadow-sm text-center md:text-left group transition-all hover:shadow-xl">
+          <div class="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold mb-8 transition-transform group-hover:scale-110">1</div>
+          <h4 class="text-lg font-bold uppercase tracking-tight mb-4">Itinéraire</h4>
+          <p class="text-zinc-500 text-[14px] leading-relaxed">Saisissez votre point de départ, votre destination et vos horaires.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="bg-white p-10 rounded-sm border border-zinc-100 shadow-sm text-center md:text-left group transition-all hover:shadow-xl">
+          <div class="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold mb-8 transition-transform group-hover:scale-110">2</div>
+          <h4 class="text-lg font-bold uppercase tracking-tight mb-4">Véhicule</h4>
+          <p class="text-zinc-500 text-[14px] leading-relaxed">Choisissez la catégorie adaptée à vos besoins et au nombre de passagers.</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="bg-white p-10 rounded-sm border border-zinc-100 shadow-sm text-center md:text-left group transition-all hover:shadow-xl">
+          <div class="w-12 h-12 bg-luxe-red text-white rounded-full flex items-center justify-center font-bold mb-8 transition-transform group-hover:scale-110">3</div>
+          <h4 class="text-lg font-bold uppercase tracking-tight mb-4">Validation</h4>
+          <p class="text-zinc-500 text-[14px] leading-relaxed">Confirmez vos coordonnées et recevez une estimation instantanée.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Centered CTA below the steps -->
+    <div class="mt-20 flex justify-center">
+      <a
+        href="/booking"
+        class="bg-black text-white px-12 py-5 text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-luxe-red transition-all shadow-2xl active:scale-95"
+      >
+        Entrer un trajet →
+      </a>
+    </div>
+  </div>
+</section>

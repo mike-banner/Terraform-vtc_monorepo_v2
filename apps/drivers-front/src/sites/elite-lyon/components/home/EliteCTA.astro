@@ -1,0 +1,40 @@
+---
+// src/sites/elite-lyon/components/home/EliteCTA.astro
+const { tenant } = Astro.locals;
+const tenantPhone = tenant?.phone || '+33 6 00 00 00 00';
+---
+
+<section class='py-40 bg-black text-white text-center relative overflow-hidden'>
+  <div
+    class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20">
+  </div>
+
+  <div class='relative z-10 container mx-auto px-8'>
+    <h2
+      class='font-headline text-5xl md:text-8xl font-extrabold mb-12 uppercase tracking-tighter leading-[0.85]'>
+      L'Exception<br /><span class='text-elite-accent'>Au Quotidien</span>
+    </h2>
+    <p
+      class='text-white/40 text-[10px] uppercase tracking-[0.4em] mb-16 max-w-xl mx-auto font-bold'>
+      Votre Partenaire Stratégique Pour Une Logistique Sans Faille
+    </p>
+    <div class='flex flex-col md:flex-row justify-center items-center gap-16'>
+      <a
+        href='#booking'
+        class='btn-premium px-16 py-8 rounded-none font-bold text-xs uppercase tracking-[0.3em] shadow-2xl'>
+        Réserver Experience
+      </a>
+      <div class='text-left border-l border-elite-accent/30 pl-12'>
+        <span
+          class='text-[9px] font-label uppercase tracking-[0.4em] font-bold text-elite-accent block mb-2'
+          >Direct Line</span
+        >
+        <a
+          href={`tel:${tenantPhone}`}
+          class='font-headline text-3xl font-bold tracking-tighter hover:text-elite-accent transition-colors'>
+          {tenantPhone}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

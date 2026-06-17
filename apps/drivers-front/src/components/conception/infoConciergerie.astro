@@ -1,0 +1,60 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+
+interface Props {
+  image?: string | ImageMetadata;
+}
+
+const { image = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070' } =
+  Astro.props;
+---
+
+<div class='flex flex-col md:flex-row gap-24 items-center'>
+  <div class='md:w-1/2 flex flex-col items-center text-center md:text-left md:items-start'>
+    <span class='text-elite-accent font-label font-bold tracking-[0.3em] uppercase text-[10px]'
+      >Lifestyle Concept</span
+    >
+    <h2
+      class='text-white font-headline text-4xl md:text-6xl font-extrabold uppercase mt-4 tracking-tighter'>
+      Conciergerie<br />Hautes Etudes
+    </h2>
+    <p class='mt-8 text-white/50 text-base leading-relaxed max-w-lg mx-auto md:mx-0'>
+      Une assistance proactive pour vos reservations, la gestion de vos bagages et l'anticipation de
+      chacun de vos besoins operationnels.
+    </p>
+    <div class='mt-12 grid grid-cols-2 gap-8 w-full'>
+      <div class='border-l-0 md:border-l border-elite-accent/40 pl-0 md:pl-4 text-center md:text-left'>
+        <span
+          class='text-[9px] font-label uppercase tracking-widest text-elite-accent font-bold block mb-1'
+          >Service</span
+        >
+        <p class='text-white font-bold text-sm uppercase'>Gastronomie</p>
+      </div>
+      <div class='border-l-0 md:border-l border-elite-accent/40 pl-0 md:pl-4 text-center md:text-left'>
+        <span
+          class='text-[9px] font-label uppercase tracking-widest text-elite-accent font-bold block mb-1'
+          >Service</span
+        >
+        <p class='text-white font-bold text-sm uppercase'>Hotellerie</p>
+      </div>
+    </div>
+  </div>
+  <div class='md:w-1/2 relative w-full'>
+    <div class='absolute inset-0 bg-elite-accent/5 translate-x-4 translate-y-4'></div>
+    {
+      typeof image === 'string' ? (
+        <img src={image} alt='Concierge Service' class='relative z-10 rounded-none shadow-2xl' />
+      ) : (
+        <Image
+          src={image}
+          alt='Concierge Service'
+          width={1000}
+          height={600}
+          format='webp'
+          class='relative z-10 rounded-none shadow-2xl'
+        />
+      )
+    }
+  </div>
+</div>

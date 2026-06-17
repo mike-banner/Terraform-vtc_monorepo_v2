@@ -1,0 +1,83 @@
+---
+// src/components/home/DestinationsSection.astro
+import { Icon } from 'astro-icon/components';
+
+const destinations = [
+  {
+    title: "Paris CDG",
+    image: "https://images.unsplash.com/photo-1520437358207-35cabc422005?q=80&w=2070&auto=format&fit=crop",
+    desc: "Aéroport Charles de Gaulle",
+    category: "aéroport"
+  },
+  {
+    title: "Paris Orly",
+    image: "https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?q=80&w=2069&auto=format&fit=crop",
+    desc: "Aéroport d'Orly",
+    category: "aéroport"
+  },
+  {
+    title: "Versailles",
+    image: "https://images.unsplash.com/photo-1590054792692-d35d2585d9ee?q=80&w=2080&auto=format&fit=crop",
+    desc: "Château & Ville",
+    category: "tourisme"
+  },
+  {
+    title: "Parc Astérix",
+    image: "https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=2070&auto=format&fit=crop",
+    desc: "Plailly, France",
+    category: "tourisme"
+  },
+  {
+    title: "Disneyland",
+    image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=2071&auto=format&fit=crop",
+    desc: "Marne-la-Vallée",
+    category: "tourisme"
+  },
+  {
+    title: "Longue Distance",
+    image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop",
+    desc: "France Entière",
+    category: "national"
+  }
+];
+---
+
+<!-- Section Destinations (masquée par défaut) -->
+<section class="py-20 bg-zinc-50 font-sans hidden">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-16 max-w-2xl mx-auto">
+      <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-accent mb-4 block">DESTINATIONS POPULAIRES</span>
+      <h2 class="text-3xl md:text-5xl font-semibold tracking-tight text-zinc-900 leading-tight">
+        Chauffeur privé <span class="text-zinc-500">à la demande</span>
+      </h2>
+      <p class="text-zinc-600 mt-4 max-w-xl mx-auto">
+        Nos destinations les plus demandées pour vos transferts aéroport et déplacements d'affaires
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {destinations.map((d) => (
+        <a 
+          href="/booking-transfert?destination=${encodeURIComponent(d.title)}" 
+          class="relative group h-[320px] overflow-hidden rounded-xl bg-zinc-200 block"
+        >
+          <img
+            src={d.image}
+            alt={d.title}
+            class="w-full h-full object-cover transition-all duration-700 brightness-90 group-hover:brightness-75 group-hover:scale-105"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+          <div class="absolute bottom-6 left-6 right-6">
+            <span class="text-xs font-medium text-accent mb-2 block">{d.category.toUpperCase()}</span>
+            <h4 class="text-xl font-semibold text-white tracking-tight mb-1">{d.title}</h4>
+            <p class="text-white/70 text-xs font-normal">{d.desc}</p>
+          </div>
+
+          <div class="absolute top-6 right-6 w-10 h-10 bg-white text-black flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white border border-transparent hover:border-white/20">
+            <Icon name="ri:arrow-right-up-line" class="text-lg" />
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,173 @@
+---
+// src/components/booking/BookingHeroLarge.astro
+import { Icon } from "astro-icon/components";
+
+const { tenant } = Astro.locals;
+---
+
+<div class="w-full max-w-md bg-white rounded-lg shadow-[0_24px_64px_rgba(0,0,0,0.18)] overflow-hidden font-sans">
+  <!-- Tabs Navigation -->
+  <div class="flex border-b border-zinc-100">
+    <button
+      id="tab-one-way-large"
+      class="flex-1 px-4 py-5 text-[10px] font-black uppercase tracking-[0.2em] border-b-2 border-black text-black transition-all"
+    >
+      Trajet simple
+    </button>
+    <button
+      id="tab-hourly-large"
+      class="flex-1 px-4 py-5 text-[10px] font-black uppercase tracking-[0.2em] border-b-2 border-transparent text-zinc-400 hover:text-black transition-all"
+    >
+      À l'heure
+    </button>
+  </div>
+
+  <!-- Form Content -->
+  <div class="p-6 space-y-5">
+
+    <!-- Pickup -->
+    <div class="relative group">
+      <label class="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Prise en charge</label>
+      <div class="relative">
+        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-black transition-colors pointer-events-none">
+          <Icon name="ri:map-pin-2-fill" class="w-4 h-4" />
+        </div>
+        <input
+          type="text"
+          placeholder="Aéroport, Gare, Adresse..."
+          class="w-full pl-12 pr-4 py-4 bg-zinc-50 border border-zinc-100 focus:border-black focus:bg-white outline-none rounded-md text-sm font-medium transition-all"
+        />
+      </div>
+    </div>
+
+    <!-- Dropoff / Duration -->
+    <div id="dropoff-container-large" class="relative group">
+      <label id="label-dropoff-large" class="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Destination</label>
+      <div class="relative">
+        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-black transition-colors pointer-events-none">
+          <Icon name="ri:navigation-fill" class="w-4 h-4" />
+        </div>
+        <input
+          type="text"
+          id="input-dropoff-large"
+          placeholder="Hôtel, Ville, Station..."
+          class="w-full pl-12 pr-4 py-4 bg-zinc-50 border border-zinc-100 focus:border-black focus:bg-white outline-none rounded-md text-sm font-medium transition-all"
+        />
+        <select
+          id="input-duration-large"
+          class="hidden w-full pl-12 pr-10 py-4 bg-zinc-50 border border-zinc-100 focus:border-black focus:bg-white outline-none rounded-md text-sm font-black appearance-none cursor-pointer transition-all"
+        >
+          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 24].map(h => (
+            <option value={h}>{h} heures</option>
+          ))}
+        </select>
+        <div id="duration-arrow-large" class="hidden absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+          <Icon name="ri:arrow-down-s-line" class="w-5 h-5 text-zinc-400" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Date & Time Grid -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="relative group">
+         <label class="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Date</label>
+         <div class="relative">
+           <div class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+              <Icon name="ri:calendar-line" class="w-4 h-4" />
+           </div>
+           <input
+              type="date"
+              class="w-full pl-11 pr-2 py-4 bg-zinc-50 border border-zinc-100 focus:border-black focus:bg-white outline-none rounded-md text-xs font-bold transition-all"
+           />
+         </div>
+      </div>
+      <div class="relative group">
+         <label class="block text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2 ml-1">Heure</label>
+         <div class="relative">
+           <div class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+              <Icon name="ri:time-line" class="w-4 h-4" />
+           </div>
+           <input
+              type="time"
+              class="w-full pl-11 pr-2 py-4 bg-zinc-50 border border-zinc-100 focus:border-black focus:bg-white outline-none rounded-md text-xs font-bold transition-all"
+           />
+         </div>
+      </div>
+    </div>
+
+    <!-- Additional Info / Voucher -->
+    <div class="pt-2">
+      <button class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest hover:text-black transition-colors flex items-center gap-2">
+        <Icon name="ri:add-line" class="w-3 h-3" />
+        Ajouter un code promo
+      </button>
+    </div>
+
+    <!-- Submit Button -->
+    <button
+      type="submit"
+      class="w-full py-5 bg-black text-white text-[11px] font-black uppercase tracking-[0.3em] rounded-md hover:bg-zinc-800 transition-all active:scale-[0.98] shadow-lg"
+    >
+      Rechercher
+    </button>
+
+  </div>
+
+  <!-- Footer Note -->
+  <div class="bg-zinc-50 px-6 py-4 border-t border-zinc-100 italic text-[10px] text-zinc-400 text-center">
+    Annulation gratuite jusqu'à 60 min avant le départ
+  </div>
+</div>
+
+<script is:inline>
+  (function() {
+    const tabOneWay = document.getElementById('tab-one-way-large');
+    const tabHourly = document.getElementById('tab-hourly-large');
+    const inputDropoff = document.getElementById('input-dropoff-large');
+    const inputDuration = document.getElementById('input-duration-large');
+    const durationArrow = document.getElementById('duration-arrow-large');
+    const labelDropoff = document.getElementById('label-dropoff-large');
+
+    function setMode(mode) {
+      if (mode === 'one-way') {
+        tabOneWay.classList.add('border-black', 'text-black');
+        tabOneWay.classList.remove('border-transparent', 'text-zinc-400');
+        tabHourly.classList.remove('border-black', 'text-black');
+        tabHourly.classList.add('border-transparent', 'text-zinc-400');
+
+        labelDropoff.textContent = "Destination";
+        inputDropoff.classList.remove('hidden');
+        inputDuration.classList.add('hidden');
+        durationArrow.classList.add('hidden');
+      } else {
+        tabHourly.classList.add('border-black', 'text-black');
+        tabHourly.classList.remove('border-transparent', 'text-zinc-400');
+        tabOneWay.classList.remove('border-black', 'text-black');
+        tabOneWay.classList.add('border-transparent', 'text-zinc-400');
+
+        labelDropoff.textContent = "Durée";
+        inputDropoff.classList.add('hidden');
+        inputDuration.classList.remove('hidden');
+        durationArrow.classList.remove('hidden');
+      }
+    }
+
+    tabOneWay.addEventListener('click', () => setMode('one-way'));
+    tabHourly.addEventListener('click', () => setMode('hourly'));
+  })();
+</script>
+
+<style>
+  input::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+  }
+</style>

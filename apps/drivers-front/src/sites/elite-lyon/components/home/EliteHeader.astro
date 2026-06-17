@@ -1,0 +1,24 @@
+---
+// src/sites/elite-lyon/components/home/EliteHeader.astro
+const { tenant } = Astro.locals;
+const tenantName = tenant?.name || 'Elite Lyon';
+---
+
+<header class='fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl border-b border-elite-accent/20'>
+  <nav
+    class='flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto font-headline text-white font-bold text-sm lg:text-base'>
+    <div class='text-xl font-bold tracking-tighter text-elite-accent uppercase'>
+      {tenantName}
+    </div>
+    <div
+      class='hidden md:flex items-center space-x-8 uppercase tracking-widest text-[10px] font-bold'>
+      <a class='text-elite-accent' href='#services'>Services</a>
+      <a class='opacity-60 hover:opacity-100 transition-opacity' href='#fleet'>Fleet</a>
+      <a class='opacity-60 hover:opacity-100 transition-opacity' href='#concierge'>Concierge</a>
+      <a class='opacity-60 hover:opacity-100 transition-opacity' href='#experience'>Experience</a>
+    </div>
+    <a href='#booking' class='btn-premium px-6 py-2 rounded-sm text-xs uppercase tracking-widest'>
+      Book Now
+    </a>
+  </nav>
+</header>

@@ -1,0 +1,28 @@
+---
+// src/sites/elite-lyon/pages/index.astro
+import EliteConcierge from "../components/home/EliteConcierge.astro";
+import EliteCTA from "../components/home/EliteCTA.astro";
+import EliteExperience from "../components/home/EliteExperience.astro";
+import EliteFleet from "../components/home/EliteFleet.astro";
+import EliteFooter from "../components/home/EliteFooter.astro";
+import EliteHeader from "../components/home/EliteHeader.astro";
+import EliteHero from "../components/home/EliteHero.astro";
+import EliteServices from "../components/home/EliteServices.astro";
+import EliteLayout from "../layouts/EliteLayout.astro";
+
+const title = "Elite Lyon | Chauffeur Privé de Luxe";
+const description = "Service de Chauffeur VTC haut de gamme à Lyon. Berlines et Vans de luxe pour vos déplacements professionnels et privés.";
+---
+
+<EliteLayout title={title} description={description}>
+    <EliteHeader />
+    <main>
+        <EliteHero />
+        <EliteServices />
+        <EliteFleet />
+        <EliteConcierge />
+        <EliteExperience />
+        <EliteCTA />
+        <EliteFooter />
+    </main>
+</EliteLayout>

@@ -1,0 +1,216 @@
+---
+// src/components/tunnels/LongDistanceTunnel.astro
+import { Icon } from 'astro-icon/components';
+import TunnelLayout from './TunnelLayout.astro';
+
+const popularDestinations = [
+  { city: 'Paris', distance: '465 km', time: '4h30', price: 'À partir de 450€' },
+  { city: 'Marseille', distance: '315 km', time: '3h', price: 'À partir de 350€' },
+  { city: 'Nice', distance: '470 km', time: '4h45', price: 'À partir de 500€' },
+  { city: 'Bordeaux', distance: '550 km', time: '5h30', price: 'À partir de 550€' },
+  { city: 'Strasbourg', distance: '490 km', time: '5h', price: 'À partir de 520€' },
+  { city: 'Toulouse', distance: '540 km', time: '5h15', price: 'À partir de 530€' },
+];
+
+const serviceOptions = [
+  { id: 'oneway', name: 'Trajet simple', desc: 'Aller simple sans retour', price: 'Prix standard' },
+  {
+    id: 'roundtrip',
+    name: 'Aller-retour',
+    desc: 'Trajet aller et retour le même jour',
+    price: '+20%',
+  },
+  {
+    id: 'multiday',
+    name: 'Plusieurs jours',
+    desc: 'Chauffeur à disposition sur plusieurs jours',
+    price: 'Devis personnalisé',
+  },
+];
+
+const { ...props } = Astro.props;
+---
+
+<TunnelLayout currentStep={1} totalSteps={4} serviceType='longDistance' {...props}>
+  <form id='tunnel-form' class='max-w-4xl mx-auto'>
+    <!-- Étape 1: Destination -->
+    <div class='mb-12'>
+      <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Destination principale</h2>
+      <p class='text-zinc-600 mb-8'>
+        Sélectionnez votre destination ou entrez une ville personnalisée
+      </p>
+
+      <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
+        {
+          popularDestinations.map((dest) => (
+            <label class='relative group cursor-pointer'>
+              <input type='radio' name='destination' value={dest.city} class='sr-only peer' />
+              <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-green-500 transition-all duration-300 peer-checked:border-green-500 peer-checked:bg-green-500/5 h-full'>
+                <div class='flex items-start justify-between mb-4'>
+                  <div>
+                    <div class='text-lg font-semibold text-zinc-900'>{dest.city}</div>
+                    <div class='text-sm text-zinc-600 mt-1'>
+                      {dest.distance} • {dest.time}
+                    </div>
+                  </div>
+                  <div class='text-xs font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded'>
+                    {dest.price}
+                  </div>
+                </div>
+                <div class='flex items-center gap-2 text-sm text-zinc-500'>
+                  <Icon name='ri:road-map-line' class='text-sm' />
+                  <span>Depuis Lyon</span>
+                </div>
+              </div>
+              <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                <Icon name='ri:check-line' class='text-white text-xs' />
+              </div>
+            </label>
+          ))
+        }
+      </div>
+
+      <div>
+        <label class='block text-sm font-medium text-zinc-700 mb-2'
+          >Ou entrez une destination personnalisée</label
+        >
+        <input
+          type='text'
+          name='customDestination'
+          placeholder='Ex: Montpellier, Lille, Genève...'
+          class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
+        />
+      </div>
+    </div>
+
+    <!-- Étape 2: Type de service -->
+    <div class='mb-12'>
+      <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Type de service</h2>
+      <p class='text-zinc-600 mb-8'>Choisissez la formule qui correspond à vos besoins</p>
+
+      <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        {
+          serviceOptions.map((option) => (
+            <label class='relative group cursor-pointer'>
+              <input type='radio' name='serviceType' value={option.id} class='sr-only peer' />
+              <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-green-500 transition-all duration-300 peer-checked:border-green-500 peer-checked:bg-green-500/5 h-full'>
+                <div class='w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-green-500/10 transition-colors'>
+                  <Icon
+                    name='ri:route-line'
+                    class='text-xl text-zinc-600 group-hover:text-green-500'
+                  />
+                </div>
+                <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{option.name}</h3>
+                <p class='text-sm text-zinc-600 mb-4'>{option.desc}</p>
+                <div class='text-lg font-bold text-green-500 mt-4'>{option.price}</div>
+              </div>
+              <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                <Icon name='ri:check-line' class='text-white text-xs' />
+              </div>
+            </label>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- Étape 3: Dates et durée -->
+    <div class='mb-12'>
+      <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Dates et durée du trajet</h2>
+      <p class='text-zinc-600 mb-8'>Précisez les dates et la durée estimée</p>
+
+      <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        <div>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>Date de départ</label>
+          <input
+            type='date'
+            name='departureDate'
+            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
+            required
+          />
+        </div>
+        <div>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>Heure de départ</label>
+          <input
+            type='time'
+            name='departureTime'
+            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
+            required
+          />
+        </div>
+      </div>
+
+      <div class='mt-6'>
+        <label class='block text-sm font-medium text-zinc-700 mb-2'>Durée estimée du trajet</label>
+        <select
+          name='estimatedDuration'
+          class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'>
+          <option value=''>Sélectionnez une durée</option>
+          <option value='2-3'>2-3 heures</option>
+          <option value='3-4'>3-4 heures</option>
+          <option value='4-5'>4-5 heures</option>
+          <option value='5-6'>5-6 heures</option>
+          <option value='6+'>Plus de 6 heures</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Étape 4: Détails supplémentaires -->
+    <div>
+      <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Détails supplémentaires</h2>
+      <p class='text-zinc-600 mb-8'>Informations complémentaires pour personnaliser votre trajet</p>
+
+      <div class='space-y-6'>
+        <div>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>Nombre de passagers</label>
+          <select
+            name='passengerCount'
+            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
+            required>
+            <option value='1'>1 passager</option>
+            <option value='2'>2 passagers</option>
+            <option value='3'>3 passagers</option>
+            <option value='4'>4 passagers</option>
+            <option value='5'>5 passagers</option>
+            <option value='6'>6 passagers</option>
+          </select>
+        </div>
+
+        <div>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'
+            >Adresse de prise en charge (Lyon)</label
+          >
+          <input
+            type='text'
+            name='pickupAddress'
+            placeholder='Ex: 1 Place Bellecour, Lyon'
+            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
+            required
+          />
+        </div>
+
+        <div>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>Adresse de destination</label>
+          <input
+            type='text'
+            name='destinationAddress'
+            placeholder='Ex: Adresse complète de destination'
+            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
+            required
+          />
+        </div>
+
+        <div>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'
+            >Notes spéciales (optionnel)</label
+          >
+          <textarea
+            name='specialNotes'
+            rows='3'
+            placeholder='Ex: Arrêt prévu à mi-parcours, besoins particuliers...'
+            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          ></textarea>
+        </div>
+      </div>
+    </div>
+  </form>
+</TunnelLayout>

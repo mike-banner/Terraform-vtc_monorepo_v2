@@ -1,0 +1,46 @@
+---
+// src/components/tunnels/TunnelProgress.astro
+const { currentStep = 1, totalSteps = 4, color = 'bg-black' } = Astro.props;
+
+const steps = [
+  { number: 1, label: 'Détails du trajet' },
+  { number: 2, label: 'Options & Véhicule' },
+  { number: 3, label: 'Informations client' },
+  { number: 4, label: 'Confirmation' },
+];
+---
+
+<div class='w-full'>
+  <div class='flex justify-between relative'>
+    <!-- Ligne de progression -->
+    <div class='absolute top-4 left-0 right-0 h-0.5 bg-zinc-200 -z-10'></div>
+    <div
+      class={`absolute top-4 left-0 h-0.5 ${color} -z-10 transition-all duration-500`}
+      style={`width: ${((currentStep - 1) / (totalSteps - 1)) * 100}%`}>
+    </div>
+
+    <!-- Étapes -->
+    {
+      steps.slice(0, totalSteps).map((step) => (
+        <div class='flex flex-col items-center relative'>
+          <div
+            class={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300
+            ${
+              step.number < currentStep
+                ? `${color} text-white`
+                : step.number === currentStep
+                  ? `${color} text-white ring-4 ring-black/5`
+                  : 'bg-zinc-200 text-zinc-500'
+            }`}>
+            {step.number}
+          </div>
+          <span
+            class={`mt-2 text-xs font-medium text-center transition-colors duration-300
+            ${step.number <= currentStep ? 'text-zinc-900' : 'text-zinc-500'}`}>
+            {step.label}
+          </span>
+        </div>
+      ))
+    }
+  </div>
+</div>

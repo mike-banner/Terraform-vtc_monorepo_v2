@@ -1,0 +1,57 @@
+---
+// src/components/conception/infoStandarStrategie.astro
+import discretionImg from '../../assets/images/elite-discretion.jpg';
+import disponibiliteImg from '../../assets/images/elite-disponibilite.jpg';
+---
+
+<div class='grid grid-cols-1 md:grid-cols-2 gap-24 items-center'>
+  <div class='order-2 md:order-1'>
+    <div class='grid grid-cols-2 gap-4'>
+      <div
+        class='relative aspect-square flex flex-col items-center justify-center p-8 border-b-2 border-elite-accent overflow-hidden group bg-zinc-900'>
+        <div class="absolute inset-0 bg-cover bg-center opacity-40 transition-transform duration-700 group-hover:scale-105" style={`background-image: url(${discretionImg.src});`}></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+        <div class="relative z-10 text-center">
+          <span class='text-3xl font-headline font-extrabold text-white uppercase'>100%</span>
+          <span class='text-[9px] font-label uppercase tracking-widest text-elite-accent font-bold mt-2 block'>Discrétion</span>
+        </div>
+      </div>
+      <div
+        class='relative aspect-square flex flex-col items-center justify-center p-8 border-b-2 border-elite-accent overflow-hidden group bg-zinc-900'>
+        <div class="absolute inset-0 bg-cover bg-center opacity-40 transition-transform duration-700 group-hover:scale-105" style={`background-image: url(${disponibiliteImg.src});`}></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+        <div class="relative z-10 text-center">
+          <span class='text-3xl font-headline font-extrabold text-white uppercase'>24/7</span>
+          <span class='text-[9px] font-label uppercase tracking-widest text-elite-accent font-bold mt-2 block'>Disponibilité</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='order-1 md:order-2 flex flex-col items-center text-center md:text-left md:items-start'>
+    <span class='text-elite-accent font-label font-bold tracking-[0.3em] uppercase text-[10px]'
+      >Strategic Standard</span
+    >
+    <h2
+      class='text-black font-headline text-4xl md:text-6xl font-extrabold uppercase mt-4 tracking-tighter mb-8'>
+      L'Expérience<br />Elite
+    </h2>
+    <p class='text-black/50 text-base leading-relaxed mb-12 max-w-md mx-auto md:mx-0'>
+      Nous comprenons que chaque trajet est une opportunité critique. Notre protocole d'excellence
+      garantit une exécution sans faille pour vos enjeux de mobilité.
+    </p>
+    <div class='space-y-6 w-full'>
+      <div class='flex flex-col items-center md:flex-row md:items-start gap-3 md:gap-4'>
+        <span class='material-symbols-outlined text-elite-accent'>verified</span>
+        <p class='text-black font-bold text-xs uppercase tracking-widest text-center md:text-left'>
+          Chauffeurs polyglottes & certifiés
+        </p>
+      </div>
+      <div class='flex flex-col items-center md:flex-row md:items-start gap-3 md:gap-4'>
+        <span class='material-symbols-outlined text-elite-accent'>verified</span>
+        <p class='text-black font-bold text-xs uppercase tracking-widest text-center md:text-left'>
+          Protocoles de sécurité VIP
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

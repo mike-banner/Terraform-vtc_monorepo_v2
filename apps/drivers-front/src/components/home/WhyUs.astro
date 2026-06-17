@@ -1,0 +1,49 @@
+---
+// src/components/home/WhyUs.astro
+import { Icon } from 'astro-icon/components';
+
+const benefits = [
+  {
+    icon: "ri:time-line",
+    title: "Gain de temps",
+    description: "Réservation en moins de 60 secondes. Votre chauffeur vous attend, fini les files d'attente interminables."
+  },
+  {
+    icon: "ri:calculator-line",
+    title: "Prix fixe garanti",
+    description: "Transparence totale : le prix est calculé instantanément et ne change plus. Pas de frais cachés ou de taxes surprises."
+  },
+  {
+    icon: "ri:customer-service-2-line",
+    title: "Relation client B2B",
+    description: "Solutions de transport sur-mesure pour les entreprises avec facturation centralisée et support VIP."
+  }
+];
+---
+
+<section class="py-24 bg-white border-b border-zinc-100 font-sans">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-20 max-w-2xl mx-auto">
+      <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-accent mb-4 block">POURQUOI NOUS CHOISIR</span>
+      <h2 class="text-3xl md:text-5xl font-semibold tracking-tight text-zinc-900 leading-tight">
+        L'excellence au service de <br/> <span class="text-zinc-500">votre efficacité</span>
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
+      {benefits.map((b) => (
+        <div class="flex flex-col group p-2 transition-all duration-300">
+          <div class="w-12 h-12 rounded-sm bg-zinc-50 flex items-center justify-center mb-8 group-hover:bg-zinc-900 transition-all duration-300">
+            <Icon name={b.icon} class="text-xl text-black group-hover:text-white transition-colors duration-300" />
+          </div>
+          <h4 class="text-lg font-semibold tracking-tight mb-4 text-zinc-900">
+            {b.title}
+          </h4>
+          <p class="text-zinc-500 text-[15px] font-normal leading-relaxed">
+            {b.description}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

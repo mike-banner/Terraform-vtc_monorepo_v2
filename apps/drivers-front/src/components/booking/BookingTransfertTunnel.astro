@@ -1,0 +1,750 @@
+---
+// src/components/booking/BookingTransfertTunnel.astro
+import { getPricing } from "../../core/pricing";
+import { supabase } from "../../core/supabase";
+import { Icon } from "astro-icon/components";
+
+const { tenant } = Astro.locals;
+const tenantId = tenant?.id || "";
+
+// 1. Récupération des véhicules via la nouvelle fonction RPC
+const { data: vehiclesData } = await supabase.rpc('get_available_vehicles', { p_tenant_id: tenantId });
+const vehicles = vehiclesData || [];
+
+const defaultVehicle = vehicles.length === 1 ? vehicles[0] : null;
+
+// 2. Récupération des zones pour les menus déroulants
+const { data: zones } = await supabase
+  .from('zones')
+  .select('id, name')
+  .eq('tenant_id', tenantId)
+  .order('name');
+
+const pricingRules = await getPricing(tenantId);
+
+// L'inventaire est basé sur les véhicules physiques disponibles
+const hasInventory = vehicles.length > 0;
+---
+
+<div id="booking-tunnel-wrapper"
+     class="w-full font-sans"
+     data-tenant-id={tenant.id}
+     data-default-category={defaultVehicle?.category || ''}
+     data-vehicles-config={JSON.stringify(vehicles)}>
+
+    <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12 items-start">
+
+        <!-- COLONNE GAUCHE : LE FORMULAIRE (2/3) -->
+        <div class="w-full">
+            {/* PROGRESS BAR */}
+            <div class="mb-6 relative max-w-xl mx-auto lg:mx-0">
+              <div class="flex justify-between items-center relative z-10">
+                {[
+                  { id: 1, label: "Itinéraire" },
+                  { id: 2, label: "Coordonnées" },
+                  { id: 3, label: "Confirmation" }
+                ].map((s, idx) => (
+                  <div id={`step-nav-${s.id}`} class={`step-nav flex flex-col items-center gap-2 ${idx === 0 ? 'active' : ''}`}>
+                    <div class={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-[11px] transition-all duration-500 ${idx === 0 ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white text-zinc-300'}`}>
+                      {idx + 1}
+                    </div>
+                    <span class={`text-[9px] font-bold uppercase tracking-[0.2em] ${idx === 0 ? 'text-black' : 'text-zinc-300'}`}>{s.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div class="absolute top-[16px] left-0 w-full h-[1px] bg-zinc-100 -z-0"></div>
+            </div>
+
+            {/* CONTAINER DES ÉTAPES */}
+            <div id="tunnel-container" class="relative group">
+              {!hasInventory ? (
+                <div class="bg-white p-12 border border-zinc-100 shadow-xl rounded-sm text-center">
+                  <Icon name="ri:error-warning-fill" class="text-5xl text-luxe-red mx-auto mb-6" />
+                  <h3 class="text-xl font-black uppercase mb-4">Service momentanément indisponible</h3>
+                  <p class="text-zinc-500 text-sm max-w-md mx-auto leading-relaxed italic">
+                    Aucun véhicule n'est actuellement configuré pour ce chauffeur.
+                    Veuillez réessayer plus tard ou contacter directement le support.
+                  </p>
+                </div>
+              ) : (
+                <div class="relative min-h-[500px] w-full">
+
+                {/* ÉTAPE 1 : ITINÉRAIRE */}
+                <div id="step-1" class="step-card bg-white p-6 md:p-8 border border-zinc-100 shadow-xl rounded-sm transition-all duration-500 ease-out z-[40]">
+                  <h2 class="text-xl font-black uppercase text-black mb-6 border-l-4 border-luxe-red pl-6">Détails de votre course</h2>
+
+                  <div class="flex flex-col lg:flex-row gap-8 items-stretch">
+                    {/* Gauche : Champs de saisie (2/3) */}
+                    <div class="flex-1 lg:flex-[2] space-y-4">
+                      <div class="flex flex-col gap-1.5">
+                        <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Point de prise en charge</label>
+                        <select id="pickup" class="w-full p-3.5 bg-zinc-50 border border-zinc-100 text-black text-sm focus:ring-1 focus:ring-black rounded-sm outline-none transition-all appearance-none cursor-pointer">
+                          <option value="" disabled selected>Choisir un lieu...</option>
+                          {zones?.map(z => <option value={z.name}>{z.name}</option>)}
+                        </select>
+                        <input type="text" id="pickup-precise" placeholder="N°, rue, 75xxx Paris..." class="hidden w-full mt-2 p-3 bg-white border border-luxe-red text-black text-xs focus:ring-1 focus:ring-black rounded-sm outline-none transition-all" />
+                        <div id="error-pickup" class="error-msg text-luxe-red text-[9px] font-bold uppercase mt-1 hidden">Veuillez préciser l'adresse (CP 75xxx requis)</div>
+                      </div>
+                      <div class="flex flex-col gap-1.5">
+                        <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Destination</label>
+                        <select id="destination" class="w-full p-3.5 bg-zinc-50 border border-zinc-100 text-black text-sm focus:ring-1 focus:ring-black rounded-sm outline-none transition-all appearance-none cursor-pointer">
+                          <option value="" disabled selected>Choisir une destination...</option>
+                          {zones?.map(z => <option value={z.name}>{z.name}</option>)}
+                        </select>
+                        <input type="text" id="destination-precise" placeholder="N°, rue, 75xxx Paris..." class="hidden w-full mt-2 p-3 bg-white border border-luxe-red text-black text-xs focus:ring-1 focus:ring-black rounded-sm outline-none transition-all" />
+                        <div id="error-destination" class="error-msg text-luxe-red text-[9px] font-bold uppercase mt-1 hidden">Veuillez préciser l'adresse de destination (CP 75xxx requis)</div>
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                          <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Date</label>
+                          <input type="date" id="date" class="w-full p-3.5 bg-zinc-50 border border-zinc-100 text-black text-sm focus:ring-1 focus:ring-black rounded-sm outline-none" />
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                          <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Heure</label>
+                          <input type="time" id="time" class="w-full p-3.5 bg-zinc-50 border border-zinc-100 text-black text-sm focus:ring-1 focus:ring-black rounded-sm outline-none" />
+                        </div>
+                      </div>
+                      <div id="error-itinerary" class="error-msg text-luxe-red text-[9px] font-bold uppercase mt-1 hidden">Veuillez choisir une date et une heure valides.</div>
+                    </div>
+
+                    {/* Droite : Prix et Bouton (1/3) */}
+                    <div class="flex-1 lg:max-w-xs flex flex-col justify-between">
+                      <div class="bg-black p-6 rounded-sm border-l-4 border-luxe-red shadow-xl mb-4 h-full flex flex-col justify-center">
+                        <span id="price-status" class="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 block mb-1">Estimation immédiate</span>
+                        <div class="flex items-baseline gap-2">
+                          <h3 id="price-display" class="text-3xl font-black text-white italic">-- €</h3>
+                          <div id="price-loader" class="hidden">
+                             <span class="loading loading-dots loading-xs text-luxe-red"></span>
+                          </div>
+                        </div>
+                        <span class="text-[8px] font-bold text-luxe-red uppercase tracking-widest mt-2">Prix fixe garanti</span>
+                      </div>
+
+                      <button id="btn-next-1" class="w-full py-5 bg-black text-white font-bold uppercase tracking-[0.3em] text-[10px] hover:bg-luxe-red transition-all shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Suivant →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ÉTAPE 2 : COORDONNÉES & VÉHICULE */}
+                <div id="step-2" class="step-card absolute inset-0 opacity-0 pointer-events-none bg-white p-6 md:p-8 border border-zinc-100 shadow-xl rounded-sm transition-all duration-500 ease-out z-[20]">
+                    <h2 class="text-xl font-black uppercase text-black mb-8 border-l-4 border-luxe-red pl-6">Véhicule et Coordonnées</h2>
+
+                    {/* CHOIX DU VÉHICULE */}
+                    <div class="mb-8 p-4 bg-zinc-50 border border-zinc-100 rounded-sm">
+                        <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400 block mb-3">Sélection du véhicule</label>
+                        {vehicles.length > 1 ? (
+                          <div class="relative">
+                            <select id="vehicle-select" class="w-full p-4 bg-white border border-zinc-200 text-sm font-black uppercase rounded-sm outline-none appearance-none cursor-pointer pr-10">
+                              {vehicles.map((v: any) => (
+                                <option value={v.id} data-category={v.category} data-capacity={v.capacity}>
+                                  {v.brand} {v.model} — {v.category.toUpperCase()} (Max {v.capacity} Pers.)
+                                </option>
+                              ))}
+                            </select>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                              <Icon name="ri:arrow-down-s-line" class="text-zinc-300 text-xl" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div class="p-4 bg-white border border-zinc-200 rounded-sm flex justify-between items-center">
+                             <div>
+                               <p class="text-xs font-black uppercase text-black">{vehicles[0]?.brand} {vehicles[0]?.model}</p>
+                               <p class="text-[9px] font-bold text-zinc-500 italic mt-1 uppercase tracking-widest">{vehicles[0]?.category} • Capacité max {vehicles[0]?.capacity} passagers</p>
+                             </div>
+                             <Icon name="ri:checkbox-circle-fill" class="text-luxe-red text-xl" />
+                          </div>
+                        )}
+                        <input type="hidden" id="selected-category" value={vehicles[0]?.category || ''} />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2 col-span-1">
+                            <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Prénom</label>
+                            <input type="text" id="firstName" placeholder="Prénom" class="w-full p-4 bg-zinc-50 border border-zinc-100 text-black text-sm focus:ring-1 focus:ring-black outline-none" />
+                        </div>
+                        <div class="flex flex-col gap-2 col-span-1">
+                            <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Nom</label>
+                            <input type="text" id="lastName" placeholder="Nom" class="w-full p-4 bg-zinc-50 border border-zinc-100 text-black text-sm focus:ring-1 focus:ring-black outline-none" />
+                        </div>
+                    </div>
+                    <div class="mt-6 flex flex-col gap-2">
+                        <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Adresse Email</label>
+                        <input type="email" id="email" placeholder="votre@email.com" class="w-full p-4 bg-zinc-50 border border-zinc-100 text-black text-sm focus:ring-1 focus:ring-black outline-none" />
+                    </div>
+                    <div class="mt-6 flex flex-col gap-2">
+                        <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Numéro de Téléphone</label>
+                        <div class="flex gap-2">
+                            <select id="phone-prefix" class="w-28 p-4 bg-zinc-50 border border-zinc-100 text-black text-xs font-bold rounded-sm outline-none appearance-none cursor-pointer">
+                                <option value="+33">🇫🇷 +33</option>
+                                <option value="+41">🇨🇭 +41</option>
+                                <option value="+32">🇧🇪 +32</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+1">🇺🇸 +1</option>
+                            </select>
+                            <input type="tel" id="phone" placeholder="6 00 00 00 00" class="flex-1 p-4 bg-zinc-50 border border-zinc-100 text-black text-sm focus:ring-1 focus:ring-black outline-none" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6 mt-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Passagers</label>
+                            <div class="flex items-center gap-4 bg-zinc-100 border border-zinc-200 p-2 rounded-sm relative">
+                                <button type="button" id="pass-down" class="w-10 h-10 flex items-center justify-center bg-white border border-zinc-300 text-black font-black hover:bg-black hover:text-white transition-all rounded-sm">-</button>
+                                <input type="number" id="passengers" value="1" min="1" max="8" class="flex-1 bg-transparent text-center font-black text-xl text-black outline-none cursor-default" readonly />
+                                <button type="button" id="pass-up" class="w-10 h-10 flex items-center justify-center bg-white border border-zinc-300 text-black font-black hover:bg-black hover:text-white transition-all rounded-sm">+</button>
+                            </div>
+                            <div id="capacity-alert" class="hidden text-[8px] font-bold text-red-600 uppercase mt-1 italic animate-pulse">Capacité max du véhicule atteinte !</div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Bagages</label>
+                            <div class="flex items-center gap-4 bg-zinc-100 border border-zinc-200 p-2 rounded-sm relative">
+                                <button type="button" id="lugg-down" class="w-10 h-10 flex items-center justify-center bg-white border border-zinc-300 text-black font-black hover:bg-black hover:text-white transition-all rounded-sm">-</button>
+                                <input type="number" id="luggage" value="0" min="0" max="10" class="flex-1 bg-transparent text-center font-black text-xl text-black outline-none cursor-default" readonly />
+                                <button type="button" id="lugg-up" class="w-10 h-10 flex items-center justify-center bg-white border border-zinc-300 text-black font-black hover:bg-black hover:text-white transition-all rounded-sm">+</button>
+                            </div>
+                            <div id="luggage-alert" class="hidden text-[8px] font-bold text-red-600 uppercase mt-1 italic animate-pulse">Espace bagages saturé !</div>
+                        </div>
+                    </div>
+
+                    <div id="error-contact" class="error-msg text-luxe-red text-[9px] font-bold uppercase mt-4 hidden text-center bg-red-50 p-2 border border-red-100 italic">Veuillez remplir tous les champs correctement.</div>
+
+                    <div class="flex gap-4 mt-8">
+                        <button id="btn-back-2" class="flex-1 py-5 border border-zinc-200 text-zinc-400 font-bold uppercase tracking-[0.2em] text-[10px] hover:bg-zinc-50 transition-all rounded-sm">
+                            ← Retour
+                        </button>
+                        <button id="btn-next-2" class="flex-1 py-5 bg-black text-white font-bold uppercase tracking-[0.3em] text-[11px] hover:bg-luxe-red transition-all shadow-xl rounded-sm">
+                            Confirmation →
+                        </button>
+                    </div>
+                </div>
+
+                {/* ÉTAPE 3 : CONFIRMATION */}
+                <div id="step-3" class="step-card absolute inset-0 opacity-0 pointer-events-none bg-white p-6 md:p-8 border border-zinc-100 shadow-xl rounded-sm transition-all duration-500 ease-out z-[10]">
+                    <h2 class="text-xl font-black uppercase text-black mb-8 border-l-4 border-luxe-red pl-6">Validation finale</h2>
+
+                    <div class="space-y-4 mb-8">
+                        {/* BLOC TRAJET */}
+                        <div class="bg-zinc-50 p-5 border-l-4 border-black">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block mb-2">Itinéraire & Timing</span>
+                            <div class="flex flex-col gap-1">
+                                <p id="recap-route" class="text-sm font-black uppercase text-black">--</p>
+                                <p id="recap-datetime" class="text-[10px] font-bold text-zinc-500 italic">--</p>
+                            </div>
+                        </div>
+
+                        {/* BLOC VEHICULE & PASSAGERS */}
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-zinc-50 p-5 border-l-4 border-luxe-red">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block mb-2">Véhicule</span>
+                                <p id="recap-category" class="text-sm font-black uppercase text-black">--</p>
+                                <p id="recap-capacity-info" class="text-[10px] font-bold text-luxe-red mt-1 hidden">Capacité insuffisante</p>
+                            </div>
+                            <div class="bg-zinc-50 p-5 border-l-4 border-zinc-300">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block mb-2">Passagers & Bagages</span>
+                                <p id="recap-passengers" class="text-sm font-black uppercase text-black">--</p>
+                            </div>
+                        </div>
+
+                        {/* BLOC CLIENT */}
+                        <div class="bg-zinc-50 p-5 border-l-4 border-zinc-200">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-zinc-400 block mb-2">Contact</span>
+                            <div class="flex flex-col gap-1 text-xs font-bold uppercase">
+                                <p id="recap-client-name" class="text-black">--</p>
+                                <p id="recap-client-contact" class="text-zinc-500 text-[10px]">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-black text-white rounded-sm mb-8">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="uppercase text-[9px] font-bold tracking-[0.3em] text-white/40 block mb-1">Total à régler</span>
+                                <span id="recap-price" class="text-3xl font-black text-luxe-red italic">-- €</span>
+                            </div>
+                            <button id="final-submit-btn" class="px-8 py-5 bg-luxe-red text-white font-black uppercase tracking-[0.3em] text-[10px] hover:brightness-110 transition-all shadow-xl active:scale-95">
+                                Confirmer →
+                            </button>
+                            <div id="submit-loader" class="hidden px-8 py-5 flex justify-center">
+                                <span class="loading loading-spinner text-white"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-back-3" class="mt-8 w-full py-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-black transition-colors">
+                        ← Modifier mes informations
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+  import { supabase } from "../../core/supabase";
+import { calculateTripPrice } from "../../lib/pricing-engine";
+
+  let currentStep = 1;
+  const totalSteps = 3;
+  let estimatedPrice = 0;
+
+  const wrapper = document.getElementById('booking-tunnel-wrapper');
+  const tenantId = wrapper?.dataset.tenantId || "";
+
+  const dom = {
+    pickup: document.getElementById('pickup') as HTMLSelectElement,
+    pickupPrecise: document.getElementById('pickup-precise') as HTMLInputElement,
+    destination: document.getElementById('destination') as HTMLSelectElement,
+    destinationPrecise: document.getElementById('destination-precise') as HTMLInputElement,
+    date: document.getElementById('date') as HTMLInputElement,
+    time: document.getElementById('time') as HTMLInputElement,
+    category: document.getElementById('selected-category') as HTMLInputElement,
+
+    priceDisplay: document.getElementById('price-display') as HTMLElement,
+    priceStatus: document.getElementById('price-status') as HTMLElement,
+    priceLoader: document.getElementById('price-loader') as HTMLElement,
+
+    btnNext1: document.getElementById('btn-next-1') as HTMLButtonElement,
+    btnBack2: document.getElementById('btn-back-2') as HTMLButtonElement,
+    btnNext2: document.getElementById('btn-next-2') as HTMLButtonElement,
+    btnBack3: document.getElementById('btn-back-3') as HTMLButtonElement,
+
+    firstName: document.getElementById('firstName') as HTMLInputElement,
+    lastName: document.getElementById('lastName') as HTMLInputElement,
+    email: document.getElementById('email') as HTMLInputElement,
+    phonePrefix: document.getElementById('phone-prefix') as HTMLSelectElement,
+    phone: document.getElementById('phone') as HTMLInputElement,
+    passengers: document.getElementById('passengers') as HTMLInputElement,
+    luggage: document.getElementById('luggage') as HTMLInputElement,
+
+    finalBtn: document.getElementById('final-submit-btn') as HTMLButtonElement,
+    finalLoader: document.getElementById('submit-loader') as HTMLElement,
+
+    recapRoute: document.getElementById('recap-route') as HTMLElement,
+    recapDateTime: document.getElementById('recap-datetime') as HTMLElement,
+    recapCategory: document.getElementById('recap-category') as HTMLElement,
+    recapCapacityInfo: document.getElementById('recap-capacity-info') as HTMLElement,
+    recapPassengers: document.getElementById('recap-passengers') as HTMLElement,
+    recapClientName: document.getElementById('recap-client-name') as HTMLElement,
+    recapClientContact: document.getElementById('recap-client-contact') as HTMLElement,
+    recapPrice: document.getElementById('recap-price') as HTMLElement,
+
+    errors: document.querySelectorAll('.error-msg'),
+    capacityAlert: document.getElementById('capacity-alert'),
+    luggageAlert: document.getElementById('luggage-alert'),
+    vehicleBtns: document.querySelectorAll('.vehicle-select-btn'),
+  };
+
+  const vehiclesConfig = JSON.parse(wrapper?.dataset.vehiclesConfig || "[]") || [];
+
+  // --- CAPACITÉ & VÉHICULE ---
+  function getSelectedVehicleSpecs() {
+    const select = document.getElementById('vehicle-select') as HTMLSelectElement;
+    let v: any = null;
+
+    if (select) {
+        v = vehiclesConfig.find((x: any) => x.id === select.value);
+    } else {
+        v = vehiclesConfig[0];
+    }
+
+    const cat = v?.category || 'berline';
+    return {
+        category: cat,
+        capacity: v?.capacity || 4,
+        luggage: cat.toLowerCase().includes('van') ? 8 : 3,
+        name: v ? `${v.brand} ${v.model}` : cat
+    };
+  }
+
+  function validateCapacity() {
+    const specs = getSelectedVehicleSpecs();
+    const p = parseInt(dom.passengers.value);
+    const l = parseInt(dom.luggage.value);
+
+    let ok = true;
+
+    // Affichage inline des alertes si limite atteinte
+    if (p >= specs.capacity) {
+        dom.capacityAlert?.classList.remove('hidden');
+    } else {
+        dom.capacityAlert?.classList.add('hidden');
+    }
+
+    if (l >= specs.luggage) {
+        dom.luggageAlert?.classList.remove('hidden');
+    } else {
+        dom.luggageAlert?.classList.add('hidden');
+    }
+
+    if (p > specs.capacity || l > specs.luggage) ok = false;
+    return ok;
+  }
+
+  function updateCounterVisuals() {
+    const specs = getSelectedVehicleSpecs();
+    const p = parseInt(dom.passengers.value);
+    const l = parseInt(dom.luggage.value);
+
+    const btnPassUp = document.getElementById('pass-up');
+    const btnLuggUp = document.getElementById('lugg-up');
+
+    if (btnPassUp) {
+        if (p >= specs.capacity) btnPassUp.classList.add('opacity-30');
+        else btnPassUp.classList.remove('opacity-30');
+    }
+    if (btnLuggUp) {
+        if (l >= specs.luggage) btnLuggUp.classList.add('opacity-30');
+        else btnLuggUp.classList.remove('opacity-30');
+    }
+  }
+
+  function updateCounterLimits() {
+    const specs = getSelectedVehicleSpecs();
+    const p = parseInt(dom.passengers.value);
+    const l = parseInt(dom.luggage.value);
+
+    if (p > specs.capacity) dom.passengers.value = specs.capacity.toString();
+    if (l > specs.luggage) dom.luggage.value = specs.luggage.toString();
+
+    validateCapacity();
+    updateCounterVisuals();
+  }
+
+  document.getElementById('vehicle-select')?.addEventListener('change', () => {
+      const specs = getSelectedVehicleSpecs();
+      dom.category.value = specs.category;
+      updatePrice();
+      updateCounterLimits();
+  });
+
+  document.getElementById('pass-up')?.addEventListener('click', () => {
+    const specs = getSelectedVehicleSpecs();
+    if (parseInt(dom.passengers.value) < specs.capacity) {
+        dom.passengers.stepUp();
+    } else {
+        dom.capacityAlert?.classList.remove('hidden');
+    }
+    validateCapacity();
+    updateCounterVisuals();
+  });
+  document.getElementById('pass-down')?.addEventListener('click', () => {
+    dom.passengers.stepDown();
+    validateCapacity();
+    updateCounterVisuals();
+  });
+
+  document.getElementById('lugg-up')?.addEventListener('click', () => {
+    const specs = getSelectedVehicleSpecs();
+    if (parseInt(dom.luggage.value) < specs.luggage) {
+        dom.luggage.stepUp();
+    } else {
+        dom.luggageAlert?.classList.remove('hidden');
+    }
+    validateCapacity();
+    updateCounterVisuals();
+  });
+  document.getElementById('lugg-down')?.addEventListener('click', () => { dom.luggage.stepDown(); validateCapacity(); updateCounterVisuals(); });
+
+  // --- LOGIQUE ERREURS ---
+  function showError(id: string, msg?: string) {
+    const el = document.getElementById(`error-${id}`);
+    if (el) {
+        if (msg) el.textContent = msg;
+        el.classList.remove('hidden');
+    }
+  }
+
+  function hideAllErrors() {
+    dom.errors.forEach((el: any) => el.classList.add('hidden'));
+  }
+
+  // --- LOGIQUE PRIX ---
+  let priceTimeout: any = null;
+
+  function togglePreciseInputs() {
+    if (!dom.pickup || !dom.pickupPrecise || !dom.destination || !dom.destinationPrecise) return;
+
+    const p = dom.pickup.value.toLowerCase();
+    const d = dom.destination.value.toLowerCase();
+
+    // On affiche l'adresse précise pour tout ce qui n'est pas un hub (Aéroport/Gare)
+    const isStationOrAirport = (val: string) => {
+      const v = val.toLowerCase();
+      return v.includes('cdg') || v.includes('orly') || v.includes('st exupéry') ||
+             v.includes('st-exupéry') || v.includes('aéroport') || v.includes('gare') || v.includes('disney');
+    };
+
+    if (p && !isStationOrAirport(p)) {
+      dom.pickupPrecise.classList.remove('hidden');
+    } else {
+      dom.pickupPrecise.classList.add('hidden');
+      dom.pickupPrecise.value = "";
+    }
+
+    if (d && !isStationOrAirport(d)) {
+      dom.destinationPrecise.classList.remove('hidden');
+    } else {
+      dom.destinationPrecise.classList.add('hidden');
+      dom.destinationPrecise.value = "";
+    }
+  }
+
+  async function updatePrice() {
+    togglePreciseInputs();
+    const p = dom.pickup.value;
+    const d = dom.destination.value;
+    const cat = dom.category.value;
+
+    if (!p || !d) {
+      dom.priceDisplay.textContent = "-- €";
+      dom.priceStatus.textContent = "Itinéraire requis";
+      dom.btnNext1.disabled = true;
+      return;
+    }
+
+    dom.priceStatus.classList.remove('text-luxe-red');
+    dom.btnNext1.disabled = false;
+    dom.priceDisplay.classList.add('hidden');
+    dom.priceLoader.classList.remove('hidden');
+
+    try {
+      const price = await calculateTripPrice(p, d, cat, tenantId);
+      dom.priceLoader.classList.add('hidden');
+      dom.priceDisplay.classList.remove('hidden');
+      if (price) {
+        estimatedPrice = price;
+        dom.priceDisplay.textContent = `${price} €`;
+        dom.priceStatus.textContent = "Tarif garanti";
+        dom.priceStatus.classList.add('text-success');
+      } else {
+        estimatedPrice = 0;
+        dom.priceDisplay.textContent = "Sur devis";
+        dom.priceStatus.textContent = "Libre estimation";
+      }
+    } catch (e) {
+      dom.priceLoader.classList.add('hidden');
+      dom.priceDisplay.classList.remove('hidden');
+      dom.priceDisplay.textContent = "Erreur";
+    }
+  }
+
+  dom.pickup?.addEventListener('change', updatePrice);
+  dom.destination?.addEventListener('change', updatePrice);
+
+  // --- NAVIGATION ---
+  function goToStep(step: number) {
+    if (step === currentStep || step < 1 || step > totalSteps) return;
+
+    for (let s = 1; s <= totalSteps; s++) {
+        const el = document.getElementById(`step-${s}`);
+        if (!el) continue;
+        if (s === step) {
+            el.classList.remove('absolute', 'opacity-0', 'pointer-events-none', 'hidden');
+            el.style.opacity = "1";
+            el.style.transform = "translateY(0)";
+            el.style.zIndex = "40";
+        } else {
+            el.classList.add('absolute', 'pointer-events-none');
+            el.style.opacity = "0";
+            el.style.zIndex = "10";
+        }
+    }
+
+    updateNav(step);
+    currentStep = step;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateNav(step: number) {
+    const activeSteps = [1, 2, 3];
+    const currentIndex = activeSteps.indexOf(step);
+    activeSteps.forEach((s, idx) => {
+        const nav = document.getElementById(`step-nav-${s}`);
+        if(!nav) return;
+        const circle = nav.querySelector('div');
+        const label = nav.querySelector('span');
+        if (idx <= currentIndex) {
+            circle?.classList.remove('border-zinc-200', 'bg-white', 'text-zinc-300');
+            circle?.classList.add('border-black', 'bg-black', 'text-white');
+            label?.classList.add('text-black');
+        } else {
+            circle?.classList.remove('border-black', 'bg-black', 'text-white');
+            circle?.classList.add('border-zinc-200', 'bg-white', 'text-zinc-300');
+            label?.classList.remove('text-black');
+        }
+    });
+  }
+
+  dom.btnNext1?.addEventListener('click', () => {
+    hideAllErrors();
+    if (!dom.date.value || !dom.time.value) { showError('itinerary'); return; }
+
+    const isParis = (val: string) => val.toLowerCase().includes('paris');
+    const parisRegex = /75\d{3}/;
+
+    if (!dom.pickupPrecise.classList.contains('hidden')) {
+        if (!dom.pickupPrecise.value) { showError('pickup', "Veuillez préciser l'adresse"); return; }
+        if (isParis(dom.pickup.value) && !parisRegex.test(dom.pickupPrecise.value)) {
+            showError('pickup', "Code postal 75xxx requis pour Paris"); return;
+        }
+    }
+    if (!dom.destinationPrecise.classList.contains('hidden')) {
+        if (!dom.destinationPrecise.value) { showError('destination', "Veuillez préciser l'adresse"); return; }
+        if (isParis(dom.destination.value) && !parisRegex.test(dom.destinationPrecise.value)) {
+            showError('destination', "Code postal 75xxx requis pour Paris"); return;
+        }
+    }
+    goToStep(2);
+  });
+
+  dom.btnBack2?.addEventListener('click', () => goToStep(1));
+  dom.btnNext2?.addEventListener('click', () => {
+    hideAllErrors();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!dom.firstName.value || !dom.lastName.value || !dom.email.value || !dom.phone.value) { showError('contact'); return; }
+    if (!emailRegex.test(dom.email.value)) { showError('contact', "Email invalide"); return; }
+    if (!validateCapacity()) { window.scrollTo({ top: dom.passengers.offsetTop - 100, behavior: 'smooth' }); return; }
+    updateSummary();
+    goToStep(3);
+  });
+
+  dom.btnBack3?.addEventListener('click', () => goToStep(2));
+
+  function updateSummary() {
+    const specs = getSelectedVehicleSpecs();
+    const pickupFull = dom.pickupPrecise.value ? `${dom.pickup.value} (${dom.pickupPrecise.value})` : dom.pickup.value;
+    const destFull = dom.destinationPrecise.value ? `${dom.destination.value} (${dom.destinationPrecise.value})` : dom.destination.value;
+
+    dom.recapRoute.textContent = `${pickupFull} ➔ ${destFull}`;
+    dom.recapDateTime.textContent = `${dom.date.value} à ${dom.time.value}`;
+    dom.recapCategory.textContent = specs.name;
+    dom.recapPassengers.textContent = `${dom.passengers.value} Passager(s), ${dom.luggage.value} Bagage(s)`;
+    dom.recapClientName.textContent = `${dom.firstName.value} ${dom.lastName.value}`;
+    dom.recapClientContact.textContent = `${dom.phonePrefix.value}${dom.phone.value} | ${dom.email.value}`;
+    dom.recapPrice.textContent = estimatedPrice > 0 ? `${estimatedPrice} €` : "Sur devis";
+  }
+
+dom.finalBtn?.addEventListener("click", async () => {
+
+  dom.finalBtn.classList.add("hidden");
+  dom.finalLoader.classList.remove("hidden");
+
+  try {
+
+    const total = estimatedPrice;
+
+    const pickupAddress = dom.pickupPrecise.value
+      ? `${dom.pickup.value} (${dom.pickupPrecise.value})`
+      : dom.pickup.value;
+
+    const dropoffAddress = dom.destinationPrecise.value
+      ? `${dom.destination.value} (${dom.destinationPrecise.value})`
+      : dom.destination.value;
+
+    const bookingTime = new Date(
+      `${dom.date.value}T${dom.time.value}`
+    ).toISOString();
+
+
+    const { data, error } =
+      await supabase.functions.invoke(
+        "create_checkout_session",
+        {
+          body: {
+
+            tenant_id: tenantId,
+
+            customer_data: {
+              email: dom.email.value,
+              first_name: dom.firstName.value,
+              last_name: dom.lastName.value,
+              phone: `${dom.phonePrefix.value}${dom.phone.value}`,
+            },
+
+            booking_data: {
+
+              tenant_id: tenantId,
+
+              pickup_address: pickupAddress,
+              dropoff_address: dropoffAddress,
+              pickup_time: bookingTime,
+
+              vehicle_id: vehiclesConfig[0]?.id,
+
+              total_amount: total,
+
+              passengers: parseInt(dom.passengers.value),
+              luggage: parseInt(dom.luggage.value),
+
+              type: "transfer"
+
+            }
+
+          },
+        }
+      );
+
+
+    if (error || !data?.url) {
+      throw new Error(error?.message || "checkout error");
+    }
+
+    window.location.href = data.url;
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert("Erreur lors de la réservation.");
+
+    dom.finalBtn.classList.remove("hidden");
+    dom.finalLoader.classList.add("hidden");
+
+  }
+
+});
+
+  window.addEventListener('load', () => {
+    updateNav(1);
+    togglePreciseInputs();
+    updateCounterLimits();
+
+    // Pré-remplissage via URL params (depuis le Hero)
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('pickup');
+    const d = params.get('dropoff');
+    const c = params.get('category');
+
+    if (p) {
+        // On cherche une zone qui correspond ou on met en précis si possible
+        const options = Array.from(dom.pickup.options).map(o => o.value);
+        if (options.includes(p)) {
+            dom.pickup.value = p;
+        } else {
+            // Fallback: on peut essayer de mettre "autre" ou un mode manuel si existant?
+            // Pour l'instant on ne fait rien si pas dans la liste des zones prédéfinies
+        }
+    }
+    if (d) {
+        if (Array.from(dom.destination.options).map(o => o.value).includes(d)) {
+            dom.destination.value = d;
+        }
+    }
+    if (c) {
+       dom.category.value = c;
+    }
+
+    if (p || d) updatePrice();
+  });
+</script>
+
+<style>
+  .step-card {
+      will-change: transform, opacity;
+  }
+</style>

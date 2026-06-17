@@ -1,0 +1,177 @@
+---
+// src/components/booking/BookingHeroSlim.astro
+import { getPricing } from "../../core/pricing";
+import { Icon } from "astro-icon/components";
+
+const { tenant } = Astro.locals;
+const tenantId = tenant?.id || "";
+const pricingRules = await getPricing(tenantId);
+
+const categories = pricingRules && pricingRules.length > 0 ? pricingRules : [
+  { service_category: "Berline Business", base_price: 95, minimum_fare: 95 },
+  { service_category: "Van (V-Class)", base_price: 145, minimum_fare: 145 }
+];
+---
+
+<div id="smart-booking-container" data-tenant-id={tenantId} class="w-full bg-white shadow-2xl rounded-xl p-4 md:p-6 border border-zinc-100 font-sans">
+  <div class="flex flex-col lg:flex-row items-center gap-4 lg:gap-2">
+
+    <!-- Pickup -->
+    <div class="w-full lg:flex-1 relative group">
+      <label class="absolute -top-2 left-4 bg-white px-2 text-[9px] font-black uppercase tracking-widest text-zinc-400 group-focus-within:text-black transition-colors z-10">Départ</label>
+      <div class="flex items-center bg-zinc-50 border border-zinc-100 focus-within:border-black rounded-lg transition-all">
+        <div class="pl-4 text-zinc-400">
+          <Icon name="ri:map-pin-2-fill" class="w-4 h-4" />
+        </div>
+        <input
+          type="text"
+          id="pickup-smart"
+          placeholder="Adresse de départ..."
+          class="w-full p-4 bg-transparent text-black text-sm outline-none placeholder:text-zinc-300 font-medium"
+        />
+      </div>
+    </div>
+
+    <!-- Arrow (Desktop only) -->
+    <div class="hidden lg:block text-zinc-200">
+      <Icon name="ri:arrow-right-line" class="w-5 h-5" />
+    </div>
+
+    <!-- Dropoff -->
+    <div class="w-full lg:flex-1 relative group">
+      <label class="absolute -top-2 left-4 bg-white px-2 text-[9px] font-black uppercase tracking-widest text-zinc-400 group-focus-within:text-black transition-colors z-10">Arrivée</label>
+      <div class="flex items-center bg-zinc-50 border border-zinc-100 focus-within:border-black rounded-lg transition-all">
+        <div class="pl-4 text-zinc-400">
+          <Icon name="ri:map-pin-user-fill" class="w-4 h-4" />
+        </div>
+        <input
+          type="text"
+          id="dropoff-smart"
+          placeholder="Destination..."
+          class="w-full p-4 bg-transparent text-black text-sm outline-none placeholder:text-zinc-300 font-medium"
+        />
+      </div>
+    </div>
+
+    <!-- Category -->
+    <div class="w-full lg:w-48 relative group">
+        <label class="absolute -top-2 left-4 bg-white px-2 text-[9px] font-black uppercase tracking-widest text-zinc-400 group-focus-within:text-black transition-colors z-10">Véhicule</label>
+        <div class="flex items-center bg-zinc-50 border border-zinc-100 focus-within:border-black rounded-lg transition-all">
+            <select id="category-smart" class="w-full p-4 bg-transparent text-black text-sm outline-none font-black appearance-none cursor-pointer">
+                {categories.map((c) => (
+                    <option value={c.service_category}>{c.service_category}</option>
+                ))}
+            </select>
+            <div class="pr-4 pointer-events-none absolute right-0">
+                <Icon name="ri:arrow-down-s-line" class="w-4 h-4 text-zinc-400" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Section -->
+    <div class="w-full lg:w-48 flex flex-col items-center justify-center px-4">
+        <span id="price-status" class="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1">Prix Estimé</span>
+        <div class="flex items-baseline gap-1">
+            <span id="price-display" class="text-2xl font-black text-black">--</span>
+            <span id="price-currency" class="text-sm font-black text-black hidden">€</span>
+        </div>
+        <div id="price-loader" class="hidden">
+           <span class="loading loading-dots loading-xs text-zinc-300"></span>
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <button id="btn-submit-smart" class="w-full lg:w-auto px-10 py-5 bg-black text-white font-black uppercase tracking-[0.2em] text-[10px] hover:bg-luxe-red transition-all shadow-xl rounded-lg whitespace-nowrap active:scale-95">
+      Réserver
+    </button>
+
+  </div>
+</div>
+
+<script>
+  import { calculateTripPrice } from "../../lib/pricing-engine";
+
+  const container = document.getElementById('smart-booking-container');
+  const tenantId = container?.dataset.tenantId || "";
+
+  const pickupInput = document.getElementById('pickup-smart') as HTMLInputElement;
+  const dropoffInput = document.getElementById('dropoff-smart') as HTMLInputElement;
+  const categorySelect = document.getElementById('category-smart') as HTMLSelectElement;
+  const btnSubmit = document.getElementById('btn-submit-smart');
+  const priceDisplay = document.getElementById('price-display');
+  const priceCurrency = document.getElementById('price-currency');
+  const priceStatus = document.getElementById('price-status');
+  const priceLoader = document.getElementById('price-loader');
+
+  let timeout: any = null;
+
+  async function updatePrice() {
+    const pickup = pickupInput.value;
+    const dropoff = dropoffInput.value;
+    const category = categorySelect.value;
+
+    if (pickup.length < 3 || dropoff.length < 3) {
+      priceDisplay!.textContent = "--";
+      priceCurrency!.classList.add('hidden');
+      priceStatus!.textContent = "Itinéraire requis";
+      return;
+    }
+
+    // Show Loader
+    priceDisplay!.classList.add('hidden');
+    priceCurrency!.classList.add('hidden');
+    priceLoader!.classList.remove('hidden');
+    priceStatus!.textContent = "Calcul en cours...";
+
+    try {
+      const price = await calculateTripPrice(pickup, dropoff, category, tenantId);
+
+      priceLoader!.classList.add('hidden');
+      priceDisplay!.classList.remove('hidden');
+
+      if (price) {
+        priceDisplay!.textContent = price.toString();
+        priceCurrency!.classList.remove('hidden');
+        priceStatus!.textContent = "Tarif Garanti";
+        priceStatus!.classList.remove('text-zinc-400');
+        priceStatus!.classList.add('text-success');
+      } else {
+        priceDisplay!.textContent = "--";
+        priceStatus!.textContent = "Sur demande";
+        priceStatus!.classList.remove('text-success');
+        priceStatus!.classList.add('text-zinc-400');
+      }
+    } catch (e) {
+      console.error(e);
+      priceLoader!.classList.add('hidden');
+      priceDisplay!.classList.remove('hidden');
+      priceStatus!.textContent = "Erreur calcul";
+    }
+  }
+
+  // Debounce Logic
+  function handleInput() {
+    clearTimeout(timeout);
+    timeout = setTimeout(updatePrice, 400); // 400ms debounce as requested (approx 300ms + margin)
+  }
+
+  pickupInput?.addEventListener('input', handleInput);
+  dropoffInput?.addEventListener('input', handleInput);
+  categorySelect?.addEventListener('change', updatePrice);
+
+  btnSubmit?.addEventListener('click', () => {
+    const pickup = encodeURIComponent(pickupInput.value);
+    const dropoff = encodeURIComponent(dropoffInput.value);
+    const category = encodeURIComponent(categorySelect.value);
+
+    // Redirection vers la page de booking avec les pré-remplissages
+    window.location.href = `/booking-transfert?pickup=${pickup}&dropoff=${dropoff}&category=${category}`;
+  });
+</script>
+
+<style>
+  /* Custom Focus Transitions */
+  input:focus + label {
+    color: black;
+  }
+</style>

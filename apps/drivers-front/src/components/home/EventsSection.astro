@@ -1,0 +1,74 @@
+---
+// src/components/home/EventsSection.astro
+import { Icon } from 'astro-icon/components';
+
+const eventTypes = [
+  {
+    title: "Séminaires & Galas",
+    icon: "ri:vip-diamond-line",
+    desc: "Une logistique irréprochable pour vos convives de prestige lors de vos événements corporate.",
+    color: "bg-blue-500/10 text-blue-500"
+  },
+  {
+    title: "Fashion Week & Showrooms",
+    icon: "ri:shirt-line",
+    desc: "Mise à disposition flexible pour accompagner vos invités d'un défilé à l'autre.",
+    color: "bg-purple-500/10 text-purple-500"
+  },
+  {
+    title: "Mariages & Cérémonies",
+    icon: "ri:heart-line",
+    desc: "Transport de prestige pour les mariés et leurs invités dans toute la région.",
+    color: "bg-pink-500/10 text-pink-500"
+  },
+  {
+    title: "Événements Sportifs",
+    icon: "ri:trophy-line",
+    desc: "Transferts VIP pour athlètes et sponsors lors de compétitions internationales.",
+    color: "bg-green-500/10 text-green-500"
+  }
+];
+---
+
+<!-- Section Événementiel (masquée par défaut) -->
+<section class="py-20 bg-black font-sans hidden">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-12">
+      <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-accent mb-4 block">ÉVÈNEMENTIEL & CORPORATE</span>
+      <h3 class="text-3xl md:text-5xl font-semibold tracking-tight text-white leading-tight mb-4">
+        Prestations d'exception <br/> <span class="text-zinc-400">pour vos événements</span>
+      </h3>
+      <p class="text-zinc-400 max-w-xl mx-auto">
+        Des solutions sur-mesure pour tous vos événements professionnels et privés
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {eventTypes.map((event) => (
+        <div class="bg-zinc-900/50 rounded-xl p-6 hover:bg-zinc-800/50 transition-all duration-300 group">
+          <div class="${event.color} w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Icon name={event.icon} class="text-xl" />
+          </div>
+          <h4 class="text-lg font-semibold text-white mb-3">{event.title}</h4>
+          <p class="text-zinc-400 text-sm leading-relaxed">{event.desc}</p>
+          <a 
+            href="/booking-transfert?service=event&type=${encodeURIComponent(event.title)}"
+            class="inline-flex items-center gap-2 text-accent text-sm font-medium mt-4 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            Demander un devis
+            <Icon name="ri:arrow-right-line" class="text-sm" />
+          </a>
+        </div>
+      ))}
+    </div>
+
+    <div class="text-center mt-12">
+      <a
+        href="/booking-transfert?service=event"
+        class="inline-block bg-white text-black px-10 py-5 font-semibold uppercase tracking-widest text-[11px] hover:bg-black hover:text-white border border-transparent hover:border-white/20 transition-all shadow-xl active:scale-95 rounded-lg"
+      >
+        Devis Événementiel Personnalisé →
+      </a>
+    </div>
+  </div>
+</section>

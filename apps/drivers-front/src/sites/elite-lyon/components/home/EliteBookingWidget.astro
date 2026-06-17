@@ -1,0 +1,37 @@
+﻿---
+// src/sites/elite-lyon/components/home/EliteBookingWidget.astro
+---
+
+<div class='bg-[#151F2B] p-8 rounded-sm w-full shadow-2xl border-t-4 border-[#6185B2]'>
+  <h3 class='font-headline text-2xl font-bold mb-6 text-white uppercase tracking-tighter'>
+    Planifiez votre voyage
+  </h3>
+  <div class='space-y-6'>
+    <div>
+      <label
+        class='block font-label text-[10px] font-bold uppercase mb-2 tracking-[0.2em] text-white/50'
+        >Prise en charge</label
+      >
+      <input
+        class='w-full px-4 py-4 bg-[#151A24] border border-white/10 rounded-none focus:ring-1 focus:ring-[#6185B2]/50 focus:outline-none transition-all font-body text-sm text-white placeholder:text-white/30'
+        placeholder='Aeroport, Gare, Hotel...'
+        type='text'
+      />
+    </div>
+    <div>
+      <label
+        class='block font-label text-[10px] font-bold uppercase mb-2 tracking-[0.2em] text-white/50'
+        >Destination</label
+      >
+      <input
+        class='w-full px-4 py-4 bg-[#151A24] border border-white/10 rounded-none focus:ring-1 focus:ring-[#6185B2]/50 focus:outline-none transition-all font-body text-sm text-white placeholder:text-white/30'
+        placeholder='Ou allez-vous ?'
+        type='text'
+      />
+    </div>
+    <button
+      class='btn-premium w-full py-5 rounded-none font-headline font-bold text-xs uppercase tracking-[0.2em] mt-4 shadow-xl active:scale-[0.98]'>
+      Obtenir un devis
+    </button>
+  </div>
+</div>

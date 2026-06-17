@@ -1,0 +1,87 @@
+---
+// src/sites/elite-lyon/pages/tunnels/[...slug].astro
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+
+// Désactiver le layout standard pour les tunnels (ils ont leur propre layout)
+export const partial = false;
+
+// Récupérer le slug depuis les params Astro, ou l'extraire du path si appelé via le router global
+const { slug, path } = Astro.params;
+const currentSlug = slug || (path?.startsWith('tunnels/') ? path.replace('tunnels/', '') : '');
+
+// Rediriger l'ancienne route 'airport' vers 'transfert'
+if (currentSlug === 'airport') {
+  return Astro.redirect('/tunnels/transfert');
+}
+
+// Normaliser le slug pour correspondre aux clés de serviceConfigs
+const slugMap: Record<string, string> = {
+  transfert: 'transfert',
+  'long-distance': 'longDistance',
+  business: 'business',
+  availability: 'availability',
+};
+
+const normalizedSlug = slugMap[currentSlug as keyof typeof slugMap];
+
+// Vérifier si le slug est valide
+if (!normalizedSlug) {
+  console.error(`[TUNNEL] Slug invalide: ${currentSlug}`);
+  return Astro.redirect('/404');
+}
+
+// Composants disponibles (mapping dynamique)
+const tunnelComponents: Record<string, () => Promise<{ default: any }>> = {
+  transfert: () => import('../../../../components/tunnels/AirportTunnel.astro'),
+  longDistance: () => import('../../../../components/tunnels/LongDistanceTunnel.astro'),
+  business: () => import('../../../../components/tunnels/BusinessTunnel.astro'),
+  availability: () => import('../../../../components/tunnels/AvailabilityTunnel.astro'),
+};
+
+// Vérifier si le composant existe
+if (!tunnelComponents[normalizedSlug]) {
+  console.error(`[TUNNEL] Composant introuvable pour: ${normalizedSlug}`);
+  return Astro.redirect('/404');
+}
+
+// Charger le composant dynamiquement
+let TunnelResult;
+try {
+  TunnelResult = await tunnelComponents[normalizedSlug]();
+} catch (error) {
+  console.error(`[TUNNEL] Erreur de chargement du composant: ${error}`);
+  return Astro.redirect('/404');
+}
+
+const TunnelComponent = TunnelResult.default;
+
+// Métadonnées SEO par tunnel
+const seoConfigs = {
+  transfert: {
+    title: 'Transfert Privé - Elite Lyon VTC',
+    description:
+      'Réservez votre transfert privé en ligne. Trajets sur-mesure vers toutes destinations et gares.',
+  },
+  longDistance: {
+    title: 'Longue Distance - Elite Lyon VTC',
+    description:
+      'Service longue distance dans toute la France. Trajets Paris, Marseille, Nice, Bordeaux depuis Lyon.',
+  },
+  business: {
+    title: 'Services Business & B2B - Elite Lyon VTC',
+    description:
+      'Solutions de mobilité professionnelle pour entreprises. Chauffeurs dédiés, véhicules premium.',
+  },
+  availability: {
+    title: 'Mise à Disposition - Elite Lyon VTC',
+    description:
+      "Chauffeur privé à votre disposition à l'heure ou à la journée. Service sur-mesure et flexible.",
+  },
+};
+
+const seo = seoConfigs[normalizedSlug as keyof typeof seoConfigs] || seoConfigs.transfert;
+---
+
+<BaseLayout title={seo.title} description={seo.description} minimal={true}>
+  <TunnelComponent serviceType={normalizedSlug} accentColor='#6185b2' />
+</BaseLayout>

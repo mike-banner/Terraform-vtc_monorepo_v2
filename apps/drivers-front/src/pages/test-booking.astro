@@ -1,0 +1,50 @@
+---
+// src/pages/test-booking.astro
+import BookingHeroLarge from "../components/booking/BookingHeroLarge.astro";
+import BookingHeroSlim from "../components/booking/BookingHeroSlim.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Catalogue Composants Booking">
+
+  <!-- Titre de la page -->
+  <div class="pt-20 pb-10 bg-white border-b border-zinc-100">
+    <div class="container mx-auto px-4">
+      <h1 class="text-5xl font-black uppercase italic tracking-tighter">Modèles de Réservation</h1>
+      <p class="text-zinc-400 mt-2 font-medium uppercase tracking-[0.2em] text-xs">Bibliothèque de composants UI</p>
+    </div>
+  </div>
+
+  <!-- SECTION 1 : SLIM FORM -->
+  <div class="py-20 bg-zinc-50 border-b border-zinc-100">
+    <div class="container mx-auto px-4">
+      <div class="mb-12">
+        <span class="text-luxe-red font-black text-[10px] uppercase tracking-[0.3em]">Composant 01</span>
+        <h2 class="text-3xl font-black uppercase mt-2">BookingHeroSlim</h2>
+        <p class="text-zinc-500 text-sm mt-1">Format horizontal compact pour intégration en bas de Hero ou en section dédiée.</p>
+      </div>
+      <BookingHeroSlim />
+    </div>
+  </div>
+
+  <!-- SECTION 2 : LARGE FORM (VERTICAL RIGHT) -->
+  <div class="py-20 bg-zinc-100">
+    <div class="container mx-auto px-4">
+      <div class="mb-12">
+        <span class="text-luxe-red font-black text-[10px] uppercase tracking-[0.3em]">Composant 02</span>
+        <h2 class="text-3xl font-black uppercase mt-2">BookingHeroLarge</h2>
+        <p class="text-zinc-500 text-sm mt-1">Format vertical inspiré de Blacklane, idéal pour un positionnement latéral dans un Hero.</p>
+      </div>
+
+      <div class="flex justify-end pt-10">
+        <div class="w-full max-w-md">
+           <div class="mb-6 text-right">
+             <h3 class="font-black uppercase text-sm tracking-widest text-black/20">Aperçu Positionnement Droite</h3>
+           </div>
+           <BookingHeroLarge />
+        </div>
+      </div>
+    </div>
+  </div>
+
+</BaseLayout>

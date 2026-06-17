@@ -1,0 +1,45 @@
+---
+// src/components/ui/Header.astro
+const { tenant } = Astro.locals;
+---
+
+<header class="fixed top-0 left-0 right-0 z-[100] bg-black/90 backdrop-blur-md border-b border-white/5 font-sans">
+  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="/" class="flex items-center gap-2 group">
+      <span class="text-xl font-bold tracking-tight uppercase text-white group-hover:text-zinc-400 transition-colors">
+        {tenant.name}
+      </span>
+    </a>
+
+    <!-- Navigation Line -->
+    <nav class="hidden lg:flex items-center gap-10">
+      <a href="/services" class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">
+        Services & Tarifs
+      </a>
+      <a href="/contact" class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">
+        Contact
+      </a>
+    </nav>
+
+    <!-- Phone & CTA -->
+    <div class="flex items-center gap-8">
+      <a href={`tel:${tenant.phone || '+33666644444'}`} class="hidden sm:flex items-center gap-3 group">
+        <span class="text-[11px] font-medium tracking-wide text-zinc-300 group-hover:text-white transition-colors">
+            {tenant.phone || '+33 6 66 64 44 44'}
+        </span>
+      </a>
+
+      <!-- Lien vers la nouvelle page de réservation -->
+      <a
+        href="/booking-transfert"
+        class="bg-luxe-red text-white px-8 py-3 rounded-sm text-[11px] font-bold uppercase tracking-[0.15em] hover:brightness-110 transition-all shadow-lg active:scale-95"
+      >
+        Réserver
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Spacer to prevent content from jumping under fixed header -->
+<div class="h-20"></div>

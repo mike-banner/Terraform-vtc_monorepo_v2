@@ -1,0 +1,82 @@
+---
+// src/components/home/ServicesGrid.astro
+import type { ImageMetadata } from 'astro';
+import { Icon } from 'astro-icon/components';
+import { Image } from 'astro:assets';
+import availabilityImg from '../../assets/images/elite-availability.jpg';
+import airportImg from '../../assets/images/elite-airport.jpg';
+import businessImg from '../../assets/images/elite-business.jpg';
+import longDistanceImg from '../../assets/images/elite-long-distance.jpg';
+
+interface Service {
+  title: string;
+  image: string | ImageMetadata;
+  desc: string;
+  link: string;
+}
+
+const services: Service[] = [
+  {
+    title: "Transferts",
+    image: airportImg,
+    desc: "Service ponctuel vers gares, aéroports ou destinations sur-mesure.",
+    link: "/tunnels/transfert"
+  },
+  {
+    title: "Longue Distance",
+    image: longDistanceImg,
+    desc: "Deplacements interurbains dans toute la France sous 24h.",
+    link: "/tunnels/long-distance"
+  },
+  {
+    title: "Business & B2B",
+    image: businessImg,
+    desc: "Solutions de mobilite pour vos collaborateurs et VIP.",
+    link: "/tunnels/business"
+  },
+  {
+    title: "Mise a Disposition",
+    image: availabilityImg,
+    desc: "Un chauffeur a votre service a l'heure ou a la journee.",
+    link: "/tunnels/availability"
+  }
+];
+---
+
+<section class="py-24 bg-[#0B0F15]">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-20">
+      <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-elite-accent mb-4 block">NOS PRESTATIONS</span>
+      <h2 class="text-3xl md:text-5xl font-semibold tracking-tight text-white leading-tight">
+        L'excellence du <span class="text-white/50">sur-mesure</span>
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {services.map((s) => (
+        <a href={s.link} class="relative group h-[400px] overflow-hidden rounded-sm bg-[#151F2B] block">
+          <Image
+            src={s.image as any}
+            alt={s.title}
+            width={800}
+            height={400}
+            class="w-full h-full object-cover transition-all duration-700 brightness-75 lg:group-hover:brightness-50 lg:group-hover:scale-105"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+
+          <div class="absolute inset-0 p-8 flex flex-col justify-end lg:translate-y-4 lg:group-hover:translate-y-0 transition-transform duration-500">
+             <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-elite-accent mb-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">Signature</span>
+             <h4 class="text-xl font-semibold text-white tracking-tight mb-2">{s.title}</h4>
+             <p class="text-white/70 text-xs font-normal leading-relaxed opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+               {s.desc}
+             </p>
+          </div>
+
+          <div class="absolute top-8 right-8 w-10 h-10 bg-[#6185B2] text-white flex items-center justify-center rounded-full opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 translate-y-0 lg:-translate-y-2 lg:group-hover:translate-y-0">
+             <Icon name="ri:arrow-right-line" class="text-lg" />
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
