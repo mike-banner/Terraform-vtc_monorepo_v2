@@ -34,3 +34,7 @@ claude-mem.db*
 .DS_Store
 Thumbs.db
 graphify-out/
+
+# Playwright
+playwright-report/
+test-results/
