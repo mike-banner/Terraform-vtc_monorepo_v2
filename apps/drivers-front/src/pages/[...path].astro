@@ -6,15 +6,15 @@ const host = Astro.url.host;
 const site = resolveSite(host);
 const path = Astro.params.path || "";
 
-console.log(`[ROUTER] Request for host: ${host}, resolved site: ${site}, path: ${path}`);
+// console.log(`[ROUTER] Request for host: ${host}, resolved site: ${site}, path: ${path}`);
 
 const tenantData = Astro.locals.tenant;
 
 // 1. Liste de tous les fichiers possibles pour ce site
 const sitePages = import.meta.glob("../sites/*/pages/**/*.astro");
-console.log(`[ROUTER] Glob found ${Object.keys(sitePages).length} files.`);
+// console.log(`[ROUTER] Glob found ${Object.keys(sitePages).length} files.`);
 if (path === "home") {
-    console.log(`[ROUTER] Debugging /home. Available keys:`, Object.keys(sitePages));
+    // console.log(`[ROUTER] Debugging /home. Available keys:`, Object.keys(sitePages));
 }
 
 // 2. Chercher le fichier correspondant
@@ -29,7 +29,7 @@ let targetPath = path === "" ? "index" : path;
 // Normalisation (suppression des slashs de fin et passage en minuscules)
 targetPath = targetPath.replace(/\/$/, "").toLowerCase();
 
-console.log(`[ROUTER] Target path normalized: ${targetPath}`);
+// console.log(`[ROUTER] Target path normalized: ${targetPath}`);
 
 // Cas spécifique des tunnels
 if (targetPath.startsWith("tunnels/")) {
@@ -39,16 +39,16 @@ if (targetPath.startsWith("tunnels/")) {
     targetFile = `../sites/${site}/pages/${targetPath}.astro`;
 }
 
-console.log(`[ROUTER] Attempting to load: ${targetFile}`);
+// console.log(`[ROUTER] Attempting to load: ${targetFile}`);
 
 let Page;
 if (sitePages[targetFile]) {
     const module = await sitePages[targetFile]();
     Page = (module as any).default;
-    console.log(`[ROUTER] Page loaded successfully!`);
+    // console.log(`[ROUTER] Page loaded successfully!`);
 } else {
     console.warn(`[ROUTER] File not found in glob: ${targetFile}`);
-    console.log(`[ROUTER] Available keys under sites:`, Object.keys(sitePages).filter(k => k.includes(site)));
+    // console.log(`[ROUTER] Available keys under sites:`, Object.keys(sitePages).filter(k => k.includes(site)));
     // Si pas trouvé, on peut essayer tunnels sans le catch-all si c'est juste /tunnels
     if (targetPath === "tunnels") {
         const fallback = `../sites/${site}/pages/tunnels/index.astro`;

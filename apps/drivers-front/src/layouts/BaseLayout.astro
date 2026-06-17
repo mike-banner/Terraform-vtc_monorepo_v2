@@ -15,6 +15,9 @@ const tenant = Astro.locals.tenant || { name: 'Elite Lyon', id: 'default' };
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title ? `${title} | ${tenant.name}` : tenant.name}</title>
     <meta name="description" content={description || "Service de chauffeur privé haut de gamme."} />
+    <meta property="og:title" content={title ? `${title} | ${tenant.name}` : tenant.name} />
+    <meta property="og:description" content={description || "Service de chauffeur privé haut de gamme."} />
+    <meta property="og:type" content="website" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
