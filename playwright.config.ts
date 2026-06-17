@@ -1,4 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), 'apps/backoffice/.env') });
 
 export default defineConfig({
   testDir: './tests',
@@ -8,13 +12,24 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:4322', // L'Astro dev server pour drivers-front
     trace: 'on-first-retry',
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'backoffice',
+      testMatch: /backoffice\.spec\.ts/,
+      use: { 
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:4321'
+      },
+    },
+    {
+      name: 'drivers-front',
+      testMatch: /seo\.spec\.ts/,
+      use: { 
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:4322'
+      },
     },
   ],
 });

@@ -7,17 +7,25 @@ settings:
 importers:
 
   .:
-    dependencies:
-      ws:
-        specifier: ^8.21.0
-        version: 8.21.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.61.0
         version: 1.61.0
+      '@supabase/supabase-js':
+        specifier: ^2.108.2
+        version: 2.108.2
+      '@types/ws':
+        specifier: ^8.5.10
+        version: 8.18.1
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       turbo:
         specifier: ^2.0.0
         version: 2.9.18
+      ws:
+        specifier: ^8.21.0
+        version: 8.21.0
 
   apps/backoffice:
     dependencies:
@@ -1973,6 +1981,10 @@ packages:
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
+
+  dotenv@17.4.2:
+    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
+    engines: {node: '>=12'}
 
   dset@3.1.4:
     resolution: {integrity: sha512-2QF/g9/zTaPDc3BjNcVTGoBbXBgYfMTTceLaYcFJ/W9kggFUkhxD/hMEeuLKbugyef9SqAx8cpgwlIP/jinUTA==}
@@ -5753,6 +5765,8 @@ snapshots:
       dom-serializer: 2.0.0
       domelementtype: 2.3.0
       domhandler: 5.0.3
+
+  dotenv@17.4.2: {}
 
   dset@3.1.4: {}
 
