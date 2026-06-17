@@ -5,3 +5,5 @@ pages_build_output_dir = "dist"
 [vars]
 NODE_VERSION = "20"
 PNPM_VERSION = "9"
+PUBLIC_SUPABASE_URL = "https://kpnkhmtxzigxtfnkmzru.supabase.co"
+PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_2DlMrNzcbyN_lfqi7Wpa9g_sPphFzPy"
