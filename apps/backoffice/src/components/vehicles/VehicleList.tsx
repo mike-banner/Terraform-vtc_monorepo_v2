@@ -3,6 +3,7 @@ import { deleteVehicle, getVehicles } from '@/services/vehicles';
 import { Edit2, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { VehicleModal } from './VehicleModal';
+import { showToast } from '@/scripts/toast';
 
 interface Vehicle {
   id: string;
@@ -51,7 +52,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
       await fetchVehicles();
       setConfirmDeleteId(null);
     } catch (err) {
-      alert('Erreur lors de la suppression');
+      showToast('Erreur lors de la suppression', 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -111,7 +112,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
             <div className='flex gap-3'>
               <button
                 onClick={() => setConfirmDeleteId(null)}
-                className='flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors bg-white/5 rounded-xl'>
+                className='flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors bg-white/5 rounded-xl'>
                 Annuler
               </button>
               <button
@@ -127,7 +128,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
 
       <div className='flex justify-between items-end mb-6 md:mb-10'>
         <div>
-          <p className='text-[10px] md:text-[10px] font-bold uppercase tracking-widest text-slate-500'>
+          <p className='text-[10px] md:text-[10px] font-bold uppercase tracking-widest text-slate-300'>
             Liste de vos véhicules ({vehicles.length})
           </p>
         </div>
@@ -167,7 +168,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
                   <h3 className='text-lg md:text-xl font-black text-white uppercase tracking-tighter mb-1'>
                     {v.brand} {v.model}
                   </h3>
-                  <p className='text-[10px] font-bold text-slate-500 uppercase tracking-widest'>
+                  <p className='text-[10px] font-bold text-slate-300 uppercase tracking-widest'>
                     {v.category} — {v.capacity} Places
                   </p>
                 </div>
@@ -175,7 +176,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
                 <div className='flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/5 pt-6 gap-4 sm:gap-0 mt-auto'>
                   <div className='flex gap-4 shrink-0'>
                     <div>
-                      <p className='text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1'>
+                      <p className='text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1'>
                         Passagers
                       </p>
                       <div className='flex items-center gap-1.5 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/10 w-fit shrink-0'>
@@ -185,7 +186,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
                       </div>
                     </div>
                     <div>
-                      <p className='text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1'>
+                      <p className='text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1'>
                         Bagages
                       </p>
                       <div className='flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit shrink-0'>
@@ -202,7 +203,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
                         e.stopPropagation();
                         handleEdit(v);
                       }}
-                      className='p-2 text-slate-500 hover:text-white transition-colors bg-white/5 sm:bg-transparent rounded-lg sm:rounded-xl'>
+                      className='p-2 text-slate-300 hover:text-white transition-colors bg-white/5 sm:bg-transparent rounded-lg sm:rounded-xl'>
                       <Edit2 className='w-4 h-4' />
                     </button>
                     <button
@@ -224,7 +225,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
           <h3 className='text-2xl font-black text-white uppercase tracking-tighter mb-2'>
             Aucun véhicule enregistré
           </h3>
-          <p className='text-slate-500 text-sm mb-8 max-w-sm'>
+          <p className='text-slate-300 text-sm mb-8 max-w-sm'>
             Ajoutez votre premier véhicule pour commencer à gérer vos courses.
           </p>
           <button

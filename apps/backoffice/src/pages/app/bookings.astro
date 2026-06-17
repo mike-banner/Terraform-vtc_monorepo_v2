@@ -634,7 +634,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                     <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Facturation</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="relative">
-                            <input type="number" name="manual_total" placeholder="Montant" required class="w-full bg-white border border-emerald-500/30 rounded-xl px-4 py-3 pr-8 text-xl text-emerald-600 font-black tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
+                            <input type="number" name="manual_total" step="0.01" placeholder="Montant" required class="w-full bg-white border border-emerald-500/30 rounded-xl px-4 py-3 pr-8 text-xl text-emerald-600 font-black tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500/40 font-black text-lg">€</span>
                         </div>
                         <div class="relative">
