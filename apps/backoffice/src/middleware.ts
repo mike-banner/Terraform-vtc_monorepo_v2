@@ -18,7 +18,7 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
             name: c.name,
             value: c.value ?? '',
           })),
-        setAll: (cookiesToSet) =>
+        setAll: (cookiesToSet: any[]) =>
           cookiesToSet.forEach(({ name, value, options }) =>
             cookies.set(name, value, options as any),
           ),
