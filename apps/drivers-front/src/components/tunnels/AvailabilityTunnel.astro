@@ -3,6 +3,8 @@
 import { Icon } from 'astro-icon/components';
 import TunnelLayout from './TunnelLayout.astro';
 import InlineError from '../ui/InlineError.astro';
+import ContactStep from './steps/ContactStep.astro';
+import VehicleGridStep from './steps/VehicleGridStep.astro';
 import { supabase } from '../../core/supabase';
 
 const { tenant } = Astro.locals;
@@ -112,42 +114,15 @@ const { ...props } = Astro.props;
     </div>
 
     <!-- Étape 2: Véhicule -->
-    <div class='step-container hidden' data-step='2'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Choisissez votre véhicule</h2>
-        <p class='text-zinc-600 mb-8'>Sélectionnez la gamme pour votre mise à disposition. Le prix est calculé selon la durée.</p>
-        
-        <p id="estimationNote" class="text-xs text-amber-600 font-medium mb-6 bg-amber-50 p-3 rounded-lg hidden">
-          Le prix minimum d'intervention de cette catégorie s'applique.
-        </p>
-
-        <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
-          {
-            vehicleTypes.map((vehicle: any) => (
-              <label class='relative group cursor-pointer'>
-                <input type='radio' name='vehicle' value={vehicle.type} data-id={vehicle.id} class='sr-only peer' required />
-                <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-orange-500 transition-all duration-300 peer-checked:border-orange-500 peer-checked:bg-orange-500/5 h-full'>
-                  <div class='w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-orange-500/10 transition-colors'>
-                    <Icon name={vehicle.icon} class='text-xl text-zinc-600 group-hover:text-orange-500' />
-                  </div>
-                  <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{vehicle.name}</h3>
-                  <div class='space-y-2 mb-4'>
-                    <div class='flex items-center gap-2 text-sm text-zinc-600'>
-                      <Icon name='ri:user-line' class='text-sm' />
-                      <span>{vehicle.seats} passagers maximum</span>
-                    </div>
-                  </div>
-                  <div class='text-lg font-bold text-orange-500 mt-4 price-display'>{vehicle.price}</div>
-                </div>
-                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-orange-500 peer-checked:bg-orange-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
-                  <Icon name='ri:check-line' class='text-white text-xs' />
-                </div>
-              </label>
-            ))
-          }
-        </div>
-      </div>
-    </div>
+    <VehicleGridStep 
+      stepNumber={2} 
+      themeColor="amber" 
+      vehicleTypes={vehicleTypes} 
+      title="Choisissez votre véhicule"
+      subtitle="Sélectionnez la gamme pour votre mise à disposition. Le prix est calculé selon la durée."
+      showEstimationNote={true}
+      estimationNoteText="Le prix minimum d'intervention de cette catégorie s'applique."
+    />
 
     <!-- Étape 3: Type d'utilisation & Options -->
     <div class='step-container hidden' data-step='3'>
@@ -222,112 +197,34 @@ const { ...props } = Astro.props;
     </div>
 
     <!-- Étape 4: Coordonnées -->
-    <div class='step-container hidden' data-step='4'>
-      <div class='mt-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Vos coordonnées</h2>
-        <p class='text-zinc-600 mb-8'>Dernière étape pour finaliser la demande</p>
-
-        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Prénom</label>
-            <input type='text' name='firstName' placeholder='Votre prénom' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
-          </div>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Nom</label>
-            <input type='text' name='lastName' placeholder='Votre nom' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
-          </div>
-        </div>
-        <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Email</label>
-            <input type='email' name='email' placeholder='votre@email.com' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
-          </div>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Téléphone</label>
-            <input type='tel' name='phone' placeholder='+33 6 00 00 00 00' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
-          </div>
-        </div>
-      </div>
-    </div>
+    <ContactStep stepNumber={4} themeColor="amber" />
   </form>
 </TunnelLayout>
 
 <script>
+  import { TunnelManager } from '../../core/tunnel-core';
+  
   function initTunnel() {
     const dataDiv = document.getElementById('tunnel-data');
     if (!dataDiv) return;
 
     const pricingRules = JSON.parse(dataDiv.dataset.pricing || '[]');
-    const form = document.getElementById('tunnel-form') as HTMLFormElement;
-    if (!form) return;
-
     const vehicleInputs = document.querySelectorAll('input[name="vehicle"]');
     const durationInputs = document.querySelectorAll('input[name="duration"]');
     const customDurationInput = document.getElementById('customDuration') as HTMLInputElement;
     const estimationNote = document.getElementById('estimationNote');
 
-    let currentStep = 1;
-    const maxSteps = 4;
-    const steps = document.querySelectorAll('.step-container');
-    const submitBtn = document.querySelector('button[form="tunnel-form"]') as HTMLButtonElement;
-    const backBtn = document.getElementById('back-btn');
-    
-    // Si on saisit une durée custom, on décoche les radios
     customDurationInput?.addEventListener('input', () => {
       if (customDurationInput.value.trim() !== '') {
         durationInputs.forEach(r => (r as HTMLInputElement).checked = false);
       }
     });
-    // Si on coche un radio, on vide la custom duration
+
     durationInputs.forEach(radio => {
       radio.addEventListener('change', () => {
         if ((radio as HTMLInputElement).checked) customDurationInput.value = '';
       });
     });
-
-    function showStep(stepIndex: number) {
-      steps.forEach((el, idx) => {
-        if (idx + 1 === stepIndex) el.classList.remove('hidden');
-        else el.classList.add('hidden');
-      });
-      
-      if (stepIndex === 2) updatePriceDisplay();
-      
-      const progressBar = document.getElementById('progress-bar-line');
-      if (progressBar) progressBar.style.width = `${((stepIndex - 1) / (maxSteps - 1)) * 100}%`;
-      
-      const circles = document.querySelectorAll('.progress-step-circle');
-      circles.forEach(circle => {
-        const stepNum = parseInt(circle.getAttribute('data-step') || '1', 10);
-        circle.className = `progress-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-          stepNum < stepIndex ? 'bg-black text-white' : stepNum === stepIndex ? 'bg-black text-white ring-4 ring-black/5' : 'bg-zinc-200 text-zinc-500'
-        }`;
-      });
-      const labels = document.querySelectorAll('.progress-step-label');
-      labels.forEach(label => {
-        const stepNum = parseInt(label.getAttribute('data-step') || '1', 10);
-        label.className = `progress-step-label mt-2 text-xs font-medium text-center transition-colors duration-300 ${
-          stepNum <= stepIndex ? 'text-zinc-900' : 'text-zinc-500'
-        }`;
-      });
-      const submitBtnText = document.getElementById('submit-btn-text');
-      if (submitBtnText) submitBtnText.textContent = stepIndex === maxSteps ? 'Finaliser' : 'Continuer';
-      
-      const progressText = document.getElementById('current-step-text');
-      if (progressText) progressText.textContent = stepIndex.toString();
-      
-      if (backBtn) {
-        if (stepIndex > 1) backBtn.classList.remove('hidden');
-        else backBtn.classList.add('hidden');
-      }
-    }
-
-    if (backBtn) {
-      backBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (currentStep > 1) { currentStep--; showStep(currentStep); }
-      });
-    }
 
     function updatePriceDisplay() {
       let selectedHours = 0;
@@ -370,58 +267,58 @@ const { ...props } = Astro.props;
       }
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
-
-      if (currentStep === 1) {
-        if (!formData.get('duration') && customDurationInput.value.trim() === '') {
-          alert("Veuillez sélectionner ou entrer une durée.");
-          return;
+    const manager = new TunnelManager('tunnel-form', {
+      maxSteps: 4,
+      onStepChange: (stepIndex) => {
+        if (stepIndex === 2) updatePriceDisplay();
+      },
+      onValidateStep: (stepIndex, formData) => {
+        if (stepIndex === 1) {
+          if (!formData.get('duration') && customDurationInput.value.trim() === '') {
+            alert("Veuillez sélectionner ou entrer une durée."); return false;
+          }
+          if (!formData.get('serviceDate') || !formData.get('startTime') || !formData.get('initialPickup')) {
+            alert("Veuillez remplir les informations de départ."); return false;
+          }
         }
-        if (!formData.get('serviceDate') || !formData.get('startTime') || !formData.get('initialPickup')) {
-          alert("Veuillez remplir les informations de départ.");
-          return;
+        if (stepIndex === 2 && !formData.get('vehicle')) { alert("Veuillez choisir un véhicule."); return false; }
+        if (stepIndex === 4) {
+          if (!formData.get('firstName') || !formData.get('lastName') || !formData.get('email') || !formData.get('phone')) {
+            alert("Veuillez remplir vos coordonnées."); return false;
+          }
         }
-        currentStep++; showStep(currentStep);
-        return;
-      }
-
-      if (currentStep === 2) {
-        if (!formData.get('vehicle')) { alert("Veuillez choisir un véhicule."); return; }
-        currentStep++; showStep(currentStep);
-        return;
-      }
-
-      if (currentStep === 3) {
-        currentStep++; showStep(currentStep);
-        return;
-      }
-
-      if (currentStep === maxSteps) {
-        if (!formData.get('firstName') || !formData.get('lastName') || !formData.get('email') || !formData.get('phone')) {
-          alert("Veuillez remplir vos coordonnées.");
-          return;
-        }
-
-        const originalText = submitBtn.textContent || '';
-        submitBtn.textContent = 'Envoi de la demande...';
-        submitBtn.disabled = true;
+        return true;
+      },
+      onSubmit: async (formData) => {
+        manager.setLoading(true, 'Envoi de la demande...');
+        
+        // --- Préparation des notes pour le chauffeur ---
+        let finalNotes = formData.get('specialNotes')?.toString() || '';
+        const isTranslator = formData.get('optionTranslator');
+        const isTourGuide = formData.get('optionTourGuide');
+        const itinerary = formData.get('plannedItinerary');
+        
+        let driverInstructions = [];
+        if (itinerary) driverInstructions.push(`Itinéraire : ${itinerary}`);
+        if (isTranslator) driverInstructions.push(`Option : Traducteur/Interprète requise`);
+        if (isTourGuide) driverInstructions.push(`Option : Guide Touristique requise`);
+        if (finalNotes) driverInstructions.push(`Notes client : ${finalNotes}`);
+        
+        const missionNote = driverInstructions.join(' | ');
+        console.log("Mission Note prête pour la DB :", missionNote);
+        // -----------------------------------------------
 
         try {
           // Pour la V1, on n'envoie pas à Stripe pour les prix dynamiques (Plan X)
-          alert("Tunnel Mise à disposition V1 terminé avec succès ! (Plan X : Redirection Stripe en construction)");
-          submitBtn.textContent = 'Demande envoyée';
+          alert("Tunnel Mise à disposition V1 terminé avec succès ! (Plan X : Redirection Stripe en construction)\n\nNotes transmises au chauffeur :\n" + missionNote.replace(/ \| /g, '\n'));
+          if (manager.submitBtn) manager.submitBtn.textContent = 'Demande envoyée';
         } catch (err: any) {
           console.error("Submit error:", err);
           alert(err.message || "Erreur lors de la soumission");
-          submitBtn.textContent = originalText;
-          submitBtn.disabled = false;
+          manager.setLoading(false);
         }
       }
     });
-
-    showStep(1);
   }
 
   if (document.readyState === 'loading') {

@@ -3,6 +3,8 @@
 import { Icon } from 'astro-icon/components';
 import TunnelLayout from './TunnelLayout.astro';
 import InlineError from '../ui/InlineError.astro';
+import ContactStep from './steps/ContactStep.astro';
+import VehicleGridStep from './steps/VehicleGridStep.astro';
 import { supabase } from '../../core/supabase';
 
 const { tenant } = Astro.locals;
@@ -123,41 +125,15 @@ const { ...props } = Astro.props;
     </div>
 
     <!-- Étape 2: Véhicule -->
-    <div class='step-container hidden' data-step='2'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Choisissez votre véhicule</h2>
-        <p class='text-zinc-600 mb-8'>Sélectionnez la gamme pour voir l'estimation du prix de votre trajet.</p>
-        <p id="estimationNote" class="text-xs text-amber-600 font-medium mb-6 bg-amber-50 p-3 rounded-lg hidden">
-          Le prix est "Sur devis" pour les destinations personnalisées ou certaines options.
-        </p>
-
-        <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
-          {
-            vehicleTypes.map((vehicle: any) => (
-              <label class='relative group cursor-pointer'>
-                <input type='radio' name='vehicle' value={vehicle.type} data-id={vehicle.id} class='sr-only peer' required />
-                <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-green-500 transition-all duration-300 peer-checked:border-green-500 peer-checked:bg-green-500/5 h-full'>
-                  <div class='w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-green-500/10 transition-colors'>
-                    <Icon name={vehicle.icon} class='text-xl text-zinc-600 group-hover:text-green-500' />
-                  </div>
-                  <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{vehicle.name}</h3>
-                  <div class='space-y-2 mb-4'>
-                    <div class='flex items-center gap-2 text-sm text-zinc-600'>
-                      <Icon name='ri:user-line' class='text-sm' />
-                      <span>{vehicle.seats} passagers maximum</span>
-                    </div>
-                  </div>
-                  <div class='text-lg font-bold text-green-500 mt-4 price-display'>{vehicle.price}</div>
-                </div>
-                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
-                  <Icon name='ri:check-line' class='text-white text-xs' />
-                </div>
-              </label>
-            ))
-          }
-        </div>
-      </div>
-    </div>
+    <VehicleGridStep 
+      stepNumber={2} 
+      themeColor="green" 
+      vehicleTypes={vehicleTypes} 
+      title="Choisissez votre véhicule"
+      subtitle="Sélectionnez la gamme pour voir l'estimation du prix de votre trajet."
+      showEstimationNote={true}
+      estimationNoteText="Le prix est 'Sur devis' pour les destinations personnalisées ou certaines options."
+    />
 
     <!-- Étape 3: Dates et compléments -->
     <div class='step-container hidden' data-step='3'>
@@ -205,71 +181,19 @@ const { ...props } = Astro.props;
     </div>
 
     <!-- Étape 4: Coordonnées -->
-    <div class='step-container hidden' data-step='4'>
-      <div class='mt-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Vos coordonnées</h2>
-        <p class='text-zinc-600 mb-8'>Dernière étape pour finaliser la demande</p>
-
-        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Prénom</label>
-            <input type='text' name='firstName' placeholder='Votre prénom' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' required />
-          </div>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Nom</label>
-            <input type='text' name='lastName' placeholder='Votre nom' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' required />
-          </div>
-        </div>
-        <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Email</label>
-            <input type='email' name='email' placeholder='votre@email.com' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' required />
-          </div>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Téléphone</label>
-            <input type='tel' name='phone' placeholder='+33 6 00 00 00 00' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' required />
-          </div>
-        </div>
-
-        <div class='mt-6 border-t border-zinc-200 pt-6'>
-          <label class='flex items-center gap-3 cursor-pointer mb-4'>
-            <input type='checkbox' id='isCompanyCheckbox' name='isCompany' value='yes' class='w-5 h-5 text-green-500 rounded focus:ring-green-500' />
-            <span class='text-sm font-medium text-zinc-900'>Je réserve pour une entreprise (Facture Pro / Devis)</span>
-          </label>
-          
-          <div id='companyFields' class='hidden space-y-4'>
-            <div>
-              <label class='block text-sm font-medium text-zinc-700 mb-2'>Nom de l'entreprise</label>
-              <input type='text' name='companyName' placeholder='Nom de la société' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' />
-            </div>
-            <div class='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div>
-                <label class='block text-sm font-medium text-zinc-700 mb-2'>SIRET (Optionnel)</label>
-                <input type='text' name='siret' placeholder='N° SIRET' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' />
-              </div>
-              <div>
-                <label class='block text-sm font-medium text-zinc-700 mb-2'>TVA Intracommunautaire (Optionnel)</label>
-                <input type='text' name='vatNumber' placeholder='N° TVA' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ContactStep stepNumber={4} themeColor="green" />
   </form>
 </TunnelLayout>
 
 <script>
   import { supabase } from '../../core/supabase';
+  import { TunnelManager } from '../../core/tunnel-core';
   
   function initTunnel() {
     const dataDiv = document.getElementById('tunnel-data');
     if (!dataDiv) return;
 
-    const tenantId = dataDiv.dataset.tenantId;
     const pricingRules = JSON.parse(dataDiv.dataset.pricing || '[]');
-    const form = document.getElementById('tunnel-form') as HTMLFormElement;
-    if (!form) return;
 
     const vehicleInputs = document.querySelectorAll('input[name="vehicle"]');
     const destInputs = document.querySelectorAll('input[name="destination"]');
@@ -277,84 +201,19 @@ const { ...props } = Astro.props;
     const customDropoffContainer = document.getElementById('customDropoffContainer');
     const estimationNote = document.getElementById('estimationNote');
 
-    let currentStep = 1;
-    const maxSteps = 4;
-    const steps = document.querySelectorAll('.step-container');
-    const submitBtn = document.querySelector('button[form="tunnel-form"]') as HTMLButtonElement;
-    const backBtn = document.getElementById('back-btn');
-
-    // Toggle Company Fields
-    const isCompanyCheckbox = document.getElementById('isCompanyCheckbox') as HTMLInputElement;
-    const companyFields = document.getElementById('companyFields');
-    if (isCompanyCheckbox && companyFields) {
-      isCompanyCheckbox.addEventListener('change', () => {
-        if (isCompanyCheckbox.checked) {
-          companyFields.classList.remove('hidden');
-        } else {
-          companyFields.classList.add('hidden');
-        }
-      });
-    }
-    
-    // Si on écrit une custom dest, on décoche les radios
     customDestInput?.addEventListener('input', () => {
       if (customDestInput.value.trim() !== '') {
         destInputs.forEach(r => (r as HTMLInputElement).checked = false);
       }
     });
-    // Si on coche un radio, on vide la custom dest
+
     destInputs.forEach(radio => {
       radio.addEventListener('change', () => {
         if ((radio as HTMLInputElement).checked) customDestInput.value = '';
       });
     });
 
-    function showStep(stepIndex: number) {
-      steps.forEach((el, idx) => {
-        if (idx + 1 === stepIndex) el.classList.remove('hidden');
-        else el.classList.add('hidden');
-      });
-      
-      if (stepIndex === 2) updatePriceDisplay();
-      
-      const progressBar = document.getElementById('progress-bar-line');
-      if (progressBar) progressBar.style.width = `${((stepIndex - 1) / (maxSteps - 1)) * 100}%`;
-      
-      const circles = document.querySelectorAll('.progress-step-circle');
-      circles.forEach(circle => {
-        const stepNum = parseInt(circle.getAttribute('data-step') || '1', 10);
-        circle.className = `progress-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-          stepNum < stepIndex ? 'bg-black text-white' : stepNum === stepIndex ? 'bg-black text-white ring-4 ring-black/5' : 'bg-zinc-200 text-zinc-500'
-        }`;
-      });
-      const labels = document.querySelectorAll('.progress-step-label');
-      labels.forEach(label => {
-        const stepNum = parseInt(label.getAttribute('data-step') || '1', 10);
-        label.className = `progress-step-label mt-2 text-xs font-medium text-center transition-colors duration-300 ${
-          stepNum <= stepIndex ? 'text-zinc-900' : 'text-zinc-500'
-        }`;
-      });
-      const submitBtnText = document.getElementById('submit-btn-text');
-      if (submitBtnText) submitBtnText.textContent = stepIndex === maxSteps ? 'Finaliser' : 'Continuer';
-      
-      const progressText = document.getElementById('current-step-text');
-      if (progressText) progressText.textContent = stepIndex.toString();
-      
-      if (backBtn) {
-        if (stepIndex > 1) backBtn.classList.remove('hidden');
-        else backBtn.classList.add('hidden');
-      }
-    }
-
-    if (backBtn) {
-      backBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (currentStep > 1) { currentStep--; showStep(currentStep); }
-      });
-    }
-
     function updatePriceDisplay() {
-      // Calculer la distance
       let selectedDistance = 0;
       let isCustom = false;
       
@@ -365,12 +224,11 @@ const { ...props } = Astro.props;
         if (selectedDest) selectedDistance = Number(selectedDest.getAttribute('data-distance') || 0);
       }
 
-      // Type de service (multiplicateur basique)
       const serviceRadios = document.querySelectorAll('input[name="serviceType"]');
       const selectedService = Array.from(serviceRadios).find(r => (r as HTMLInputElement).checked) as HTMLInputElement;
       let multiplier = 1;
-      if (selectedService?.value === 'roundtrip') multiplier = 2; // Aller-retour
-      if (selectedService?.value === 'multiday') isCustom = true; // Plusieurs jours = sur devis
+      if (selectedService?.value === 'roundtrip') multiplier = 2;
+      if (selectedService?.value === 'multiday') isCustom = true;
 
       vehicleInputs.forEach((input) => {
         const radio = input as HTMLInputElement;
@@ -379,7 +237,6 @@ const { ...props } = Astro.props;
         if (!vehicleCard) return;
         const priceDiv = vehicleCard.querySelector('.price-display');
         
-        // Trouver la règle pour cette catégorie
         const rule = pricingRules.find((r: any) => r.service_category?.toLowerCase() === category.toLowerCase());
 
         if (priceDiv) {
@@ -397,69 +254,52 @@ const { ...props } = Astro.props;
       });
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
-
-      if (currentStep === 1) {
-        if (!formData.get('destination') && customDestInput.value.trim() === '') {
-          alert("Veuillez sélectionner ou entrer une destination.");
-          return;
-        }
-        if (!formData.get('serviceType')) {
-          alert("Veuillez choisir un type de service.");
-          return;
-        }
-        // Afficher/Cacher custom dropoff dans l'étape 3
-        if (customDropoffContainer) {
-          if (customDestInput.value.trim() !== '') customDropoffContainer.classList.remove('hidden');
-          else customDropoffContainer.classList.add('hidden');
-        }
-        currentStep++; showStep(currentStep);
-        return;
-      }
-
-      if (currentStep === 2) {
-        if (!formData.get('vehicle')) { alert("Veuillez choisir un véhicule."); return; }
-        currentStep++; showStep(currentStep);
-        return;
-      }
-
-      if (currentStep === 3) {
-        if (!formData.get('departureDate') || !formData.get('departureTime') || !formData.get('pickupAddress')) {
-          alert("Veuillez remplir les informations de départ.");
-          return;
-        }
-        currentStep++; showStep(currentStep);
-        return;
-      }
-
-      if (currentStep === maxSteps) {
-        if (!formData.get('firstName') || !formData.get('lastName') || !formData.get('email') || !formData.get('phone')) {
-          alert("Veuillez remplir vos coordonnées.");
-          return;
+    const manager = new TunnelManager('tunnel-form', {
+      maxSteps: 4,
+      onStepChange: (stepIndex) => {
+        if (stepIndex === 2) updatePriceDisplay();
+      },
+      onValidateStep: (stepIndex, formData) => {
+        if (stepIndex === 1) {
+          if (!formData.get('destination') && customDestInput.value.trim() === '') {
+            alert("Veuillez sélectionner ou entrer une destination."); return false;
+          }
+          if (!formData.get('serviceType')) {
+            alert("Veuillez choisir un type de service."); return false;
+          }
+          if (customDropoffContainer) {
+            if (customDestInput.value.trim() !== '') customDropoffContainer.classList.remove('hidden');
+            else customDropoffContainer.classList.add('hidden');
+          }
         }
 
-        const originalText = submitBtn.textContent || '';
-        submitBtn.textContent = 'Envoi de la demande...';
-        submitBtn.disabled = true;
+        if (stepIndex === 2 && !formData.get('vehicle')) { alert("Veuillez choisir un véhicule."); return false; }
+        
+        if (stepIndex === 3) {
+          if (!formData.get('departureDate') || !formData.get('departureTime') || !formData.get('pickupAddress')) {
+            alert("Veuillez remplir les informations de départ."); return false;
+          }
+        }
 
+        if (stepIndex === 4) {
+          if (!formData.get('firstName') || !formData.get('lastName') || !formData.get('email') || !formData.get('phone')) {
+            alert("Veuillez remplir vos coordonnées."); return false;
+          }
+        }
+        return true;
+      },
+      onSubmit: async (formData) => {
+        manager.setLoading(true, 'Envoi de la demande...');
         try {
-          // Pour l'Option A (V1), on n'envoie pas à Stripe pour les prix dynamiques car on doit refaire le Edge Function (Plan X)
-          // On affiche juste une alerte (Mock) ou on insert dans `bookings` avec status "pending_quote"
           alert("Tunnel V1 terminé avec succès ! (Plan X : Redirection Stripe en construction)");
-          submitBtn.textContent = 'Demande envoyée';
-          // window.location.href = '/success';
+          if (manager.submitBtn) manager.submitBtn.textContent = 'Demande envoyée';
         } catch (err: any) {
           console.error("Submit error:", err);
           alert(err.message || "Erreur lors de la soumission");
-          submitBtn.textContent = originalText;
-          submitBtn.disabled = false;
+          manager.setLoading(false);
         }
       }
     });
-
-    showStep(1);
   }
 
   if (document.readyState === 'loading') {

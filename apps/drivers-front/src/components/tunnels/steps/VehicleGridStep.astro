@@ -1,0 +1,93 @@
+---
+// apps/drivers-front/src/components/tunnels/steps/VehicleGridStep.astro
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+  stepNumber: number;
+  themeColor?: 'accent' | 'green' | 'amber' | 'purple';
+  vehicleTypes: any[];
+  title?: string;
+  subtitle?: string;
+  showEstimationNote?: boolean;
+  estimationNoteText?: string;
+}
+
+const { 
+  stepNumber, 
+  themeColor = 'accent', 
+  vehicleTypes,
+  title = "Choisissez votre véhicule",
+  subtitle = "Sélectionnez la gamme qui vous convient.",
+  showEstimationNote = false,
+  estimationNoteText = ""
+} = Astro.props;
+
+let borderColor = 'peer-checked:border-accent hover:border-accent';
+let bgColor = 'peer-checked:bg-accent/5';
+let iconHoverBg = 'group-hover:bg-accent/10';
+let iconHoverText = 'group-hover:text-accent';
+let priceColor = 'text-accent';
+let checkBg = 'peer-checked:bg-accent';
+
+if (themeColor === 'green') {
+  borderColor = 'peer-checked:border-green-500 hover:border-green-500';
+  bgColor = 'peer-checked:bg-green-500/5';
+  iconHoverBg = 'group-hover:bg-green-500/10';
+  iconHoverText = 'group-hover:text-green-500';
+  priceColor = 'text-green-500';
+  checkBg = 'peer-checked:bg-green-500';
+} else if (themeColor === 'purple') {
+  borderColor = 'peer-checked:border-purple-500 hover:border-purple-500';
+  bgColor = 'peer-checked:bg-purple-500/5';
+  iconHoverBg = 'group-hover:bg-purple-500/10';
+  iconHoverText = 'group-hover:text-purple-500';
+  priceColor = 'text-purple-500';
+  checkBg = 'peer-checked:bg-purple-500';
+} else if (themeColor === 'amber') {
+  borderColor = 'peer-checked:border-amber-500 hover:border-amber-500';
+  bgColor = 'peer-checked:bg-amber-500/5';
+  iconHoverBg = 'group-hover:bg-amber-500/10';
+  iconHoverText = 'group-hover:text-amber-500';
+  priceColor = 'text-amber-500';
+  checkBg = 'peer-checked:bg-amber-500';
+}
+---
+
+<div class='step-container hidden' data-step={stepNumber}>
+  <div class='mb-12'>
+    <h2 class='text-2xl font-bold text-zinc-900 mb-2'>{title}</h2>
+    <p class='text-zinc-600 mb-8'>{subtitle}</p>
+
+    {showEstimationNote && (
+      <p id="estimationNote" class="text-xs text-amber-600 font-medium mb-6 bg-amber-50 p-3 rounded-lg hidden">
+        {estimationNoteText}
+      </p>
+    )}
+
+    <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
+      {
+        vehicleTypes.map((vehicle: any) => (
+          <label class='relative group cursor-pointer'>
+            <input type='radio' name='vehicle' value={vehicle.type} data-id={vehicle.id} class='sr-only peer' required />
+            <div class={`p-6 border-2 border-zinc-200 rounded-xl transition-all duration-300 h-full ${borderColor} ${bgColor}`}>
+              <div class={`w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 transition-colors ${iconHoverBg}`}>
+                <Icon name={vehicle.icon} class={`text-xl text-zinc-600 ${iconHoverText}`} />
+              </div>
+              <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{vehicle.name}</h3>
+              <div class='space-y-2 mb-4'>
+                <div class='flex items-center gap-2 text-sm text-zinc-600'>
+                  <Icon name='ri:user-line' class='text-sm' />
+                  <span>{vehicle.seats} passagers maximum</span>
+                </div>
+              </div>
+              <div class={`text-lg font-bold mt-4 price-display ${priceColor}`}>{vehicle.price}</div>
+            </div>
+            <div class={`absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all ${borderColor} ${checkBg}`}>
+              <Icon name='ri:check-line' class='text-white text-xs' />
+            </div>
+          </label>
+        ))
+      }
+    </div>
+  </div>
+</div>

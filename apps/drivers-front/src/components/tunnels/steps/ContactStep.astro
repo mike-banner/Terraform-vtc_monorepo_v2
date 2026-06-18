@@ -1,0 +1,128 @@
+---
+// apps/drivers-front/src/components/tunnels/steps/ContactStep.astro
+
+interface Props {
+  stepNumber: number;
+  isBusinessOnly?: boolean;
+  themeColor?: 'accent' | 'green' | 'purple' | 'amber';
+}
+
+const { stepNumber, isBusinessOnly = false, themeColor = 'accent' } = Astro.props;
+
+let ringClass = 'focus:ring-accent';
+let checkboxColor = 'text-accent focus:ring-accent';
+
+if (themeColor === 'green') {
+  ringClass = 'focus:ring-green-500';
+  checkboxColor = 'text-green-500 focus:ring-green-500';
+} else if (themeColor === 'purple') {
+  ringClass = 'focus:ring-purple-500';
+  checkboxColor = 'text-purple-500 focus:ring-purple-500';
+} else if (themeColor === 'amber') {
+  ringClass = 'focus:ring-amber-500';
+  checkboxColor = 'text-amber-500 focus:ring-amber-500';
+}
+---
+
+<div class='step-container hidden' data-step={stepNumber}>
+  <div class='mt-12'>
+    <h2 class='text-2xl font-bold text-zinc-900 mb-2'>{isBusinessOnly ? "Informations entreprise" : "Vos coordonnées"}</h2>
+    <p class='text-zinc-600 mb-8'>{isBusinessOnly ? "Renseignez les informations de facturation de votre société" : "Dernière étape avant la confirmation"}</p>
+
+    <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+      <div>
+        <label class='block text-sm font-medium text-zinc-700 mb-2'>Prénom</label>
+        <input type='text' name='firstName' placeholder='Votre prénom' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} required />
+      </div>
+      <div>
+        <label class='block text-sm font-medium text-zinc-700 mb-2'>Nom</label>
+        <input type='text' name='lastName' placeholder='Votre nom' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} required />
+      </div>
+    </div>
+    <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+      <div>
+        <label class='block text-sm font-medium text-zinc-700 mb-2'>Email</label>
+        <input type='email' name='email' placeholder='votre@email.com' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} required />
+      </div>
+      <div>
+        <label class='block text-sm font-medium text-zinc-700 mb-2'>Téléphone</label>
+        <input type='tel' name='phone' placeholder='+33 6 00 00 00 00' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} required />
+      </div>
+    </div>
+
+    {isBusinessOnly ? (
+      <div class='space-y-6'>
+        <div>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>Nom de l'entreprise</label>
+          <input type='text' name='companyName' placeholder='Ex: Société Example SAS' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} required />
+        </div>
+
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>SIRET</label>
+            <input type='text' name='siret' placeholder='Ex: 123 456 789 00012' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} />
+          </div>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>TVA Intracommunautaire</label>
+            <input type='text' name='vatNumber' placeholder='Ex: FR12345678901' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} />
+          </div>
+        </div>
+
+        <div>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>Adresse de facturation</label>
+          <textarea name='billingAddress' rows={2} placeholder='Adresse complète de facturation' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} required></textarea>
+        </div>
+      </div>
+    ) : (
+      <div class='mt-6 border-t border-zinc-200 pt-6'>
+        <label class='flex items-center gap-3 cursor-pointer mb-4'>
+          <input type='checkbox' name='isCompany' value='yes' class={`is-company-checkbox w-5 h-5 rounded ${checkboxColor}`} />
+          <span class='text-sm font-medium text-zinc-900'>Je réserve pour une entreprise (Facture Pro / Devis)</span>
+        </label>
+        
+        <div class='company-fields-container hidden space-y-4'>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Nom de l'entreprise</label>
+            <input type='text' name='companyName' placeholder='Nom de la société' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} />
+          </div>
+          <div class='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div>
+              <label class='block text-sm font-medium text-zinc-700 mb-2'>SIRET (Optionnel)</label>
+              <input type='text' name='siret' placeholder='N° SIRET' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} />
+            </div>
+            <div>
+              <label class='block text-sm font-medium text-zinc-700 mb-2'>TVA Intracommunautaire (Optionnel)</label>
+              <input type='text' name='vatNumber' placeholder='N° TVA' class={`w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+
+<script>
+  function initContactStep() {
+    const checkboxes = document.querySelectorAll('.is-company-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        const container = target.closest('.step-container')?.querySelector('.company-fields-container');
+        if (container) {
+          if (target.checked) {
+            container.classList.remove('hidden');
+          } else {
+            container.classList.add('hidden');
+          }
+        }
+      });
+    });
+  }
+
+  // Execute on load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContactStep);
+  } else {
+    initContactStep();
+  }
+</script>
