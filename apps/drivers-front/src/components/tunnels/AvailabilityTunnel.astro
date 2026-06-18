@@ -2,305 +2,431 @@
 // src/components/tunnels/AvailabilityTunnel.astro
 import { Icon } from 'astro-icon/components';
 import TunnelLayout from './TunnelLayout.astro';
+import InlineError from '../ui/InlineError.astro';
+import { supabase } from '../../core/supabase';
+
+const { tenant } = Astro.locals;
+const tenantId = tenant?.id || "";
+
+// Récupération des données
+const [
+  { data: vehiclesData },
+  { data: pricingRulesData }
+] = await Promise.all([
+  supabase.rpc('get_available_vehicles', { p_tenant_id: tenantId }),
+  supabase.from('pricing_rules').select('*').eq('tenant_id', tenantId).eq('active', true)
+]);
+
+const availableVehicles = vehiclesData || [];
+const pricingRules = pricingRulesData || [];
+
+const vehicleTypes = availableVehicles.map((v: any) => ({
+  type: v.category,
+  id: v.id,
+  name: `${v.brand} ${v.model}`,
+  seats: v.capacity,
+  price: 'Calcul en cours...', // Modifié par JS
+  icon: v.category.toLowerCase().includes('van') ? 'ri:bus-2-line' : (v.category.toLowerCase().includes('business') ? 'ri:briefcase-line' : 'ri:car-line')
+}));
 
 const availabilityOptions = [
-  {
-    id: 'halfDay',
-    name: 'Demi-journée',
-    duration: '4 heures',
-    price: 'À partir de 260€',
-    desc: 'Idéal pour rendez-vous courts',
-  },
-  {
-    id: 'fullDay',
-    name: 'Journée complète',
-    duration: '8 heures',
-    price: 'À partir de 450€',
-    desc: 'Service 8h avec pauses incluses',
-  },
-  {
-    id: 'extended',
-    name: 'Journée étendue',
-    duration: '12 heures',
-    price: 'À partir de 650€',
-    desc: 'Pour journées marathon',
-  },
+  { id: '4', name: 'Demi-journée', duration: '4 heures', desc: 'Idéal pour rendez-vous courts' },
+  { id: '8', name: 'Journée complète', duration: '8 heures', desc: 'Service 8h avec pauses incluses' },
+  { id: '12', name: 'Journée étendue', duration: '12 heures', desc: 'Pour journées marathon' },
 ];
 
 const useCases = [
-  {
-    id: 'shopping',
-    name: 'Shopping & Visites',
-    icon: 'ri:shopping-bag-line',
-    desc: 'Accompagnement shopping et visites touristiques',
-  },
-  {
-    id: 'events',
-    name: 'Événements',
-    icon: 'ri:calendar-event-line',
-    desc: 'Transport pour mariages, galas, cérémonies',
-  },
-  {
-    id: 'medical',
-    name: 'Accompagnement médical',
-    icon: 'ri:hospital-line',
-    desc: 'Rendez-vous médicaux et hospitaliers',
-  },
-  {
-    id: 'family',
-    name: 'Transport familial',
-    icon: 'ri:team-line',
-    desc: 'Déplacements en famille avec enfants',
-  },
-  {
-    id: 'airport',
-    name: 'Transferts multiples',
-    icon: 'ri:plane-line',
-    desc: 'Plusieurs allers-retours aéroport',
-  },
-  {
-    id: 'custom',
-    name: 'Usage personnalisé',
-    icon: 'ri:user-star-line',
-    desc: 'Besoins spécifiques sur mesure',
-  },
+  { id: 'shopping', name: 'Shopping & Visites', icon: 'ri:shopping-bag-line', desc: 'Accompagnement shopping et visites' },
+  { id: 'events', name: 'Événements', icon: 'ri:calendar-event-line', desc: 'Transport pour mariages, galas, cérémonies' },
+  { id: 'medical', name: 'Accompagnement médical', icon: 'ri:hospital-line', desc: 'Rendez-vous médicaux' },
+  { id: 'family', name: 'Transport familial', icon: 'ri:team-line', desc: 'Déplacements en famille' },
+  { id: 'airport', name: 'Transferts multiples', icon: 'ri:plane-line', desc: 'Plusieurs allers-retours aéroport' },
+  { id: 'custom', name: 'Usage personnalisé', icon: 'ri:user-star-line', desc: 'Besoins spécifiques sur mesure' },
 ];
 
 const { ...props } = Astro.props;
 ---
-
 <TunnelLayout currentStep={1} totalSteps={4} serviceType='availability' {...props}>
-  <form id='tunnel-form' class='max-w-4xl mx-auto'>
-    <!-- Étape 1: Durée de disponibilité -->
-    <div class='mb-12'>
-      <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Durée de disponibilité</h2>
-      <p class='text-zinc-600 mb-8'>
-        Choisissez la durée pendant laquelle vous souhaitez un chauffeur à votre disposition
-      </p>
+  <div id="tunnel-data" data-tenant-id={tenantId} data-pricing={JSON.stringify(pricingRules)} class="hidden"></div>
+  <form id='tunnel-form' class='max-w-4xl mx-auto' novalidate>
+    
+    <!-- Étape 1: Durée & Date -->
+    <div class='step-container' data-step='1'>
+      <div class='mb-12'>
+        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Durée de l'excursion</h2>
+        <p class='text-zinc-600 mb-8'>Choisissez la durée de votre excursion ou mise à disposition</p>
 
-      <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
-        {
-          availabilityOptions.map((option) => (
-            <label class='relative group cursor-pointer'>
-              <input type='radio' name='duration' value={option.id} class='sr-only peer' />
-              <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-orange-500 transition-all duration-300 peer-checked:border-orange-500 peer-checked:bg-orange-500/5 h-full'>
-                <div class='w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-orange-500/10 transition-colors'>
-                  <Icon
-                    name='ri:time-line'
-                    class='text-xl text-zinc-600 group-hover:text-orange-500'
-                  />
+        <div class='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+          {
+            availabilityOptions.map((option) => (
+              <label class='relative group cursor-pointer'>
+                <input type='radio' name='duration' value={option.id} class='sr-only peer' />
+                <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-orange-500 transition-all duration-300 peer-checked:border-orange-500 peer-checked:bg-orange-500/5 h-full'>
+                  <div class='w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-orange-500/10 transition-colors'>
+                    <Icon name='ri:time-line' class='text-xl text-zinc-600 group-hover:text-orange-500' />
+                  </div>
+                  <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{option.name}</h3>
+                  <div class='text-sm font-medium text-orange-500 mb-2'>{option.duration}</div>
+                  <p class='text-sm text-zinc-600 mb-4'>{option.desc}</p>
                 </div>
-                <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{option.name}</h3>
-                <div class='text-sm font-medium text-orange-500 mb-2'>{option.duration}</div>
-                <p class='text-sm text-zinc-600 mb-4'>{option.desc}</p>
-                <div class='text-lg font-bold text-orange-500 mt-4'>{option.price}</div>
-              </div>
-              <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-orange-500 peer-checked:bg-orange-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
-                <Icon name='ri:check-line' class='text-white text-xs' />
-              </div>
-            </label>
-          ))
-        }
-      </div>
-    </div>
-
-    <!-- Étape 2: Type d'utilisation -->
-    <div class='mb-12'>
-      <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Type d'utilisation</h2>
-      <p class='text-zinc-600 mb-8'>
-        Sélectionnez le type d'utilisation prévue pour mieux adapter notre service
-      </p>
-
-      <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-        {
-          useCases.map((useCase) => (
-            <label class='relative group cursor-pointer'>
-              <input type='radio' name='useCase' value={useCase.id} class='sr-only peer' />
-              <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-orange-500 transition-all duration-300 peer-checked:border-orange-500 peer-checked:bg-orange-500/5 h-full'>
-                <div class='w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-orange-500/10 transition-colors'>
-                  <Icon
-                    name={useCase.icon}
-                    class='text-lg text-zinc-600 group-hover:text-orange-500'
-                  />
+                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-orange-500 peer-checked:bg-orange-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                  <Icon name='ri:check-line' class='text-white text-xs' />
                 </div>
-                <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{useCase.name}</h3>
-                <p class='text-sm text-zinc-600'>{useCase.desc}</p>
-              </div>
-              <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-orange-500 peer-checked:bg-orange-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
-                <Icon name='ri:check-line' class='text-white text-xs' />
-              </div>
-            </label>
-          ))
-        }
-      </div>
-    </div>
+              </label>
+            ))
+          }
+        </div>
 
-    <!-- Étape 3: Date et horaires -->
-    <div class='mb-12'>
-      <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Date et horaires</h2>
-      <p class='text-zinc-600 mb-8'>Définissez la date et les horaires de votre service</p>
-
-      <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'>Date du service</label>
+        <div class="mb-12">
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>Ou saisissez une durée personnalisée (en heures)</label>
           <input
-            type='date'
-            name='serviceDate'
+            type='number'
+            name='customDuration'
+            id='customDuration'
+            min='2'
+            max='72'
+            placeholder='Ex: 6'
             class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-            required
           />
         </div>
-        <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'>Heure de début</label>
-          <input
-            type='time'
-            name='startTime'
-            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-            required
-          />
-        </div>
-      </div>
 
-      <div class='mt-6'>
-        <label class='block text-sm font-medium text-zinc-700 mb-2'
-          >Zone de prise en charge initiale</label
-        >
-        <input
-          type='text'
-          name='initialPickup'
-          placeholder='Ex: Hôtel, domicile, gare...'
-          class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-          required
-        />
-      </div>
+        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Date et horaires</h2>
+        <p class='text-zinc-600 mb-8'>Définissez la date et le lieu de départ</p>
 
-      <div class='mt-6'>
-        <label class='flex items-center gap-3 cursor-pointer'>
-          <input
-            type='checkbox'
-            name='flexibleHours'
-            class='w-5 h-5 text-orange-500 rounded focus:ring-orange-500'
-          />
-          <span class='text-sm text-zinc-700'
-            >Horaires flexibles (le chauffeur s'adapte à votre emploi du temps)</span
-          >
-        </label>
-      </div>
-    </div>
-
-    <!-- Étape 4: Détails et préférences -->
-    <div>
-      <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Détails et préférences</h2>
-      <p class='text-zinc-600 mb-8'>Personnalisez votre service selon vos besoins spécifiques</p>
-
-      <div class='space-y-6'>
-        <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'>Nombre de passagers</label>
-          <select
-            name='passengerCount'
-            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-            required>
-            <option value='1'>1 passager</option>
-            <option value='2'>2 passagers</option>
-            <option value='3'>3 passagers</option>
-            <option value='4'>4 passagers</option>
-            <option value='5'>5 passagers</option>
-            <option value='6'>6 passagers</option>
-          </select>
-        </div>
-
-        <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'
-            >Type de véhicule préféré</label
-          >
-          <select
-            name='vehiclePreference'
-            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'>
-            <option value=''>Aucune préférence</option>
-            <option value='sedan'>Berline Premium</option>
-            <option value='suv'>SUV Confort</option>
-            <option value='van'>Van Espace</option>
-            <option value='electric'>Véhicule électrique</option>
-          </select>
-        </div>
-
-        <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'
-            >Langues parlées souhaitées (optionnel)</label
-          >
-          <div class='flex flex-wrap gap-2 mt-2'>
-            {
-              ['Français', 'Anglais', 'Espagnol', 'Allemand', 'Italien', 'Arabe', 'Chinois'].map(
-                (lang) => (
-                  <label class='flex items-center gap-2 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      name='languages'
-                      value={lang}
-                      class='w-4 h-4 text-orange-500 rounded focus:ring-orange-500'
-                    />
-                    <span class='text-sm text-zinc-700'>{lang}</span>
-                  </label>
-                ),
-              )
-            }
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Date du service</label>
+            <input type='date' name='serviceDate' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
+          </div>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Heure de début</label>
+            <input type='time' name='startTime' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
           </div>
         </div>
 
         <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'
-            >Équipements spéciaux nécessaires (optionnel)</label
-          >
-          <div class='flex flex-wrap gap-2 mt-2'>
-            {
-              [
-                'Siège bébé',
-                'Siège enfant',
-                'Rampes PMR',
-                'Espace bagages',
-                'WiFi',
-                'Chargeur USB',
-                'Eau minérale',
-                'Journal',
-              ].map((equipment) => (
-                <label class='flex items-center gap-2 cursor-pointer'>
-                  <input
-                    type='checkbox'
-                    name='equipment'
-                    value={equipment}
-                    class='w-4 h-4 text-orange-500 rounded focus:ring-orange-500'
-                  />
-                  <span class='text-sm text-zinc-700'>{equipment}</span>
-                </label>
-              ))
-            }
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>Zone de prise en charge initiale</label>
+          <input type='text' name='initialPickup' placeholder='Ex: Hôtel, domicile, gare...' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
+        </div>
+      </div>
+    </div>
+
+    <!-- Étape 2: Véhicule -->
+    <div class='step-container hidden' data-step='2'>
+      <div class='mb-12'>
+        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Choisissez votre véhicule</h2>
+        <p class='text-zinc-600 mb-8'>Sélectionnez la gamme pour votre mise à disposition. Le prix est calculé selon la durée.</p>
+        
+        <p id="estimationNote" class="text-xs text-amber-600 font-medium mb-6 bg-amber-50 p-3 rounded-lg hidden">
+          Le prix minimum d'intervention de cette catégorie s'applique.
+        </p>
+
+        <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
+          {
+            vehicleTypes.map((vehicle: any) => (
+              <label class='relative group cursor-pointer'>
+                <input type='radio' name='vehicle' value={vehicle.type} data-id={vehicle.id} class='sr-only peer' required />
+                <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-orange-500 transition-all duration-300 peer-checked:border-orange-500 peer-checked:bg-orange-500/5 h-full'>
+                  <div class='w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-orange-500/10 transition-colors'>
+                    <Icon name={vehicle.icon} class='text-xl text-zinc-600 group-hover:text-orange-500' />
+                  </div>
+                  <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{vehicle.name}</h3>
+                  <div class='space-y-2 mb-4'>
+                    <div class='flex items-center gap-2 text-sm text-zinc-600'>
+                      <Icon name='ri:user-line' class='text-sm' />
+                      <span>{vehicle.seats} passagers maximum</span>
+                    </div>
+                  </div>
+                  <div class='text-lg font-bold text-orange-500 mt-4 price-display'>{vehicle.price}</div>
+                </div>
+                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-orange-500 peer-checked:bg-orange-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                  <Icon name='ri:check-line' class='text-white text-xs' />
+                </div>
+              </label>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Étape 3: Type d'utilisation & Options -->
+    <div class='step-container hidden' data-step='3'>
+      <div class='mb-12'>
+        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Programme de l'excursion</h2>
+        <p class='text-zinc-600 mb-8'>Détaillez le programme de votre journée pour que notre chauffeur s'adapte à vos besoins</p>
+
+        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
+          {
+            useCases.map((useCase) => (
+              <label class='relative group cursor-pointer'>
+                <input type='radio' name='useCase' value={useCase.id} class='sr-only peer' />
+                <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-orange-500 transition-all duration-300 peer-checked:border-orange-500 peer-checked:bg-orange-500/5 h-full'>
+                  <div class='w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-orange-500/10 transition-colors'>
+                    <Icon name={useCase.icon} class='text-lg text-zinc-600 group-hover:text-orange-500' />
+                  </div>
+                  <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{useCase.name}</h3>
+                  <p class='text-sm text-zinc-600'>{useCase.desc}</p>
+                </div>
+                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-orange-500 peer-checked:bg-orange-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                  <Icon name='ri:check-line' class='text-white text-xs' />
+                </div>
+              </label>
+            ))
+          }
+        </div>
+
+        <div class='space-y-6'>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Nombre de passagers</label>
+            <select name='passengerCount' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required>
+              <option value='1'>1 passager</option>
+              <option value='2'>2 passagers</option>
+              <option value='3'>3 passagers</option>
+              <option value='4'>4 passagers</option>
+              <option value='5'>5 passagers</option>
+              <option value='6'>6 passagers</option>
+            </select>
+          </div>
+
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Itinéraire détaillé et lieux à visiter (Requis)</label>
+            <textarea name='plannedItinerary' rows='3' placeholder='Ex: 1. Visite du Château de Versailles 2. Déjeuner au restaurant X 3. Retour à Paris...' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required></textarea>
+          </div>
+
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Options Touristiques Supplémentaires (Sur devis)</label>
+            <div class='flex flex-col gap-3 mt-2'>
+              <label class='flex items-center gap-3 cursor-pointer p-3 border border-zinc-200 rounded-lg hover:bg-orange-50/50 transition-colors'>
+                <input type='checkbox' name='optionTranslator' value='yes' class='w-5 h-5 text-orange-500 rounded focus:ring-orange-500' />
+                <div>
+                  <span class='text-sm font-medium text-zinc-900 block'>Option Traducteur / Interprète</span>
+                  <span class='text-xs text-zinc-500'>Un professionnel bilingue vous accompagne.</span>
+                </div>
+              </label>
+              <label class='flex items-center gap-3 cursor-pointer p-3 border border-zinc-200 rounded-lg hover:bg-orange-50/50 transition-colors'>
+                <input type='checkbox' name='optionTourGuide' value='yes' class='w-5 h-5 text-orange-500 rounded focus:ring-orange-500' />
+                <div>
+                  <span class='text-sm font-medium text-zinc-900 block'>Formule Guide Touristique</span>
+                  <span class='text-xs text-zinc-500'>Le chauffeur dispose d'une accréditation guide touristique.</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Notes spéciales (optionnel)</label>
+            <textarea name='specialNotes' rows='2' placeholder='Ex: Personne à mobilité réduite, besoins spécifiques...' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'></textarea>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'
-            >Itinéraire prévisionnel (optionnel)</label
-          >
-          <textarea
-            name='plannedItinerary'
-            rows='3'
-            placeholder='Ex: 1. Hôtel → Centre commercial 2. Centre commercial → Restaurant 3. Restaurant → Aéroport'
-            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-          ></textarea>
+    <!-- Étape 4: Coordonnées -->
+    <div class='step-container hidden' data-step='4'>
+      <div class='mt-12'>
+        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Vos coordonnées</h2>
+        <p class='text-zinc-600 mb-8'>Dernière étape pour finaliser la demande</p>
+
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Prénom</label>
+            <input type='text' name='firstName' placeholder='Votre prénom' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
+          </div>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Nom</label>
+            <input type='text' name='lastName' placeholder='Votre nom' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
+          </div>
         </div>
-
-        <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'
-            >Notes spéciales (optionnel)</label
-          >
-          <textarea
-            name='specialNotes'
-            rows='3'
-            placeholder='Ex: Personne à mobilité réduite, anniversaire surprise, besoins médicaux...'
-            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-          ></textarea>
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Email</label>
+            <input type='email' name='email' placeholder='votre@email.com' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
+          </div>
+          <div>
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Téléphone</label>
+            <input type='tel' name='phone' placeholder='+33 6 00 00 00 00' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
+          </div>
         </div>
       </div>
     </div>
   </form>
 </TunnelLayout>
+
+<script>
+  function initTunnel() {
+    const dataDiv = document.getElementById('tunnel-data');
+    if (!dataDiv) return;
+
+    const pricingRules = JSON.parse(dataDiv.dataset.pricing || '[]');
+    const form = document.getElementById('tunnel-form') as HTMLFormElement;
+    if (!form) return;
+
+    const vehicleInputs = document.querySelectorAll('input[name="vehicle"]');
+    const durationInputs = document.querySelectorAll('input[name="duration"]');
+    const customDurationInput = document.getElementById('customDuration') as HTMLInputElement;
+    const estimationNote = document.getElementById('estimationNote');
+
+    let currentStep = 1;
+    const maxSteps = 4;
+    const steps = document.querySelectorAll('.step-container');
+    const submitBtn = document.querySelector('button[form="tunnel-form"]') as HTMLButtonElement;
+    const backBtn = document.getElementById('back-btn');
+    
+    // Si on saisit une durée custom, on décoche les radios
+    customDurationInput?.addEventListener('input', () => {
+      if (customDurationInput.value.trim() !== '') {
+        durationInputs.forEach(r => (r as HTMLInputElement).checked = false);
+      }
+    });
+    // Si on coche un radio, on vide la custom duration
+    durationInputs.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if ((radio as HTMLInputElement).checked) customDurationInput.value = '';
+      });
+    });
+
+    function showStep(stepIndex: number) {
+      steps.forEach((el, idx) => {
+        if (idx + 1 === stepIndex) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+      
+      if (stepIndex === 2) updatePriceDisplay();
+      
+      const progressBar = document.getElementById('progress-bar-line');
+      if (progressBar) progressBar.style.width = `${((stepIndex - 1) / (maxSteps - 1)) * 100}%`;
+      
+      const circles = document.querySelectorAll('.progress-step-circle');
+      circles.forEach(circle => {
+        const stepNum = parseInt(circle.getAttribute('data-step') || '1', 10);
+        circle.className = `progress-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
+          stepNum < stepIndex ? 'bg-black text-white' : stepNum === stepIndex ? 'bg-black text-white ring-4 ring-black/5' : 'bg-zinc-200 text-zinc-500'
+        }`;
+      });
+      const labels = document.querySelectorAll('.progress-step-label');
+      labels.forEach(label => {
+        const stepNum = parseInt(label.getAttribute('data-step') || '1', 10);
+        label.className = `progress-step-label mt-2 text-xs font-medium text-center transition-colors duration-300 ${
+          stepNum <= stepIndex ? 'text-zinc-900' : 'text-zinc-500'
+        }`;
+      });
+      const submitBtnText = document.getElementById('submit-btn-text');
+      if (submitBtnText) submitBtnText.textContent = stepIndex === maxSteps ? 'Finaliser' : 'Continuer';
+      
+      const progressText = document.getElementById('current-step-text');
+      if (progressText) progressText.textContent = stepIndex.toString();
+      
+      if (backBtn) {
+        if (stepIndex > 1) backBtn.classList.remove('hidden');
+        else backBtn.classList.add('hidden');
+      }
+    }
+
+    if (backBtn) {
+      backBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentStep > 1) { currentStep--; showStep(currentStep); }
+      });
+    }
+
+    function updatePriceDisplay() {
+      let selectedHours = 0;
+      
+      if (customDurationInput.value.trim() !== '') {
+        selectedHours = Number(customDurationInput.value);
+      } else {
+        const selectedDest = Array.from(durationInputs).find(r => (r as HTMLInputElement).checked) as HTMLInputElement;
+        if (selectedDest) selectedHours = Number(selectedDest.value || 0);
+      }
+
+      let minimumTriggered = false;
+
+      vehicleInputs.forEach((input) => {
+        const radio = input as HTMLInputElement;
+        const category = radio.value;
+        const vehicleCard = radio.nextElementSibling as HTMLElement;
+        if (!vehicleCard) return;
+        const priceDiv = vehicleCard.querySelector('.price-display');
+        
+        const rule = pricingRules.find((r: any) => r.service_category?.toLowerCase() === category.toLowerCase());
+
+        if (priceDiv) {
+          if (!rule || !rule.price_per_hour || selectedHours === 0) {
+            priceDiv.textContent = `Sur devis`;
+          } else {
+            let amount = selectedHours * rule.price_per_hour;
+            if (amount < rule.minimum_fare) {
+              amount = rule.minimum_fare;
+              minimumTriggered = true;
+            }
+            priceDiv.textContent = `~ ${amount.toFixed(0)} €`;
+          }
+        }
+      });
+
+      if (estimationNote) {
+        if (minimumTriggered) estimationNote.classList.remove('hidden');
+        else estimationNote.classList.add('hidden');
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      if (currentStep === 1) {
+        if (!formData.get('duration') && customDurationInput.value.trim() === '') {
+          alert("Veuillez sélectionner ou entrer une durée.");
+          return;
+        }
+        if (!formData.get('serviceDate') || !formData.get('startTime') || !formData.get('initialPickup')) {
+          alert("Veuillez remplir les informations de départ.");
+          return;
+        }
+        currentStep++; showStep(currentStep);
+        return;
+      }
+
+      if (currentStep === 2) {
+        if (!formData.get('vehicle')) { alert("Veuillez choisir un véhicule."); return; }
+        currentStep++; showStep(currentStep);
+        return;
+      }
+
+      if (currentStep === 3) {
+        currentStep++; showStep(currentStep);
+        return;
+      }
+
+      if (currentStep === maxSteps) {
+        if (!formData.get('firstName') || !formData.get('lastName') || !formData.get('email') || !formData.get('phone')) {
+          alert("Veuillez remplir vos coordonnées.");
+          return;
+        }
+
+        const originalText = submitBtn.textContent || '';
+        submitBtn.textContent = 'Envoi de la demande...';
+        submitBtn.disabled = true;
+
+        try {
+          // Pour la V1, on n'envoie pas à Stripe pour les prix dynamiques (Plan X)
+          alert("Tunnel Mise à disposition V1 terminé avec succès ! (Plan X : Redirection Stripe en construction)");
+          submitBtn.textContent = 'Demande envoyée';
+        } catch (err: any) {
+          console.error("Submit error:", err);
+          alert(err.message || "Erreur lors de la soumission");
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+        }
+      }
+    });
+
+    showStep(1);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTunnel);
+  } else {
+    initTunnel();
+  }
+</script>
