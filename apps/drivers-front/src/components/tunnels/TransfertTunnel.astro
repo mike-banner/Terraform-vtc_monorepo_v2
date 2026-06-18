@@ -255,6 +255,30 @@ const isGeneralTransfer = serviceType === 'transfert';
             />
           </div>
         </div>
+
+        <div class='mt-6 border-t border-zinc-200 pt-6'>
+          <label class='flex items-center gap-3 cursor-pointer mb-4'>
+            <input type='checkbox' id='isCompanyCheckbox' name='isCompany' value='yes' class='w-5 h-5 text-accent rounded focus:ring-accent' />
+            <span class='text-sm font-medium text-zinc-900'>Je réserve pour une entreprise (Facture Pro / Devis)</span>
+          </label>
+          
+          <div id='companyFields' class='hidden space-y-4'>
+            <div>
+              <label class='block text-sm font-medium text-zinc-700 mb-2'>Nom de l'entreprise</label>
+              <input type='text' name='companyName' placeholder='Nom de la société' class='w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent' />
+            </div>
+            <div class='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div>
+                <label class='block text-sm font-medium text-zinc-700 mb-2'>SIRET (Optionnel)</label>
+                <input type='text' name='siret' placeholder='N° SIRET' class='w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent' />
+              </div>
+              <div>
+                <label class='block text-sm font-medium text-zinc-700 mb-2'>TVA Intracommunautaire (Optionnel)</label>
+                <input type='text' name='vatNumber' placeholder='N° TVA' class='w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent' />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </form>
@@ -299,6 +323,19 @@ const isGeneralTransfer = serviceType === 'transfert';
     const maxSteps = 4;
     const steps = document.querySelectorAll('.step-container');
     const submitBtn = document.querySelector('button[form="tunnel-form"]') as HTMLButtonElement;
+
+    // Toggle Company Fields
+    const isCompanyCheckbox = document.getElementById('isCompanyCheckbox') as HTMLInputElement;
+    const companyFields = document.getElementById('companyFields');
+    if (isCompanyCheckbox && companyFields) {
+      isCompanyCheckbox.addEventListener('change', () => {
+        if (isCompanyCheckbox.checked) {
+          companyFields.classList.remove('hidden');
+        } else {
+          companyFields.classList.add('hidden');
+        }
+      });
+    }
     
     // Fonction pour mettre à jour l'affichage de l'étape
     function showStep(stepIndex: number) {

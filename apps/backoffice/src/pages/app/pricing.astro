@@ -190,31 +190,51 @@ if (error) {
                         </div>
                     </div>
 
-                    <!-- Tarification -->
-                    <div class="space-y-3">
-                        <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-600">Tarification</p>
-                        <div class="grid grid-cols-3 gap-3">
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Base (€)</label>
-                                <input type="number" step="0.01" min="0" name="base_price" id="base-price" required class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0">
+                    <div class="space-y-4 pt-2">
+                        <!-- Section: Trajet A-B -->
+                        <div class="space-y-4 p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                            <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                                <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-white">Trajet Classique</p>
+                                    <p class="text-[10px] text-slate-500 font-bold mt-0.5">Point A vers Point B</p>
+                                </div>
                             </div>
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">/ km (€)</label>
-                                <input type="number" step="0.01" min="0" name="price_per_km" id="price-per-km" required class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">/ heure (€)</label>
-                                <input type="number" step="0.01" min="0" name="price_per_hour" id="price-per-hour" required class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0" placeholder="0.00">
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Base de départ (€)</label>
+                                    <input type="number" step="0.01" min="0" name="base_price" id="base-price" class="w-full bg-black/20 focus:bg-white/5 border border-white/10 focus:border-indigo-500 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0 transition-all" placeholder="0.00">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Prix / km (€)</label>
+                                    <input type="number" step="0.01" min="0" name="price_per_km" id="price-per-km" class="w-full bg-black/20 focus:bg-white/5 border border-white/10 focus:border-indigo-500 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0 transition-all" placeholder="0.00">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Course Minimum (€)</label>
+                                    <input type="number" step="0.01" min="0" name="minimum_fare" id="minimum-fare" class="w-full bg-black/20 focus:bg-white/5 border border-white/10 focus:border-indigo-500 rounded-xl px-4 py-3 text-white font-bold tabular-nums text-sm transition-all" placeholder="0.00">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Seuil minimum -->
-                    <div class="space-y-3">
-                        <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-600">Seuil minimum</p>
-                        <div>
-                            <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Montant minimum (€)</label>
-                            <input type="number" step="0.01" min="0" name="minimum_fare" id="minimum-fare" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold tabular-nums text-sm">
+                        <!-- Section: Mise à disposition -->
+                        <div class="space-y-4 p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                            <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                                <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-white">Mise à disposition</p>
+                                    <p class="text-[10px] text-slate-500 font-bold mt-0.5">Location à l'heure</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Taux horaire (€)</label>
+                                <input type="number" step="0.01" min="0" name="price_per_hour" id="price-per-hour" class="w-full bg-black/20 focus:bg-white/5 border border-white/10 focus:border-amber-500 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0 transition-all" placeholder="0.00">
+                            </div>
                         </div>
                     </div>
                 </div>
