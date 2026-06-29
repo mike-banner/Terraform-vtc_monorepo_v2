@@ -33,3 +33,5 @@ locals {
     PNPM_VERSION             = "9.0.0"
   }
 }
+
+# Trigger CI/CD pipelines after Hard Reset
