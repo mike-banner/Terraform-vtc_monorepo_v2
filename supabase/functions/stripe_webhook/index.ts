@@ -273,6 +273,17 @@ Deno.serve(async (req) => {
             booking_id: booking.id,
           })
           .eq("stripe_event_id", event.id);
+
+        // Cas A : génération automatique de la facture officielle Stripe
+        const invoiceRes = await supabase.functions.invoke("generate-invoice", {
+          body: { booking_id: booking.id },
+        });
+        if (invoiceRes.error) {
+          // Non bloquant : le webhook a réussi, la facture peut être régénérée manuellement
+          console.error("INVOICE GENERATION FAILED (non-blocking)", invoiceRes.error);
+        } else {
+          console.log("INVOICE GENERATED", invoiceRes.data?.invoice_number);
+        }
       }
     }
   }

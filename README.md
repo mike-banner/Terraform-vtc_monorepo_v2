@@ -1,50 +1,108 @@
-# VTC Platform
+# VTC Cloud Platform — Multi-Tenant SaaS Architecture
 
-Une plateforme de mise en relation VTC moderne, structurée autour d'une architecture monorepo haute performance.
+> A production-ready, highly scalable multi-tenant platform built for the transportation industry, showcasing modern architectural patterns, Infrastructure as Code (IaC), and GitOps CI/CD workflows.
 
-## Architecture & Technologies
+---
 
-Ce projet utilise un **Monorepo Turborepo** pour partager la logique métier entre les différentes applications tout en garantissant un build incrémental rapide.
+## 🏗️ Architecture Overview
 
-*   **Gestionnaire de paquets :** pnpm (Workspaces)
-*   **Applications Front/Back :** Astro.js, React (SSR/SSG hybride)
-*   **Base de Données & Auth :** Supabase (PostgreSQL, Realtime, RLS)
-*   **UI/UX :** Ark UI, TailwindCSS
-*   **Déploiement :** Cloudflare (Edge Computing)
+This project is structured as a **Monorepo** to decouple concerns while maximizing code reuse across multiple frontend applications and a centralized backend.
 
-## Structure du Monorepo
+### The Stack
+- **Frontend Layer**: 
+  - **Backoffice**: [Astro](https://astro.build/) with React & Ark UI (Hybrid SSR/SSG).
+  - **Drivers-Front**: Astro with DaisyUI (High performance, SEO-first).
+  - **Superadmin**: React + Vite SPA (Client-side rendering for heavy dashboarding).
+  - **Styling**: TailwindCSS across all apps.
+- **Backend Layer**: [Supabase](https://supabase.com/) (PostgreSQL, Row Level Security, Edge Functions).
+- **Infrastructure Layer**: [Terraform](https://www.terraform.io/) (HCP Terraform Backend), Cloudflare Pages.
+- **CI/CD Pipeline**: GitHub Actions (GitOps).
+
+### Key Engineering Highlights
+
+#### 1. Multi-Tenant Edge Architecture (Cloudflare for SaaS)
+Instead of provisioning separate instances for each driver or agency, the `drivers-front` application acts as a single multi-tenant SSR server deployed on Cloudflare Pages. It dynamically renders tailored interfaces based on custom hostnames (via Cloudflare for SaaS API), drastically reducing infrastructure overhead and deployment times.
+
+#### 2. Fully Automated GitOps Pipeline
+Infrastructure changes are strictly peer-reviewed and deployed via GitHub Actions:
+- **Pull Requests**: Trigger `terraform plan` to validate and preview infrastructure drift securely.
+- **Merges to `dev`/`main`**: Automatically execute `terraform apply`, provisioning Cloudflare Pages instances and injecting production secrets at build time.
+
+#### 3. Centralized Infrastructure as Code (IaC)
+All cloud resources are codified in the `terraform/` directory. The state is securely managed via HashiCorp Cloud Platform (HCP), preventing deployment conflicts via state locking and providing a full audit trail of architectural changes.
+
+#### 4. Type-Safe Monorepo
+Leveraging `pnpm` workspaces, the architecture shares a single `packages/database` module containing Supabase generated TypeScript definitions. This ensures end-to-end type safety from the PostgreSQL schema down to the UI components.
+
+---
+
+## 📂 Project Structure
 
 ```text
-.
+vtc_repo_v2/
 ├── apps/
-│   ├── backoffice/       # Dashboard d'administration (Astro/React)
-│   └── drivers-front/    # Application chauffeurs (Astro/React)
+│   ├── backoffice/     # Agency management dashboard (Astro + React)
+│   ├── drivers-front/  # Multi-tenant public-facing sites for drivers (Astro)
+│   └── superadmin/     # Platform administration console (React SPA + Vite)
 ├── packages/
-│   └── database/         # Typages générés et clients Supabase mutualisés
-├── turbo.json            # Configuration du pipeline de build
-└── pnpm-workspace.yaml   # Déclaration du monorepo
+│   └── database/       # Shared TS types and Supabase client logic
+├── supabase/
+│   ├── migrations/     # Version-controlled PostgreSQL schemas
+│   ├── seed.sql        # Deterministic local development data
+│   └── config.toml     # Supabase local environment configuration
+├── terraform/            
+│   ├── main.tf         # Providers and HCP Backend configuration
+│   ├── pages.tf        # Cloudflare Pages deployment definitions
+│   └── variables.tf    # Environment-agnostic variable definitions
+└── .github/workflows/
+    └── terraform.yml   # GitOps CI/CD pipeline
 ```
 
-## Décisions Techniques (ADR)
+---
 
-1.  **Isolation de la couche de données :** Le package `@vtc/database` centralise les types générés et l'instanciation des clients Supabase. Cela empêche la duplication de code et garantit la cohérence des requêtes sur toute la stack.
-2.  **Gestion de l'environnement SSR :** Implémentation d'un polyfill `ws` au niveau du package base de données pour assurer la stabilité du `RealtimeClient` Supabase dans les environnements Node.js >= 20.
-3.  **Edge Rendering :** L'utilisation d'Astro avec le déploiement sur Cloudflare permet une distribution au plus près des utilisateurs avec des temps de réponse minimaux.
+## 🚀 Deployment & Operations
 
-# Scripts Utiles
+### Prerequisites
+- Node.js 20+ & `pnpm` 9+
+- Terraform CLI ≥ 1.5.0
+- Supabase CLI
 
+### Local Development Setup
+
+1. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
+
+2. **Start the local Supabase stack**
+   ```bash
+   supabase start
+   ```
+
+3. **Run the development servers**
+   ```bash
+   pnpm dev --filter backoffice
+   ```
+
+### Infrastructure Deployment (CI/CD)
+
+The infrastructure is fully automated. Pushing to `dev` or `main` will trigger the GitHub Actions workflow, which securely handles:
+- Cloudflare Pages provisioning for the 3 frontend apps.
+- Secure injection of third-party credentials (Stripe, Resend, Supabase).
+- Automatic builds and distributed CDN edge deployments.
+
+For manual infrastructure emergency overrides:
 ```bash
-# Installation des dépendances
-pnpm install
-
-# Démarrer l'environnement de développement (toutes les applications)
-pnpm dev
-
-# Lancer une application spécifique (très utile pour éviter de surcharger le terminal)
-pnpm dev --filter @vtc/backoffice     # Lancer le Backoffice
-pnpm dev --filter superadmin          # Lancer le Superadmin
-pnpm dev --filter @vtc/drivers-front  # Lancer le tunnel de réservation public
-
-# Compiler pour la production
-pnpm build
+cd terraform/
+terraform init
+terraform plan
+terraform apply
 ```
+
+---
+
+## 🔐 Security Standards
+
+- **Row Level Security (RLS)**: PostgreSQL policies isolate tenant data at the database layer.
+- **Secret Management**: No secrets are stored in the repository. They are injected at pipeline execution via GitHub Secrets.
+- **Principle of Least Privilege**: Cloudflare API tokens and Terraform service accounts are restricted solely to the resources they govern.
