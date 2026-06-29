@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
+import { generateDevisEmail } from "../_shared/email-templates/devis.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,40 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
+
+async function sendEmailLog(params: {
+  bookingId: string;
+  emailType: "devis" | "invoice";
+  recipientEmail: string;
+  html: string;
+  subject: string;
+}): Promise<{ status: string; resend_id?: string }> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${serviceKey}`,
+    },
+    body: JSON.stringify({ to: params.recipientEmail, subject: params.subject, html: params.html }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  const status = res.ok ? "sent" : "failed";
+  const resendId = data?.id ?? null;
+
+  await supabase.from("email_logs").insert({
+    booking_id: params.bookingId,
+    email_type: params.emailType,
+    recipient_email: params.recipientEmail,
+    status,
+    resend_id: resendId,
+  });
+
+  return { status, resend_id: resendId };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -215,14 +250,60 @@ Deno.serve(async (req) => {
       .from("invoices")
       .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
 
+    const pdfUrl = signedData?.signedUrl ?? "";
+
     await supabase.from("bookings").update({
-      invoice_url: signedData?.signedUrl ?? null,
+      invoice_url: pdfUrl || null,
       invoice_number: invoiceNumber,
       invoice_created_at: now.toISOString(),
     }).eq("id", booking_id);
 
+    // --- Email ---
+    const customerEmail = customer?.email;
+    if (customerEmail && pdfUrl) {
+      const html = generateDevisEmail({
+        invoiceNumber,
+        pdfUrl,
+        tenant: {
+          name: tenant.name ?? "",
+          email: tenant.email,
+          phone: tenant.phone,
+          siret: tenant.siret,
+          vat_number: tenant.vat_number,
+          is_vat_exempt: tenant.is_vat_exempt,
+          vat_rate: tenant.vat_rate,
+          legal_form: tenant.legal_form,
+          capital_social: tenant.capital_social,
+        },
+        customer: {
+          first_name: customer?.first_name,
+          last_name: customer?.last_name,
+          email: customer?.email,
+          company_name: customer?.company_name,
+        },
+        booking: {
+          pickup_address: booking.pickup_address,
+          dropoff_address: booking.dropoff_address,
+          pickup_time: booking.pickup_time,
+          subtotal_amount: booking.subtotal_amount,
+          vat_amount: booking.vat_amount,
+          total_amount: booking.total_amount,
+          passenger_count: booking.passenger_count,
+          luggage_count: booking.luggage_count,
+        },
+      });
+
+      await sendEmailLog({
+        bookingId: booking_id,
+        emailType: "devis",
+        recipientEmail: customerEmail,
+        subject: `Votre devis ${invoiceNumber} — ${tenant.name ?? ""}`,
+        html,
+      }).catch((err) => console.error("SEND EMAIL ERROR", err));
+    }
+
     return new Response(
-      JSON.stringify({ success: true, invoice_number: invoiceNumber, invoice_url: signedData?.signedUrl }),
+      JSON.stringify({ success: true, invoice_number: invoiceNumber, invoice_url: pdfUrl }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: any) {
