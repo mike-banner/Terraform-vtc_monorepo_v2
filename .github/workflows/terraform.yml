@@ -39,8 +39,18 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
+      - name: Dynamic HCP Workspace Selection
+        run: |
+          WORKSPACE="vtc_dev"
+          if [ "${{ env.TF_VAR_environment }}" == "production" ]; then
+            WORKSPACE="vtc_prod"
+          fi
+          sed -i "s/name = \"vtc_prod\"/name = \"$WORKSPACE\"/g" main.tf
+
       - name: Terraform Init
         run: terraform init
+
+
 
       - name: Terraform Format
         run: terraform fmt -check
