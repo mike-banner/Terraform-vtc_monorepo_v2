@@ -38,3 +38,7 @@ graphify-out/
 # Playwright
 playwright-report/
 test-results/
+
+# Supabase
+.supabase/
+.agents/
