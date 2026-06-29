@@ -2,7 +2,11 @@ terraform {
   required_version = ">= 1.5.0"
 
   cloud {
-    # Organisation et workspace gérés via TF_CLOUD_ORGANIZATION et TF_WORKSPACE
+    organization = "mike-banner_inc"
+
+    workspaces {
+      name = "vtc_prod"
+    }
   }
 
   required_providers {
