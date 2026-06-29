@@ -205,10 +205,16 @@ Deno.serve(async (req) => {
       connectedOpts
     );
 
-    // --- 7. Mise à jour booking ---
+    // --- 7. Numéro séquentiel (art. L441-3 : sans rupture ni réutilisation) ---
     const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
-    const invoiceNumber = `FAC-${dateStr}-${booking_id.slice(0, 6).toUpperCase()}`;
+    const { data: invoiceNumber, error: seqErr } = await supabase.rpc(
+      "next_invoice_number",
+      { t_id: booking.current_tenant_id, y: now.getFullYear() }
+    );
+    if (seqErr || !invoiceNumber) {
+      console.error("SEQUENCE ERROR", seqErr);
+      return new Response("Failed to generate invoice number", { status: 500 });
+    }
 
     await supabase
       .from("bookings")
