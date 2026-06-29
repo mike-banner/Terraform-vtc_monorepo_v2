@@ -4,11 +4,7 @@ resource "cloudflare_pages_project" "backoffice" {
   name              = "vtc-backoffice-${var.environment}"
   production_branch = "main"
 
-  build_config {
-    build_command   = "pnpm build --filter backoffice"
-    destination_dir = "apps/backoffice/dist"
-    root_dir        = "/"
-  }
+
 
   deployment_configs {
     production {
@@ -26,11 +22,7 @@ resource "cloudflare_pages_project" "drivers_front" {
   name              = "vtc-drivers-front-${var.environment}"
   production_branch = "main"
 
-  build_config {
-    build_command   = "pnpm build --filter drivers-front"
-    destination_dir = "apps/drivers-front/dist"
-    root_dir        = "/"
-  }
+
 
   deployment_configs {
     production {
@@ -48,11 +40,7 @@ resource "cloudflare_pages_project" "superadmin" {
   name              = "vtc-superadmin-${var.environment}"
   production_branch = "main"
 
-  build_config {
-    build_command   = "pnpm build --filter superadmin"
-    destination_dir = "apps/superadmin/dist"
-    root_dir        = "/"
-  }
+
 
   deployment_configs {
     production {
