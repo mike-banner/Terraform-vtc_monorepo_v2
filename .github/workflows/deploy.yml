@@ -34,6 +34,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build applications
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: pnpm build
 
       - name: Deploy Backoffice
