@@ -2,7 +2,7 @@
 resource "cloudflare_pages_project" "backoffice" {
   account_id        = var.cloudflare_account_id
   name              = "vtc-backoffice-${var.environment}"
-  production_branch = "main"
+  production_branch = var.environment == "production" ? "main" : "dev"
 
 
 
@@ -20,7 +20,7 @@ resource "cloudflare_pages_project" "backoffice" {
 resource "cloudflare_pages_project" "drivers_front" {
   account_id        = var.cloudflare_account_id
   name              = "vtc-drivers-front-${var.environment}"
-  production_branch = "main"
+  production_branch = var.environment == "production" ? "main" : "dev"
 
 
 
@@ -38,7 +38,7 @@ resource "cloudflare_pages_project" "drivers_front" {
 resource "cloudflare_pages_project" "superadmin" {
   account_id        = var.cloudflare_account_id
   name              = "vtc-superadmin-${var.environment}"
-  production_branch = "main"
+  production_branch = var.environment == "production" ? "main" : "dev"
 
 
 
