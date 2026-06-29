@@ -9,7 +9,11 @@
 This project is structured as a **Monorepo** to decouple concerns while maximizing code reuse across multiple frontend applications and a centralized backend.
 
 ### The Stack
-- **Frontend Layer**: [Astro](https://astro.build/) (Hybrid SSR/SSG), TailwindCSS.
+- **Frontend Layer**: 
+  - **Backoffice**: [Astro](https://astro.build/) with React & Ark UI (Hybrid SSR/SSG).
+  - **Drivers-Front**: Astro with DaisyUI (High performance, SEO-first).
+  - **Superadmin**: React + Vite SPA (Client-side rendering for heavy dashboarding).
+  - **Styling**: TailwindCSS across all apps.
 - **Backend Layer**: [Supabase](https://supabase.com/) (PostgreSQL, Row Level Security, Edge Functions).
 - **Infrastructure Layer**: [Terraform](https://www.terraform.io/) (HCP Terraform Backend), Cloudflare Pages.
 - **CI/CD Pipeline**: GitHub Actions (GitOps).
@@ -37,9 +41,9 @@ Leveraging `pnpm` workspaces, the architecture shares a single `packages/databas
 ```text
 vtc_repo_v2/
 ├── apps/
-│   ├── backoffice/     # Agency management dashboard (Astro)
+│   ├── backoffice/     # Agency management dashboard (Astro + React)
 │   ├── drivers-front/  # Multi-tenant public-facing sites for drivers (Astro)
-│   └── superadmin/     # Platform administration console (Astro)
+│   └── superadmin/     # Platform administration console (React SPA + Vite)
 ├── packages/
 │   └── database/       # Shared TS types and Supabase client logic
 ├── supabase/
