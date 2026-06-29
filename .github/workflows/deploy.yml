@@ -41,18 +41,18 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/backoffice/dist --project-name=vtc-backoffice-${{ env.ENVIRONMENT }}
+          command: pages deploy apps/backoffice/dist --project-name=vtc-backoffice-${{ env.ENVIRONMENT }} --branch main
 
       - name: Deploy Drivers Front
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/drivers-front/dist --project-name=vtc-drivers-front-${{ env.ENVIRONMENT }}
+          command: pages deploy apps/drivers-front/dist --project-name=vtc-drivers-front-${{ env.ENVIRONMENT }} --branch main
 
       - name: Deploy Superadmin
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/superadmin/dist --project-name=vtc-superadmin-${{ env.ENVIRONMENT }}
+          command: pages deploy apps/superadmin/dist --project-name=vtc-superadmin-${{ env.ENVIRONMENT }} --branch main
