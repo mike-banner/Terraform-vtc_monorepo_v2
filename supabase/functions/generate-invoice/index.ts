@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@12.18.0?target=deno&no-check";
 import { generateInvoiceEmail } from "../_shared/email-templates/invoice.ts";
+import { sendEmailLog } from "../_shared/send-email-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,40 +17,6 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
-
-async function sendEmailLog(params: {
-  bookingId: string;
-  emailType: "devis" | "invoice";
-  recipientEmail: string;
-  html: string;
-  subject: string;
-}): Promise<{ status: string; resend_id?: string }> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${serviceKey}`,
-    },
-    body: JSON.stringify({ to: params.recipientEmail, subject: params.subject, html: params.html }),
-  });
-
-  const data = await res.json().catch(() => ({}));
-  const status = res.ok ? "sent" : "failed";
-  const resendId = data?.id ?? null;
-
-  await supabase.from("email_logs").insert({
-    booking_id: params.bookingId,
-    email_type: params.emailType,
-    recipient_email: params.recipientEmail,
-    status,
-    resend_id: resendId,
-  });
-
-  return { status, resend_id: resendId };
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -71,7 +38,7 @@ Deno.serve(async (req) => {
         "pickup_address, dropoff_address, pickup_time, booking_type, " +
         "total_amount, subtotal_amount, vat_amount, " +
         "status, mission_status, payment_mode, " +
-        "stripe_payment_intent_id, invoice_number"
+        "stripe_payment_intent_id, stripe_invoice_id, invoice_number"
       )
       .eq("id", booking_id)
       .single();
@@ -100,11 +67,30 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Guard CR-03 : si stripe_invoice_id existe déjà, la facture Stripe a été créée mais
+    // next_invoice_number a échoué au run précédent — on relance seulement le séquençage local.
+    if (booking.stripe_invoice_id) {
+      const now = new Date();
+      const { data: invoiceNumber, error: seqErr } = await supabase.rpc(
+        "next_invoice_number",
+        { t_id: booking.current_tenant_id, y: now.getFullYear() }
+      );
+      if (seqErr || !invoiceNumber) {
+        console.error("SEQUENCE ERROR (retry)", seqErr);
+        return new Response("Failed to generate invoice number", { status: 500 });
+      }
+      await supabase.from("bookings").update({ invoice_number: invoiceNumber }).eq("id", booking_id);
+      return new Response(
+        JSON.stringify({ success: true, invoice_number: invoiceNumber, stripe_invoice_id: booking.stripe_invoice_id }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // --- 2. Tenant ---
     const { data: tenant, error: tErr } = await supabase
       .from("tenants")
       .select(
-        "id, name, email, siret, vat_number, vat_rate, is_vat_exempt, " +
+        "id, name, email, phone, siret, vat_number, vat_rate, is_vat_exempt, " +
         "legal_form, rcs_number, capital_social, stripe_account_id"
       )
       .eq("id", booking.current_tenant_id)
@@ -159,7 +145,8 @@ Deno.serve(async (req) => {
     const totalCents = Math.round(Number(booking.total_amount ?? 0) * 100);
     const subtotalCents = Math.round(Number(booking.subtotal_amount ?? booking.total_amount ?? 0) * 100);
     const vatCents = Math.round(Number(booking.vat_amount ?? 0) * 100);
-    const isExempt = tenant.is_vat_exempt !== false;
+    // ponytail: null → non exonéré (prudent fiscalement, WR-02)
+    const isExempt = tenant.is_vat_exempt === true;
     const vatRate = Number(tenant.vat_rate ?? 0);
 
     const pickupDate = booking.pickup_time
@@ -240,6 +227,11 @@ Deno.serve(async (req) => {
       connectedOpts
     );
 
+    // CR-03 : persister stripe_invoice_id immédiatement comme verrou d'idempotence.
+    // Si next_invoice_number échoue et que le client retente, le guard ci-dessus
+    // détecte stripe_invoice_id non-null et saute la création Stripe.
+    await supabase.from("bookings").update({ stripe_invoice_id: paid.id }).eq("id", booking_id);
+
     // --- 7. Numéro séquentiel (art. L441-3 : sans rupture ni réutilisation) ---
     const now = new Date();
     const { data: invoiceNumber, error: seqErr } = await supabase.rpc(
@@ -273,7 +265,7 @@ Deno.serve(async (req) => {
         tenant: {
           name: tenant.name ?? "",
           email: tenant.email,
-          phone: null,
+          phone: tenant.phone,
           siret: tenant.siret,
           vat_number: tenant.vat_number,
           is_vat_exempt: tenant.is_vat_exempt,
@@ -318,6 +310,6 @@ Deno.serve(async (req) => {
     );
   } catch (err: any) {
     console.error("GENERATE INVOICE ERROR", err);
-    return new Response(`Error: ${err.message}`, { status: 500 });
+    return new Response("Internal server error", { status: 500 });
   }
 });

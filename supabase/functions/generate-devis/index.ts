@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 import { generateDevisEmail } from "../_shared/email-templates/devis.ts";
+import { sendEmailLog } from "../_shared/send-email-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,40 +12,6 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
-
-async function sendEmailLog(params: {
-  bookingId: string;
-  emailType: "devis" | "invoice";
-  recipientEmail: string;
-  html: string;
-  subject: string;
-}): Promise<{ status: string; resend_id?: string }> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${serviceKey}`,
-    },
-    body: JSON.stringify({ to: params.recipientEmail, subject: params.subject, html: params.html }),
-  });
-
-  const data = await res.json().catch(() => ({}));
-  const status = res.ok ? "sent" : "failed";
-  const resendId = data?.id ?? null;
-
-  await supabase.from("email_logs").insert({
-    booking_id: params.bookingId,
-    email_type: params.emailType,
-    recipient_email: params.recipientEmail,
-    status,
-    resend_id: resendId,
-  });
-
-  return { status, resend_id: resendId };
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -57,13 +24,11 @@ Deno.serve(async (req) => {
       return new Response("Missing booking_id", { status: 400 });
     }
 
-    const [{ data: booking }, ] = await Promise.all([
-      supabase.from("bookings").select(
-        "id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, " +
-        "total_amount, subtotal_amount, vat_amount, payment_mode, booking_type, " +
-        "passenger_count, luggage_count, invoice_number"
-      ).eq("id", booking_id).single(),
-    ]);
+    const { data: booking } = await supabase.from("bookings").select(
+      "id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, " +
+      "total_amount, subtotal_amount, vat_amount, payment_mode, booking_type, " +
+      "passenger_count, luggage_count, invoice_number"
+    ).eq("id", booking_id).single();
 
     if (!booking) {
       return new Response("Booking not found", { status: 404 });
@@ -71,11 +36,15 @@ Deno.serve(async (req) => {
 
     // Devis déjà généré — on renvoie l'existant
     if (booking.invoice_number?.startsWith("DEV-")) {
-      const { data: existing } = await supabase.storage
+      const { data: existing, error: urlErr } = await supabase.storage
         .from("invoices")
-        .createSignedUrl(`${booking.current_tenant_id}/devis/${booking_id}.pdf`, 60 * 60 * 24 * 365);
+        .createSignedUrl(`${booking.current_tenant_id}/devis/${booking_id}.pdf`, 60 * 60 * 24 * 7); // 7 jours (WR-03)
+      if (urlErr || !existing?.signedUrl) {
+        console.error("SIGNED URL ERROR (idempotent path)", urlErr);
+        return new Response("PDF introuvable, veuillez régénérer le devis", { status: 404 });
+      }
       return new Response(
-        JSON.stringify({ success: true, invoice_number: booking.invoice_number, invoice_url: existing?.signedUrl }),
+        JSON.stringify({ success: true, invoice_number: booking.invoice_number, invoice_url: existing.signedUrl }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -202,7 +171,8 @@ Deno.serve(async (req) => {
 
     const total = Number(booking.total_amount ?? 0);
     const vat = Number(booking.vat_amount ?? 0);
-    const isExempt = tenant.is_vat_exempt !== false;
+    // ponytail: null → non exonéré (prudent fiscalement, WR-02)
+    const isExempt = tenant.is_vat_exempt === true;
     const vatRate = Number(tenant.vat_rate ?? 0);
     const labelX = width - 200;
     const valueX = width - 55;
@@ -248,7 +218,7 @@ Deno.serve(async (req) => {
 
     const { data: signedData } = await supabase.storage
       .from("invoices")
-      .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 7); // 7 jours (WR-03)
 
     const pdfUrl = signedData?.signedUrl ?? "";
 
@@ -308,6 +278,6 @@ Deno.serve(async (req) => {
     );
   } catch (err: any) {
     console.error("GENERATE DEVIS ERROR", err);
-    return new Response(`Error: ${err.message}`, { status: 500 });
+    return new Response("Internal server error", { status: 500 });
   }
 });
