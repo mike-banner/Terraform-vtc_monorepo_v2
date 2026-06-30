@@ -36,7 +36,7 @@ CREATE POLICY "superadmin_select_email_logs" ON email_logs
     )
   );
 
--- service_role : insertion (appelé depuis les edge functions)
-CREATE POLICY "service_role_insert_email_logs" ON email_logs
-  FOR INSERT
-  WITH CHECK (true);
+-- Le service_role contourne RLS (attribut bypassrls) — pas de policy INSERT nécessaire.
+-- Supprimer la policy ouverte qui permettait à anon/authenticated d'insérer.
+-- (Si cette policy existait déjà, on la supprime proprement.)
+DROP POLICY IF EXISTS "service_role_insert_email_logs" ON email_logs;
