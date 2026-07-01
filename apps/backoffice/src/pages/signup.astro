@@ -4,16 +4,16 @@ import MainLayout from "../layouts/MainLayout.astro";
 ---
 
 <MainLayout title="Inscription" hideFooter>
-	<div class="flex-1 flex items-center justify-center px-4 py-4">
-		<div class="glass p-10 rounded-3xl w-full max-w-xl shadow-2xl border border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+	<div class="flex-1 flex items-center justify-center px-4 py-2 relative z-10">
+		<div class="bg-card/30 backdrop-blur-md p-6 sm:p-8 rounded-[2.5rem] w-full max-w-xl shadow-2xl border border-border/50 animate-in fade-in slide-in-from-bottom-4 duration-700">
 			<!-- Step Indicators -->
-			<div class="flex justify-between mb-8 relative px-2">
-				<div class="absolute top-1/2 left-0 w-full h-0.5 bg-white/5 -translate-y-1/2"></div>
-				<div id="progress-bar" class="absolute top-1/2 left-0 h-0.5 bg-indigo-500 -translate-y-1/2 transition-all duration-500 ease-in-out" style="width: 0%"></div>
+			<div class="flex justify-between mb-6 relative px-2">
+				<div class="absolute top-1/2 left-0 w-full h-0.5 bg-border -translate-y-1/2"></div>
+				<div id="progress-bar" class="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2 transition-all duration-500 ease-in-out" style="width: 0%"></div>
 				{
 					[1, 2, 3].map((step) => (
 						<div
-							class="step-dot w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center text-xs font-black z-10 transition-all duration-500"
+							class="step-dot w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-background border border-border flex items-center justify-center text-[10px] sm:text-xs font-bold text-muted-foreground z-10 transition-all duration-500"
 							data-step={step}
 						>
 							{step}
@@ -22,33 +22,33 @@ import MainLayout from "../layouts/MainLayout.astro";
 				}
 			</div>
 
-			<div class="text-center mb-8 h-[80px]">
+			<div class="text-center mb-6 h-[60px]">
 				<div class="step-header" data-step="1">
-					<h1 class="text-3xl font-extrabold mb-2 text-white uppercase tracking-tighter">Compte</h1>
-					<p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Tes identifiants de connexion</p>
+					<h1 class="text-2xl sm:text-3xl font-heading font-black mb-1 text-foreground uppercase tracking-tight">Compte</h1>
+					<p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Tes identifiants de connexion</p>
 				</div>
 				<div class="step-header hidden" data-step="2">
-					<h1 class="text-3xl font-extrabold mb-2 text-white uppercase tracking-tighter">Profil</h1>
-					<p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Identité du titulaire</p>
+					<h1 class="text-2xl sm:text-3xl font-heading font-black mb-1 text-foreground uppercase tracking-tight">Profil</h1>
+					<p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Identité du titulaire</p>
 				</div>
 				<div class="step-header hidden" data-step="3">
-					<h1 class="text-3xl font-extrabold mb-2 text-white uppercase tracking-tighter">Entreprise</h1>
-					<p class="text-slate-400 text-xs font-bold uppercase tracking-widest">Détails juridiques & PRO</p>
+					<h1 class="text-2xl sm:text-3xl font-heading font-black mb-1 text-foreground uppercase tracking-tight">Entreprise</h1>
+					<p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Détails juridiques & PRO</p>
 				</div>
 			</div>
 
-			<form id="signup-form" class="space-y-6">
+			<form id="signup-form" class="space-y-4">
 				<!-- Step 1: Account -->
-				<div class="step-content space-y-4" data-step="1">
-					<div class="space-y-2">
-						<label for="email" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email professionnel</label>
-						<input type="email" id="email" name="email" required placeholder="nom@entreprise.fr" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all" />
+				<div class="step-content space-y-3" data-step="1">
+					<div class="space-y-1.5">
+						<label for="email" class="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Email professionnel</label>
+						<input type="email" id="email" name="email" required placeholder="nom@entreprise.fr" class="w-full bg-card/50 border border-border rounded-[var(--radius)] px-4 py-2.5 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm" />
 					</div>
-					<div class="space-y-2">
-						<label for="password" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Mot de passe</label>
+					<div class="space-y-1.5">
+						<label for="password" class="text-xs font-semibold text-muted-foreground uppercase tracking-wider ml-1">Mot de passe</label>
 						<div class="relative">
-							<input type="password" id="password" name="password" required placeholder="••••••••" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all" />
-							<button type="button" id="toggle-password" aria-label="Afficher le mot de passe" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors p-1">
+							<input type="password" id="password" name="password" required placeholder="••••••••" class="w-full bg-card/50 border border-border rounded-[var(--radius)] px-4 py-2.5 pr-11 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm" />
+							<button type="button" id="toggle-password" aria-label="Afficher le mot de passe" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1">
 								<svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
 									<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
 									<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -62,39 +62,39 @@ import MainLayout from "../layouts/MainLayout.astro";
 				</div>
 
 				<!-- Step 2: Profile -->
-				<div class="step-content space-y-6 hidden" data-step="2">
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						<div class="space-y-2">
-							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">Prénom</label>
-							<input type="text" name="first_name" required placeholder="Jean" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-inner" />
+				<div class="step-content space-y-4 hidden" data-step="2">
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+						<div class="space-y-1.5">
+							<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Prénom</label>
+							<input type="text" name="first_name" required placeholder="Jean" class="w-full bg-card/50 border border-border rounded-[var(--radius)] px-4 py-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm" />
 						</div>
-						<div class="space-y-2">
-							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">Nom</label>
-							<input type="text" name="last_name" required placeholder="Dupont" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-inner" />
+						<div class="space-y-1.5">
+							<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Nom</label>
+							<input type="text" name="last_name" required placeholder="Dupont" class="w-full bg-card/50 border border-border rounded-[var(--radius)] px-4 py-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm" />
 						</div>
 					</div>
-					<div class="space-y-2">
-						<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">Téléphone</label>
-						<div class="flex items-center bg-white/5 border border-white/10 rounded-2xl px-5 focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all shadow-inner group">
-							<div class="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0 py-4">
-								<span class="text-lg leading-none">🇫🇷</span>
-								<span class="font-black text-sm tracking-tighter opacity-80">+33</span>
+					<div class="space-y-1.5">
+						<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Téléphone</label>
+						<div class="flex items-center bg-card/50 border border-border rounded-[var(--radius)] focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all overflow-hidden h-[42px]">
+							<div class="flex items-center gap-2 px-3 border-r border-border shrink-0 h-full bg-card/80">
+								<span class="text-sm leading-none">🇫🇷</span>
+								<span class="font-bold text-xs tracking-tighter opacity-80">+33</span>
 							</div>
-							<input type="tel" name="phone_number" id="phone_number_input" required placeholder="6 12 34 56 78" inputmode="numeric" maxlength="14" class="flex-1 bg-transparent border-none outline-none py-4 pl-4 text-white placeholder:text-slate-500" />
+							<input type="tel" name="phone_number" id="phone_number_input" required placeholder="6 12 34 56 78" inputmode="numeric" maxlength="14" class="flex-1 bg-transparent border-none outline-none px-3 text-foreground placeholder:text-muted-foreground/50 text-sm h-full" />
 							<input type="hidden" name="phone_prefix" value="+33" />
 						</div>
 					</div>
 				</div>
 
 				<!-- Step 3: Business -->
-				<div class="step-content space-y-4 hidden" data-step="3">
-					<div class="space-y-2">
-						<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Type d'entreprise</label>
-						<div class="grid grid-cols-2 gap-2 bg-white/5 p-1 rounded-2xl border border-white/10">
-							<button type="button" class="legal-form-toggle-btn py-3 text-[9px] font-black uppercase rounded-xl transition-all active bg-indigo-600 shadow-lg shadow-indigo-600/30 text-white" data-type="societe">
+				<div class="step-content space-y-3 hidden" data-step="3">
+					<div class="space-y-1.5">
+						<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">Type d'entreprise</label>
+						<div class="grid grid-cols-2 gap-2 bg-card/50 p-1 rounded-[var(--radius)] border border-border">
+							<button type="button" class="legal-form-toggle-btn py-2 text-[10px] font-bold uppercase rounded-[calc(var(--radius)-4px)] transition-all active bg-primary shadow-sm shadow-primary/20 text-primary-foreground" data-type="societe">
 								Société
 							</button>
-							<button type="button" class="legal-form-toggle-btn py-3 text-[9px] font-black uppercase rounded-xl transition-all text-slate-500 hover:text-white hover:bg-white/5" data-type="auto_entrepreneur">
+							<button type="button" class="legal-form-toggle-btn py-2 text-[10px] font-bold uppercase rounded-[calc(var(--radius)-4px)] transition-all text-muted-foreground hover:text-foreground hover:bg-card/80" data-type="auto_entrepreneur">
 								Auto-entrepreneur
 							</button>
 						</div>
@@ -102,11 +102,11 @@ import MainLayout from "../layouts/MainLayout.astro";
 					</div>
 
 					<!-- Sous-type de société (masqué pour AE) -->
-					<div id="societe-details" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-						<div class="space-y-2">
-							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">Type de société</label>
-							<div class="relative group">
-								<select id="legal_form_select" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer pr-10">
+					<div id="societe-details" class="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+						<div class="space-y-1.5">
+							<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">Type de société</label>
+							<div class="relative group h-[42px]">
+								<select id="legal_form_select" class="w-full h-full bg-card/50 border border-border rounded-[var(--radius)] px-4 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary appearance-none cursor-pointer pr-10 text-sm">
 									<option value="sasu" selected>SASU</option>
 									<option value="eurl">EURL</option>
 									<option value="sarl">SARL</option>
@@ -114,7 +114,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 									<option value="ei">Entreprise Individuelle (EI)</option>
 									<option value="other">Autre</option>
 								</select>
-								<div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-white transition-colors">
+								<div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground group-hover:text-foreground transition-colors">
 									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 									</svg>
@@ -122,37 +122,37 @@ import MainLayout from "../layouts/MainLayout.astro";
 							</div>
 						</div>
 					</div>
-					<div class="space-y-2">
-						<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Nom de l'entreprise</label>
-						<input type="text" id="company_name_input" name="company_name" required placeholder="Ex: Prestige VTC" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+					<div class="space-y-1.5">
+						<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">Nom de l'entreprise</label>
+						<input type="text" id="company_name_input" name="company_name" required placeholder="Ex: Prestige VTC" class="w-full bg-card/50 border border-border rounded-[var(--radius)] px-4 py-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm" />
 					</div>
-					<div class="space-y-2">
-						<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Domaine web (prestige-vtc)</label>
-						<input type="text" name="primary_domain" required placeholder="prestige-vtc" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+					<div class="space-y-1.5">
+						<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">Domaine web (prestige-vtc)</label>
+						<input type="text" name="primary_domain" required placeholder="prestige-vtc" class="w-full bg-card/50 border border-border rounded-[var(--radius)] px-4 py-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm" />
 					</div>
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						<div class="space-y-2">
-							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">SIRET (14 chiffres)</label>
-							<input type="text" name="siret" id="siret_input" required placeholder="123 456 789 00012" pattern="[0-9 ]{14,18}" maxlength="18" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-[13px] sm:text-sm" />
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+						<div class="space-y-1.5">
+							<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">SIRET (14 chiffres)</label>
+							<input type="text" name="siret" id="siret_input" required placeholder="123 456 789 00012" pattern="[0-9 ]{14,18}" maxlength="18" class="w-full bg-card/50 border border-border rounded-[var(--radius)] px-4 py-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] sm:text-sm" />
 						</div>
-						<div class="space-y-2">
-							<label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Carte VTC</label>
-							<input type="text" name="vtc_license_number" id="vtc_input" required placeholder="123 456 789 012" pattern="[0-9 ]{14,15}" maxlength="15" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-[13px] sm:text-sm" />
+						<div class="space-y-1.5">
+							<label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">Carte VTC</label>
+							<input type="text" name="vtc_license_number" id="vtc_input" required placeholder="123 456 789 012" pattern="[0-9 ]{14,15}" maxlength="15" class="w-full bg-card/50 border border-border rounded-[var(--radius)] px-4 py-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] sm:text-sm" />
 						</div>
 					</div>
 				</div>
 
-				<div class="flex flex-col sm:flex-row gap-4 pt-4">
-					<button type="button" id="prev-btn" class="w-full sm:flex-1 bg-white/10 hover:bg-white/20 text-white text-xs font-black uppercase tracking-wider min-h-[44px] py-3 rounded-xl transition-all opacity-0 pointer-events-none border border-white/5">
+				<div class="flex flex-col sm:flex-row gap-3 pt-2">
+					<button type="button" id="prev-btn" class="w-full sm:flex-1 bg-card hover:bg-card/80 text-foreground text-[11px] font-bold uppercase tracking-wider h-10 rounded-[var(--radius)] transition-all opacity-0 pointer-events-none border border-border">
 						Retour
 					</button>
-					<button type="button" id="next-btn" class="w-full sm:flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider min-h-[44px] py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all">
+					<button type="button" id="next-btn" class="w-full sm:flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-[11px] font-bold uppercase tracking-wider h-10 rounded-[var(--radius)] shadow-sm shadow-primary/20 transition-all">
 						Suivant
 					</button>
-					<button type="submit" id="final-btn" class="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider min-h-[44px] py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition-all hidden relative overflow-hidden group">
+					<button type="submit" id="final-btn" class="w-full sm:flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-[11px] font-bold uppercase tracking-wider h-10 rounded-[var(--radius)] shadow-sm shadow-primary/20 transition-all hidden relative overflow-hidden group">
 						<span class="btn-text">Finaliser</span>
-						<div class="loader-container hidden absolute inset-0 flex items-center justify-center bg-emerald-600">
-							<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+						<div class="loader-container hidden absolute inset-0 flex items-center justify-center bg-primary">
+							<svg class="animate-spin h-4 w-4 text-primary-foreground" viewBox="0 0 24 24">
 								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
 								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
 							</svg>
@@ -161,7 +161,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 				</div>
 			</form>
 
-			<div id="message" role="alert" aria-live="polite" class="mt-6 text-center text-xs font-medium min-h-[20px]">
+			<div id="message" role="alert" aria-live="polite" class="mt-4 text-center text-[10px] font-bold min-h-[16px] uppercase tracking-widest">
 			</div>
 		</div>
 	</div>
@@ -239,11 +239,11 @@ import MainLayout from "../layouts/MainLayout.astro";
 			}
 
 			legalFormToggleBtns.forEach((b: any) => {
-				b.classList.remove("active", "bg-indigo-600", "shadow-lg", "shadow-indigo-600/30", "text-white");
-				b.classList.add("text-slate-500", "hover:text-white", "hover:bg-white/5");
+				b.classList.remove("active", "bg-primary", "shadow-md", "shadow-primary/20", "text-primary-foreground");
+				b.classList.add("text-muted-foreground", "hover:text-foreground", "hover:bg-card/80");
 			});
-			btn.classList.add("active", "bg-indigo-600", "shadow-lg", "shadow-indigo-600/30", "text-white");
-			btn.classList.remove("text-slate-500", "hover:text-white", "hover:bg-white/5");
+			btn.classList.add("active", "bg-primary", "shadow-md", "shadow-primary/20", "text-primary-foreground");
+			btn.classList.remove("text-muted-foreground", "hover:text-foreground", "hover:bg-card/80");
 		});
 	});
 
@@ -334,9 +334,11 @@ import MainLayout from "../layouts/MainLayout.astro";
 		dots.forEach((dot) => {
 			const step = parseInt(dot.getAttribute("data-step")!);
 			if (step <= currentStep) {
-				dot.classList.add("border-indigo-500", "bg-indigo-500/10", "text-indigo-400");
+				dot.classList.add("border-primary", "bg-primary/10", "text-primary");
+				dot.classList.remove("border-border", "text-muted-foreground");
 			} else {
-				dot.classList.remove("border-indigo-500", "bg-indigo-500/10", "text-indigo-400");
+				dot.classList.remove("border-primary", "bg-primary/10", "text-primary");
+				dot.classList.add("border-border", "text-muted-foreground");
 			}
 		});
 
@@ -391,7 +393,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 		loader.classList.remove("hidden");
 		btnText.style.opacity = "0";
 		messageEl.textContent = "CRÉATION DU COMPTE...";
-		messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-indigo-400";
+		messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-primary";
 
 		try {
 			let userId = sessionUser?.id;
@@ -509,7 +511,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 			} catch (e) { console.error("Email fail", e); }
 
 			messageEl.textContent = "SUCCÈS ! REDIRECTION...";
-			messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-emerald-400";
+			messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-emerald-500";
 
 			setTimeout(() => {
 				window.location.href = "/waiting-approval";
@@ -518,7 +520,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 		} catch (err: any) {
 			console.error(err);
 			messageEl.textContent = "ERREUR : " + (err.message || "Technique");
-			messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-red-500";
+			messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-destructive";
 			finalBtn.disabled = false;
 			loader.classList.add("hidden");
 			btnText.style.opacity = "1";

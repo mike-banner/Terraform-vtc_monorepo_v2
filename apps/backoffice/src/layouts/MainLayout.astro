@@ -15,41 +15,33 @@ const { user } = Astro.locals;
 <html lang="fr" class="dark h-full overflow-hidden">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1, maximum-scale=1, 
-  user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="generator" content={Astro.generator} />
-        <title>{title} | VTC Premium</title>
+        <title>{title} | VTC HUB</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-            rel="stylesheet"
-        />
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     </head>
     <body
-        class="premium-gradient h-full flex flex-col overflow-hidden text-slate-50 selection:bg-indigo-500/30"
+        class="bg-background h-full flex flex-col overflow-hidden text-foreground selection:bg-primary/30 font-sans"
     >
         <div
-            class="fixed inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] pointer-events-none opacity-20"
+            class="fixed inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] pointer-events-none opacity-10"
         >
         </div>
 
         <nav
-            class="flex-none z-50 w-full glass border-b border-white/5 px-6 py-4"
+            class="flex-none z-50 w-full bg-background/80 backdrop-blur-md border-b border-border/50 px-6 py-4"
         >
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <a
                     href="/"
-                    class="flex items-center gap-2 group transition-opacity hover:opacity-80"
+                    class="flex items-center gap-2 group transition-opacity hover:opacity-80 text-primary"
                 >
-                    <div
-                        class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform"
-                    >
-                        <span class="text-white font-bold text-xl">V</span>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7"><circle cx="12" cy="12" r="9"/><path d="M12 12v-9"/><path d="M12 12l-7.75 4.5"/><path d="M12 12l7.75 4.5"/><path d="M12 12v3"/><circle cx="12" cy="15" r="2"/></svg>
                     <span
-                        class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400"
+                        class="text-xl font-heading font-semibold tracking-wide text-foreground"
                     >
                         VTC HUB
                     </span>
@@ -60,14 +52,14 @@ const { user } = Astro.locals;
                         user ? (
                             <button
                                 id="logout-btn"
-                                class="text-sm font-bold text-red-400/80 hover:text-red-400 transition-colors"
+                                class="text-sm font-bold text-destructive/80 hover:text-destructive transition-colors uppercase tracking-widest"
                             >
                                 Déconnexion
                             </button>
                         ) : (
                             <a
                                 href="/login"
-                                class="text-sm font-bold text-slate-400 hover:text-white transition-colors"
+                                class="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-widest"
                             >
                                 Connexion
                             </a>
@@ -82,8 +74,8 @@ const { user } = Astro.locals;
         </main>
 
         {!hideFooter && (
-            <footer class="flex-none border-t border-white/5 py-3 px-6 glass">
-                <div class="max-w-7xl mx-auto flex justify-between items-center text-slate-600 text-[11px]">
+            <footer class="flex-none border-t border-border/50 py-3 px-6 bg-background/80 backdrop-blur-md">
+                <div class="max-w-7xl mx-auto flex justify-between items-center text-muted-foreground/60 text-[10px] tracking-widest uppercase">
                     <span>&copy; {new Date().getFullYear()} VTC HUB &mdash; Précision. Luxe. Excellence.</span>
                 </div>
             </footer>

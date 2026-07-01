@@ -1,5 +1,6 @@
 ---
 // src/pages/app/settings.astro
+import Card from "../../components/ui/Card.astro";
 import AppLayout from "../../layouts/AppLayout.astro";
 import { requireTenantRole } from "../../lib/guards";
 
@@ -24,150 +25,143 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
 ---
 
 <AppLayout title="Entreprise">
-    <div id="settings-page" class="flex flex-col px-6 py-10 md:px-12 md:py-16">
+    <div id="settings-page" class="flex flex-col px-6 py-6 md:px-12 md:py-10">
         <!-- FIXED HEADER -->
-        <div class="flex-shrink-0 border-b border-white/5 pb-10 mb-10">
+        <div class="flex-shrink-0 border-b border-white/5 pb-5 mb-6">
             <span
-                class="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-black tracking-widest text-indigo-400 uppercase"
+                class="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-black tracking-widest text-primary uppercase"
                 >Entreprise</span
             >
-            <p class="text-slate-500 mt-2 font-medium text-sm">
+            <p class="text-muted-foreground mt-2 font-medium text-sm">
                 Identité, fiscalité et configuration de votre société.
             </p>
         </div>
 
         <!-- SCROLLABLE CONTENT -->
-        <div class="space-y-5 pb-20">
+        <div class="space-y-4 pb-20">
 
-            <!-- 1. IDENTITÉ — Nom + Logo -->
-            <div class="glass rounded-[2rem] border border-white/5 overflow-hidden">
-                <!-- Company name banner -->
-                <div class="px-8 pt-8 pb-6 border-b border-white/5">
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Nom de l'entreprise</p>
-                    <p class="text-2xl font-black tracking-tight text-white">{tenantName}</p>
-                </div>
-
-                <!-- Logo section -->
-                <div class="px-8 py-7">
-                    <div class="flex flex-col sm:flex-row gap-6 items-start">
-                        <!-- Logo preview with checkered transparent bg -->
-                        <div class="relative group flex-shrink-0">
-                            <div
-                                id="logo-well"
-                                class="w-28 h-28 rounded-2xl overflow-hidden border-2 border-dashed border-white/10 group-hover:border-indigo-500/40 transition-colors flex items-center justify-center"
-                                style="background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%), linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1a1a1a 75%), linear-gradient(-45deg, transparent 75%, #1a1a1a 75%); background-size: 12px 12px; background-position: 0 0, 0 6px, 6px -6px, -6px 0px; background-color: #111;"
-                            >
-                                {tenant?.logo_url ? (
-                                    <img id="logo-preview" src={tenant.logo_url} class="w-full h-full object-contain p-3" alt="Logo" />
-                                ) : (
-                                    <div id="logo-placeholder" class="flex flex-col items-center gap-1.5 text-slate-600">
-                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <p class="text-[9px] font-black uppercase tracking-widest text-center leading-tight">Aucun<br/>logo</p>
-                                    </div>
-                                )}
-                                <img id="logo-preview-new" class="hidden w-full h-full object-contain p-3" alt="Aperçu" />
-                            </div>
-                            <!-- Transparent badge -->
-                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#111] border border-white/10 rounded-full">
-                                <p class="text-[8px] font-black uppercase tracking-widest text-slate-600 whitespace-nowrap">Sans fond</p>
-                            </div>
-                        </div>
-
-                        <!-- Upload controls -->
-                        <div class="flex-1 min-w-0 pt-1">
-                            <p class="text-xs font-bold text-slate-300 mb-1">Logo de l'entreprise</p>
-                            <p class="text-xs text-slate-500 mb-5 leading-relaxed">PNG transparent ou SVG recommandé. Max 2 Mo.</p>
-                            <div class="flex flex-wrap gap-3">
-                                <label class="cursor-pointer px-5 py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all active:scale-95 inline-flex items-center gap-2">
-                                    <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            <!-- 1. IDENTITÉ — Nom + Logo dans une seule card compacte -->
+            <Card rounded="xl" padding="md">
+                <div class="flex flex-col sm:flex-row gap-5 items-start">
+                    <!-- Logo preview with checkered transparent bg -->
+                    <div class="relative group flex-shrink-0">
+                        <div
+                            id="logo-well"
+                            class="w-20 h-20 rounded-2xl overflow-hidden border border-border bg-muted group-hover:border-primary/40 transition-colors flex items-center justify-center"
+                            style="background-image: linear-gradient(45deg, rgba(255,255,255,.04) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,.04) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,.04) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.04) 75%); background-size: 12px 12px; background-position: 0 0, 0 6px, 6px -6px, -6px 0px;"
+                        >
+                            {tenant?.logo_url ? (
+                                <img id="logo-preview" src={tenant.logo_url} class="w-full h-full object-contain p-2.5" alt="Logo" />
+                            ) : (
+                                <div id="logo-placeholder" class="flex flex-col items-center gap-1 text-muted-foreground">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    Choisir un fichier
-                                    <input type="file" id="logo-input" class="hidden" accept="image/*" />
-                                </label>
-                                <button id="save-logo-btn" class="hidden px-5 py-3 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                                    Enregistrer
-                                </button>
-                            </div>
+                                </div>
+                            )}
+                            <img id="logo-preview-new" class="hidden w-full h-full object-contain p-2.5" alt="Aperçu" />
                         </div>
                     </div>
+
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Nom de l'entreprise</p>
+                        <p class="text-xl font-black tracking-tight text-foreground mb-3">{tenantName}</p>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="cursor-pointer px-4 py-2.5 bg-white/5 border border-white/10 text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all active:scale-95 inline-flex items-center gap-2">
+                                <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                                Changer le logo
+                                <input type="file" id="logo-input" class="hidden" accept="image/*" />
+                            </label>
+                            <button id="save-logo-btn" class="hidden px-4 py-2.5 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Enregistrer
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground mt-2">PNG transparent ou SVG recommandé. Max 2 Mo.</p>
+                    </div>
                 </div>
-            </div>
+            </Card>
 
             <!-- 2 & 3. NAV — Grille Tarifaire + Gestion des Véhicules -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <a href="/app/pricing" class="group glass p-6 rounded-[2rem] border border-white/5 bg-white/[0.01] hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all active:scale-[0.98] flex items-center gap-4">
-                    <div class="w-11 h-11 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 flex-shrink-0">
+                <Card href="/app/pricing" hover rounded="xl" padding="md" class="group flex items-center gap-4">
+                    <div class="w-11 h-11 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center text-primary flex-shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-white font-black text-sm">Grille Tarifaire</p>
-                        <p class="text-slate-500 text-xs mt-0.5 leading-relaxed">Prix de prise en charge, au km et minimum.</p>
+                        <p class="text-foreground font-black text-sm">Grille Tarifaire</p>
+                        <p class="text-muted-foreground text-xs mt-0.5 leading-relaxed">Prix de prise en charge, au km et minimum.</p>
                     </div>
-                    <svg class="w-4 h-4 text-slate-600 group-hover:text-indigo-400 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
-                </a>
-                <a href="/app/vehicles" class="group glass p-6 rounded-[2rem] border border-white/5 bg-white/[0.01] hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all active:scale-[0.98] flex items-center gap-4">
-                    <div class="w-11 h-11 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 flex-shrink-0">
+                </Card>
+                <Card href="/app/vehicles" hover rounded="xl" padding="md" class="group flex items-center gap-4">
+                    <div class="w-11 h-11 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center text-primary flex-shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-white font-black text-sm">Gestion des Véhicules</p>
-                        <p class="text-slate-500 text-xs mt-0.5 leading-relaxed">Véhicules de l'entreprise et véhicule actif.</p>
+                        <p class="text-foreground font-black text-sm">Gestion des Véhicules</p>
+                        <p class="text-muted-foreground text-xs mt-0.5 leading-relaxed">Véhicules de l'entreprise et véhicule actif.</p>
                     </div>
-                    <svg class="w-4 h-4 text-slate-600 group-hover:text-indigo-400 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
-                </a>
+                </Card>
             </div>
 
             <!-- 4. FISCALITÉ -->
-            <div class="glass p-8 rounded-[2rem] border border-white/5 bg-white/[0.01]">
+            <Card rounded="xl" padding="md">
                 <div class="flex items-center gap-3 mb-1">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                    <h3 class="text-base font-black uppercase tracking-tight text-white">Fiscalité</h3>
+                    <h3 class="text-base font-black uppercase tracking-tight text-foreground">Fiscalité</h3>
                 </div>
-                <p class="text-slate-500 text-xs mb-7 leading-relaxed pl-5">Le taux TVA est calculé automatiquement selon votre forme juridique. Les prix de votre grille tarifaire sont traités comme TTC.</p>
+                <p class="text-muted-foreground text-xs mb-7 leading-relaxed pl-5">Le taux TVA est calculé automatiquement selon votre forme juridique. Les prix de votre grille tarifaire sont traités comme TTC.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                     <!-- Forme juridique -->
                     <div>
-                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-2">Forme juridique</label>
-                        <select
-                            id="legal-form-select"
-                            class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/40 font-bold text-sm appearance-none"
-                        >
-                            {[
-                                { value: "auto_entrepreneur", label: "Auto-entrepreneur" },
-                                { value: "ei",                label: "Entreprise Individuelle (EI)" },
-                                { value: "sasu",              label: "SASU" },
-                                { value: "sas",               label: "SAS" },
-                                { value: "eurl",              label: "EURL" },
-                                { value: "sarl",              label: "SARL" },
-                                { value: "other",             label: "Autre" },
-                            ].map(opt => (
-                                <option value={opt.value} selected={tenant?.legal_form === opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
+                        <label class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest block mb-2">Forme juridique</label>
+                        <div class="relative group">
+                            <select
+                                id="legal-form-select"
+                                class="w-full bg-white/5 border border-white/10 rounded-2xl pl-4 pr-10 py-3 text-foreground focus:outline-none focus:border-primary/40 font-bold text-sm appearance-none cursor-pointer"
+                            >
+                                {[
+                                    { value: "auto_entrepreneur", label: "Auto-entrepreneur" },
+                                    { value: "ei",                label: "Entreprise Individuelle (EI)" },
+                                    { value: "sasu",              label: "SASU" },
+                                    { value: "sas",               label: "SAS" },
+                                    { value: "eurl",              label: "EURL" },
+                                    { value: "sarl",              label: "SARL" },
+                                    { value: "other",             label: "Autre" },
+                                ].map(opt => (
+                                    <option value={opt.value} selected={tenant?.legal_form === opt.value} class="bg-background text-foreground">{opt.label}</option>
+                                ))}
+                            </select>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground group-hover:text-foreground transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Statut TVA (read-only) -->
                     <div>
-                        <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-2">Statut TVA</label>
+                        <label class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest block mb-2">Statut TVA</label>
                         <div class={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${tenant?.is_vat_exempt !== false ? "bg-amber-500/5 border-amber-500/20" : "bg-emerald-500/5 border-emerald-500/20"}`}>
                             <span class={`w-2 h-2 rounded-full flex-shrink-0 ${tenant?.is_vat_exempt !== false ? "bg-amber-400" : "bg-emerald-400"}`}></span>
                             <div>
                                 <div class={`text-sm font-black ${tenant?.is_vat_exempt !== false ? "text-amber-300" : "text-emerald-300"}`}>
                                     {tenant?.is_vat_exempt !== false ? "Exonéré (Art. 293 B CGI)" : `Assujetti — ${tenant?.vat_rate ?? 10} %`}
                                 </div>
-                                <div class="text-[10px] text-slate-600 mt-0.5">
+                                <div class="text-[10px] text-muted-foreground mt-0.5">
                                     {tenant?.is_vat_exempt !== false ? "Aucune TVA facturée" : "TVA déduite du montant TTC"}
                                 </div>
                             </div>
@@ -177,24 +171,24 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
 
                 <!-- Numéro TVA (affiché uniquement si assujetti) -->
                 <div id="vat-number-section" class={tenant?.is_vat_exempt !== false ? "hidden" : ""}>
-                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-2">Numéro TVA intracommunautaire</label>
+                    <label class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest block mb-2">Numéro TVA intracommunautaire</label>
                     <input
                         type="text"
                         id="vat-number-input"
                         placeholder="FR00 000 000 000"
                         value={tenant?.vat_number ?? ""}
-                        class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/40 font-bold text-sm font-mono mb-5"
+                        class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/40 font-bold text-sm font-mono mb-5"
                     />
                 </div>
 
                 <button
                     id="save-vat-btn"
-                    class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+                    class="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95"
                 >
                     Enregistrer
                 </button>
                 <p id="vat-save-msg" class="hidden text-xs text-emerald-400 font-bold mt-3"></p>
-            </div>
+            </Card>
 
         </div>
     </div>

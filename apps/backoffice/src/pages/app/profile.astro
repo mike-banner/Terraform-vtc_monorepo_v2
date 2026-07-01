@@ -45,59 +45,52 @@ const logoUrl = tenant?.logo_url;
 ---
 
 <AppLayout title="Profil">
-    <div class="flex flex-col px-6 py-10 md:p-12 bg-brand-dark" id="profile-page" data-confirmation-phrase={`SUPPRESSION COMPTE ${tenantName}`}>
+    <div class="flex flex-col px-6 py-10 md:p-12" id="profile-page" data-confirmation-phrase={`SUPPRESSION COMPTE ${tenantName}`}>
         <!-- HEADER -->
         <div class="mb-10 flex-shrink-0">
-             <span class="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-black tracking-widest text-indigo-400 uppercase">Mon Compte</span>
+             <span class="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-black tracking-widest text-primary uppercase">Mon Compte</span>
         </div>
 
         <!-- 🏢 CARD 1: PROFIL ENTREPRISE (FULL WIDTH) -->
-        <Card padding="lg" rounded="3xl" class="mb-10 shadow-2xl shadow-indigo-500/5 group">
-            {/* 🎨 Background Icon - Desktop Only */}
-            <div class="hidden md:block absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
-                <svg class="w-64 h-64" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            </div>
-
-            <div class="relative z-20 flex flex-row items-center md:items-start gap-6 md:gap-12 text-left">
+        <Card class="mb-10">
+            <div class="flex flex-row items-center md:items-start gap-4 md:gap-6 text-left">
                 <!-- Logo -->
                 {logoUrl ? (
-                    <div class="hidden md:flex w-20 h-20 md:w-32 md:h-32 bg-white rounded-2xl md:rounded-3xl p-3 md:p-4 shadow-2xl flex items-center justify-center border border-white/10 flex-shrink-0">
+                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-white rounded-xl p-2 md:p-2.5 items-center justify-center border border-white/10 flex-shrink-0">
                         <img src={logoUrl} alt={tenantName} class="w-full h-full object-contain" />
                     </div>
                 ) : (
-                    <div class="hidden md:flex w-20 h-20 md:w-32 md:h-32 bg-indigo-600 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-2xl text-white font-black text-4xl md:text-6xl border border-white/10 flex-shrink-0">
+                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-primary rounded-xl items-center justify-center text-primary-foreground font-black text-lg md:text-2xl flex-shrink-0">
                         {tenantName.charAt(0).toUpperCase()}
                     </div>
                 )}
 
-                <div class="flex-1">
-                    <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4 md:mb-6">
-                        <h2 class="text-2xl md:text-5xl font-black text-white uppercase tracking-tighter leading-tight md:leading-none">{tenantName}</h2>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-5">
+                        <h2 class="text-xl md:text-2xl font-black text-foreground uppercase tracking-tighter leading-none truncate">{tenantName}</h2>
                         <Badge variant="emerald">Compte Vérifié</Badge>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
                         <div>
-                            <p class="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">SIRET</p>
-                            <p class="text-base font-semibold text-white tabular-nums">{tenant.siret?.trim() || "---"}</p>
+                            <p class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">SIRET</p>
+                            <p class="text-sm font-semibold text-foreground tabular-nums">{tenant.siret?.trim() || "—"}</p>
                         </div>
 
                         {isAuto ? (
                             <div>
-                                <p class="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Fiscalité</p>
-                                <p class="text-base font-semibold text-indigo-400 uppercase tracking-tighter">Exonéré (Art. 293 B)</p>
+                                <p class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Fiscalité</p>
+                                <p class="text-sm font-semibold text-primary uppercase tracking-tighter">Exonéré (Art. 293 B)</p>
                             </div>
                         ) : (
                             <>
                                 <div>
-                                    <p class="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">RCS</p>
-                                    <p class="text-base font-semibold text-white truncate">{tenant.rcs_number?.trim() || "---"}</p>
+                                    <p class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">RCS</p>
+                                    <p class="text-sm font-semibold text-foreground truncate">{tenant.rcs_number?.trim() || "—"}</p>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">TVA</p>
-                                    <p class="text-base font-semibold text-white tabular-nums">{tenant.vat_number?.trim() || "---"}</p>
+                                    <p class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">TVA</p>
+                                    <p class="text-sm font-semibold text-foreground tabular-nums">{tenant.vat_number?.trim() || "—"}</p>
                                 </div>
                             </>
                         )}
@@ -107,11 +100,8 @@ const logoUrl = tenant?.logo_url;
         </Card>
 
         <!-- 👤 SECTION 2: CHAUFFEUR PRINCIPAL -->
-        <div class="mb-12 relative z-10">
-            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-6 flex items-center gap-3">
-                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                Chauffeur Principal
-            </h3>
+        <div class="mb-12">
+            <p class="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Chauffeur Principal</p>
 
                 <EditableDriverCard
                     client:only="react"
@@ -127,9 +117,9 @@ const logoUrl = tenant?.logo_url;
 
         <!-- ⚠️ ZONE DE DANGER -->
         <div class="pb-20">
-            <div class="glass p-8 rounded-[2.5rem] border border-red-500/10 bg-red-500/[0.02]">
-                <h3 class="text-lg font-black mb-2 text-red-500 uppercase tracking-tighter">Zone de Danger</h3>
-                <p class="text-slate-500 mb-6 text-sm font-medium">
+            <div class="bg-card border border-red-500/10 rounded-2xl p-6">
+                <h3 class="text-sm font-black mb-2 text-red-500 uppercase tracking-tighter">Zone de Danger</h3>
+                <p class="text-muted-foreground mb-5 text-sm font-medium">
                     La suppression désactivera votre société, votre accès au dashboard et toutes vos données. Irréversible.
                 </p>
                 <button
@@ -145,20 +135,20 @@ const logoUrl = tenant?.logo_url;
     <!-- MODAL SUPPRESSION -->
     <div slot="modals" id="delete-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-300">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm delete-modal-overlay"></div>
-        <div class="relative glass max-w-lg w-full rounded-[2.5rem] border border-red-500/20 shadow-2xl p-8 transform scale-95 transition-all duration-300">
-            <div class="w-14 h-14 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center text-red-500 mb-6">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="relative bg-card border border-red-500/20 max-w-lg w-full rounded-2xl shadow-2xl p-8 transform scale-95 transition-all duration-300">
+            <div class="w-10 h-10 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center text-red-500 mb-5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
             </div>
-            <h2 class="text-2xl font-black uppercase text-white mb-3 tracking-tighter">Confirmation de suppression</h2>
-            <p class="text-slate-400 text-sm font-medium mb-6 leading-relaxed">
+            <h2 class="text-lg font-black uppercase text-foreground mb-2 tracking-tighter">Confirmation de suppression</h2>
+            <p class="text-muted-foreground text-sm font-medium mb-5 leading-relaxed">
                 Suppression définitive du compte :<br/>
-                <strong class="text-red-500 uppercase tracking-tighter text-lg block mt-1">{tenantName}</strong>
+                <strong class="text-red-500 uppercase tracking-tighter block mt-1">{tenantName}</strong>
             </p>
-            <div class="bg-red-500/5 border border-red-500/10 rounded-2xl p-5 mb-6">
+            <div class="bg-red-500/5 border border-red-500/10 rounded-xl p-4 mb-5">
                 <p class="text-[10px] font-black uppercase tracking-widest text-red-400 mb-2">Phrase de confirmation :</p>
-                <p class="text-white font-mono text-sm font-bold bg-black/40 p-3 rounded-xl border border-white/5 select-all">
+                <p class="text-foreground font-mono text-sm font-bold bg-black/40 p-3 rounded-lg border border-white/5 select-all">
                     SUPPRESSION COMPTE {tenantName}
                 </p>
             </div>
@@ -166,14 +156,14 @@ const logoUrl = tenant?.logo_url;
                 type="text"
                 id="confirmation-input"
                 placeholder="Écrire la phrase de confirmation"
-                class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-red-500/50 focus:outline-none font-bold mb-6 transition-all"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground focus:border-red-500/50 focus:outline-none font-bold mb-5 transition-all"
             />
             <div class="flex flex-col sm:flex-row gap-3">
-                <button id="cancel-delete" class="px-6 py-4 glass border border-white/10 rounded-2xl font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all text-[10px] order-2 sm:order-1">
+                <button id="cancel-delete" class="px-6 py-3 bg-white/5 border border-border rounded-xl font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all text-[10px] order-2 sm:order-1">
                     Annuler
                 </button>
                 <button id="confirm-delete-btn" disabled
-                    class="flex-1 px-6 py-4 bg-red-600/20 border border-red-600/20 text-red-600/40 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all disabled:cursor-not-allowed order-1 sm:order-2">
+                    class="flex-1 px-6 py-3 bg-red-600/20 border border-red-600/20 text-red-600/40 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all disabled:cursor-not-allowed order-1 sm:order-2">
                     Supprimer définitivement
                 </button>
             </div>

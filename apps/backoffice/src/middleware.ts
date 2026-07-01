@@ -66,11 +66,9 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   // 3. LOGIQUE DE REDIRECTION (Pour connectés sur Login/Dashboard/Apps)
   if (isSaaSRoute || isAuthPage || isHomePage) {
     // --- PRIORITÉ : ADMIN Plateforme ---
+    // Le backoffice est réservé aux tenants. L'admin reste sur l'accueil uniquement.
     if (profile?.platform_role) {
-      // Toujours vers l'admin dashboard
-      if (!isAdminRoute) {
-        return redirect('/admin/onboardings');
-      }
+      if (!isHomePage) return redirect('/');
       return next();
     }
 
