@@ -1,0 +1,31 @@
+name: 'Supabase Keep-Alive'
+
+on:
+  schedule:
+    # S'exécute tous les 2 jours à 04:00 du matin (UTC)
+    - cron: '0 4 */2 * *'
+  workflow_dispatch: # Permet de le lancer manuellement depuis l'interface GitHub
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "Démarrage du Ping vers Supabase pour empêcher la mise en veille (auto-pause)..."
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "$SUPABASE_URL/rest/v1/" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+            
+          echo "Réponse HTTP de Supabase : $HTTP_STATUS"
+          
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✅ Ping réussi ! La base de données est réveillée."
+          else
+            echo "⚠️ Ping terminé, mais statut HTTP inattendu."
+          fi
