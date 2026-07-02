@@ -14,7 +14,7 @@ if (!profile) return Astro.redirect("/login");
 <AppLayout title="Mes Véhicules">
     <div class="flex flex-col px-6 py-10 md:px-12 md:py-16">
         <!-- BACK LINK -->
-        <a href="/app/settings" class="inline-flex items-center gap-2 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors mb-8 flex-shrink-0">
+        <a href="/app/settings" class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase tracking-widest transition-colors mb-8 flex-shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
@@ -25,7 +25,7 @@ if (!profile) return Astro.redirect("/login");
             <div>
                 <Badge variant="primary">Mes Véhicules</Badge>
             </div>
-            <Button id="btn-new-vehicle-content">
+            <Button id="btn-new-vehicle-content" variant="white" class="h-9 px-4 text-[10px]">
                 + Nouveau
             </Button>
         </div>
