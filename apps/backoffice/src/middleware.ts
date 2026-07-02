@@ -29,7 +29,10 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
 
   // options par défaut appliquées par setAll — capturées pour pouvoir les répliquer
   // à l'identique lors du re-set explicite du cookie (seul maxAge doit changer).
-  let defaultCookieOptions: Record<string, any> = {};
+  // path: '/' fixé dès le départ : si setAll ne tourne pas dans cette requête (token pas
+  // près d'expirer), un re-set sans path explicite créait un second cookie sur un path
+  // différent du path='/' posé au login — collision de cookies homonymes détectée en prod.
+  let defaultCookieOptions: Record<string, any> = { path: '/' };
 
   // Initialisation Supabase (SSR)
   const supabase = createServerClient(
