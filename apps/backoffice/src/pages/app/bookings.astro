@@ -592,20 +592,6 @@ const getFilterUrl = (params: Record<string, string>) => {
                     </div>
                 </div>
 
-                <!-- SECTION: PASSAGERS & BAGAGES -->
-                <div class="space-y-3">
-                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Capacité</p>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-1.5">
-                            <label class="text-[10px] font-semibold text-slate-500">Passagers (max 8)</label>
-                            <input type="number" name="passenger_count" value="1" min="1" max="8" class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-bold" />
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-[10px] font-semibold text-slate-500">Bagages</label>
-                            <input type="number" name="luggage_count" value="0" min="0" max="12" class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-bold" />
-                        </div>
-                    </div>
-                </div>
 
                 <!-- SECTION: CLIENT -->
                 <div class="space-y-3">
@@ -628,6 +614,22 @@ const getFilterUrl = (params: Record<string, string>) => {
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
+                            </div>
+                        </div>
+
+                        <!-- PASSAGERS & BAGAGES -->
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div class="relative">
+                                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                </div>
+                                <input type="number" name="passenger_count" value="1" min="1" max="8" class="w-full bg-background border border-border rounded-[var(--radius)] py-3 pl-10 pr-4 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium tabular-nums" />
+                            </div>
+                            <div class="relative">
+                                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                </div>
+                                <input type="number" name="luggage_count" value="0" min="0" max="12" class="w-full bg-background border border-border rounded-[var(--radius)] py-3 pl-10 pr-4 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium tabular-nums" />
                             </div>
                         </div>
 
@@ -665,8 +667,8 @@ const getFilterUrl = (params: Record<string, string>) => {
                     </div>
                 </div>
 
-                <div class="pt-2 pb-2">
-                    <Button type="submit" variant="emerald" class="w-full shadow-2xl shadow-emerald-500/20">
+                <div class="sticky bottom-0 z-20 bg-card border-t border-border px-5 py-4 sm:px-8 mt-6 -mx-5 sm:-mx-8 -mb-6">
+                    <Button type="submit" variant="emerald" class="w-full shadow-lg shadow-emerald-500/20">
                         Confirmer la réservation
                     </Button>
                 </div>
