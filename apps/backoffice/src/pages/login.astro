@@ -59,7 +59,7 @@ import "../styles/global.css";
           </p>
         </div>
 
-        <form id="login-form" class="space-y-3">
+        <form id="login-form" action="/api/auth/login" method="POST" class="space-y-3">
           <div class="space-y-3">
             <div class="space-y-1 relative group">
               <label for="email" class="text-[11px] font-medium text-muted-foreground ml-1">
@@ -199,40 +199,13 @@ import "../styles/global.css";
         e.preventDefault();
 
         const formData = new FormData(form);
-        const email = formData.get("email") as string;
-        const password = formData.get("password") as string;
-
+        // We let the form submit natively, but we can show the spinner
         submitBtn.disabled = true;
         loader.classList.remove("hidden");
         btnText.style.opacity = "0";
-        messageEl.textContent = "";
-
-        try {
-            const res = await fetch("/api/auth/login", {
-                method: "POST",
-                body: formData
-            });
-            const data = await res.json();
-
-            if (!res.ok || data.error) {
-                messageEl.textContent = "Erreur : " + (data.error || "Identifiants invalides");
-                messageEl.className = "mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-center text-xs font-medium text-red-400";
-                submitBtn.disabled = false;
-                loader.classList.add("hidden");
-                btnText.style.opacity = "1";
-            } else {
-                messageEl.textContent = "Connexion réussie ! Redirection...";
-                messageEl.className = "mt-4 text-center text-xs font-medium text-emerald-400";
-                
-                window.location.href = "/dashboard";
-            }
-        } catch (err) {
-            console.error(err);
-            messageEl.textContent = "Une erreur technique est survenue.";
-            messageEl.className = "mt-4 text-center text-xs font-medium text-red-400";
-            submitBtn.disabled = false;
-            loader.classList.add("hidden");
-            btnText.style.opacity = "1";
-        }
+        messageEl.textContent = "Connexion en cours...";
+        
+        // Let the form submit naturally
+        form.submit();
     });
 </script>
