@@ -170,7 +170,6 @@ import "../styles/global.css";
 </html>
 
 <script>
-    import { supabase } from "@/lib/supabase/client";
 
     const form = document.querySelector("#login-form") as HTMLFormElement;
     const messageEl = document.querySelector("#message") as HTMLDivElement;
@@ -209,10 +208,14 @@ import "../styles/global.css";
         messageEl.textContent = "";
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
 
-            if (error) {
-                messageEl.textContent = "Erreur : " + error.message;
+            if (!res.ok || data.error) {
+                messageEl.textContent = "Erreur : " + (data.error || "Identifiants invalides");
                 messageEl.className = "mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-center text-xs font-medium text-red-400";
                 submitBtn.disabled = false;
                 loader.classList.add("hidden");
@@ -221,11 +224,7 @@ import "../styles/global.css";
                 messageEl.textContent = "Connexion réussie ! Redirection...";
                 messageEl.className = "mt-4 text-center text-xs font-medium text-emerald-400";
                 
-                // On s'assure que la session est bien initialisée et le cookie écrit
-                await supabase.auth.getSession();
-                setTimeout(() => {
-                    window.location.href = "/dashboard";
-                }, 500);
+                window.location.href = "/dashboard";
             }
         } catch (err) {
             console.error(err);

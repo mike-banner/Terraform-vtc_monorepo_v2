@@ -21,10 +21,21 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
             name: c.name,
             value: c.value ?? '',
           })),
-        setAll: (cookiesToSet: any[]) =>
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookies.set(name, value, options as any),
-          ),
+        setAll: (cookiesToSet: any[]) => {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Astro expects sameSite to be strictly typed
+            const safeOptions = { ...options };
+            if (typeof safeOptions.sameSite === 'string') {
+                const s = safeOptions.sameSite.toLowerCase();
+                safeOptions.sameSite = (s === 'lax' ? 'lax' : s === 'strict' ? 'strict' : s === 'none' ? 'none' : 'lax');
+            }
+            try {
+                cookies.set(name, value, safeOptions);
+            } catch (e) {
+                console.error("Cookie set error:", e);
+            }
+          });
+        },
       },
     },
   );
