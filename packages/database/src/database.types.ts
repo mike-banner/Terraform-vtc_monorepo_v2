@@ -450,6 +450,7 @@ export type Database = {
           last_name: string | null
           phone: string | null
           postal_code: string | null
+          stripe_customer_id: string | null
           tenant_id: string
           type: Database["public"]["Enums"]["customer_type_enum"]
           vat_number: string | null
@@ -466,6 +467,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           postal_code?: string | null
+          stripe_customer_id?: string | null
           tenant_id: string
           type?: Database["public"]["Enums"]["customer_type_enum"]
           vat_number?: string | null
@@ -482,6 +484,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           postal_code?: string | null
+          stripe_customer_id?: string | null
           tenant_id?: string
           type?: Database["public"]["Enums"]["customer_type_enum"]
           vat_number?: string | null
@@ -712,6 +715,39 @@ export type Database = {
           },
           {
             foreignKeyName: "fixed_routes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_sequences: {
+        Row: {
+          last_seq: number
+          tenant_id: string
+          year: number
+        }
+        Insert: {
+          last_seq?: number
+          tenant_id: string
+          year: number
+        }
+        Update: {
+          last_seq?: number
+          tenant_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_sequences_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "admin_tenants_overview"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "invoice_sequences_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1042,6 +1078,7 @@ export type Database = {
           deleted_at: string | null
           email: string | null
           favicon_url: string | null
+          fiscal_year_start_month: number | null
           google_reviews_url: string | null
           id: string
           is_vat_exempt: boolean | null
@@ -1068,6 +1105,7 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           favicon_url?: string | null
+          fiscal_year_start_month?: number | null
           google_reviews_url?: string | null
           id?: string
           is_vat_exempt?: boolean | null
@@ -1094,6 +1132,7 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           favicon_url?: string | null
+          fiscal_year_start_month?: number | null
           google_reviews_url?: string | null
           id?: string
           is_vat_exempt?: boolean | null
@@ -1580,6 +1619,7 @@ export type Database = {
         Returns: number
       }
       current_tenant_id: { Args: never; Returns: string }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_tenant_account: { Args: never; Returns: undefined }
       expire_unpaid_bookings: { Args: never; Returns: undefined }
       get_available_vehicles: {
@@ -1602,6 +1642,10 @@ export type Database = {
           payment_intent_id: string
           refund_allowed: boolean
         }[]
+      }
+      next_invoice_number: {
+        Args: { t_id: string; y: number }
+        Returns: string
       }
     }
     Enums: {

@@ -3,12 +3,33 @@ import { createServerClient } from '@vtc/database';
 import { parseCookieHeader } from '@supabase/ssr';
 import { defineMiddleware } from 'astro:middleware';
 
+// D-01 : durée de vie prolongée du cookie de session pour le chauffeur sur une course en cours.
+const ACTIVE_COURSE_MAXAGE_SECONDS = 8 * 60 * 60; // 8h
+
+// Décode le payload d'un JWT (segment base64url du milieu), sans vérification de signature.
+// Sûr ici car appelé uniquement sur le access_token déjà authentifié par supabase.auth.getUser().
+function decodeJwtPayload(accessToken: string): Record<string, any> | null {
+  try {
+    const [, payload] = accessToken.split('.');
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const json = Buffer.from(base64, 'base64').toString('utf8');
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 export const onRequest = defineMiddleware(async ({ cookies, request, redirect, locals }, next) => {
   const url = new URL(request.url);
   const path = url.pathname;
   
   console.log("---- MIDDLEWARE HIT:", path);
   console.log("COOKIE HEADER:", request.headers.get('Cookie'));
+
+  // options par défaut appliquées par setAll — capturées pour pouvoir les répliquer
+  // à l'identique lors du re-set explicite du cookie (seul maxAge doit changer).
+  let defaultCookieOptions: Record<string, any> = {};
 
   // Initialisation Supabase (SSR)
   const supabase = createServerClient(
@@ -21,25 +42,16 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
             name: c.name,
             value: c.value ?? '',
           })),
-        setAll: (cookiesToSet: any[]) => {
-          console.log("Supabase calling setAll:", cookiesToSet);
+        setAll: (cookiesToSet: any[]) =>
           cookiesToSet.forEach(({ name, value, options }) => {
             const safeOptions = { ...options };
-            if (typeof safeOptions.sameSite === 'string') {
-                const s = safeOptions.sameSite.toLowerCase();
-                safeOptions.sameSite = (s === 'lax' ? 'lax' : s === 'strict' ? 'strict' : s === 'none' ? 'none' : 'lax');
-            }
             // En local (http), forcer secure à false pour éviter que le navigateur rejette le cookie
             if (url.protocol === 'http:') {
-                safeOptions.secure = false;
+              safeOptions.secure = false;
             }
-            try {
-                cookies.set(name, value, safeOptions);
-            } catch (e) {
-                console.error("Cookie set error:", e);
-            }
-          });
-        },
+            defaultCookieOptions = safeOptions as any;
+            cookies.set(name, value, safeOptions as any);
+          }),
       },
     },
   );
@@ -74,14 +86,84 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
 
   locals.user = user;
 
-  // 2. CAS : Utilisateur connecté -> Récupérer profil
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
+  // 2. CAS : Utilisateur connecté -> Résoudre le profil depuis les claims JWT (D-03/D-04)
+  // Plus de requête profiles ici : tenant_role/tenant_id/platform_role sont injectés dans
+  // l'access_token par le hook Supabase Auth (voir 10-01). getUser() a déjà prouvé
+  // l'authenticité du token, on peut donc décoder ses claims sans requête supplémentaire.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  locals.profile = profile || null;
+  const claims = session?.access_token ? decodeJwtPayload(session.access_token) : null;
+
+  let profile: { platform_role: any; tenant_role: any; tenant_id: any } | null = null;
+
+  if (claims && (claims.tenant_role !== undefined || claims.platform_role !== undefined)) {
+    profile = {
+      platform_role: claims.platform_role ?? null,
+      tenant_role: claims.tenant_role ?? null,
+      tenant_id: claims.tenant_id ?? null,
+    };
+  } else {
+    // ponytail: fallback pour les sessions émises avant l'activation du hook — une seule
+    // requête profiles, pas un second chemin permanent. Disparaît quand ces tokens expirent.
+    const { data: legacyProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+    profile = legacyProfile || null;
+  }
+
+  locals.profile = profile;
+
+  // D-01/D-02 : chauffeur lié à une course en cours (mission_status = 'in_progress')
+  // -> session prolongée. Requête scopée sur bookings, jamais sur profiles (pas de
+  // régression de latence). Ne s'applique qu'au tenant_role 'driver'.
+  let hasActiveCourse = false;
+  if (profile?.tenant_role === 'driver' && profile?.tenant_id) {
+    const { data: driver } = await supabase
+      .from('drivers')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('tenant_id', profile.tenant_id)
+      .limit(1)
+      .maybeSingle();
+
+    if (driver) {
+      const { data: activeBooking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('driver_id', driver.id)
+        .eq('mission_status', 'in_progress')
+        .limit(1)
+        .maybeSingle();
+
+      hasActiveCourse = Boolean(activeBooking);
+    }
+  }
+
+  // Ré-écrit explicitement le(s) cookie(s) d'auth Supabase une fois hasActiveCourse connu,
+  // APRÈS son calcul — jamais dans le closure setAll (qui peut s'exécuter pendant
+  // getUser()/getSession(), avant que hasActiveCourse ne soit déterminé).
+  const applySessionMaxAge = () => {
+    const requestCookies = parseCookieHeader(request.headers.get('Cookie') ?? '');
+    requestCookies
+      .filter((c) => c.name.startsWith('sb-'))
+      .forEach(({ name }) => {
+        const value = cookies.get(name)?.value;
+        if (value === undefined) return;
+        cookies.set(name, value, {
+          ...defaultCookieOptions,
+          maxAge: hasActiveCourse ? ACTIVE_COURSE_MAXAGE_SECONDS : defaultCookieOptions.maxAge,
+        });
+      });
+  };
+
+  const finish = async (response: Response) => {
+    applySessionMaxAge();
+    return response;
+  };
 
   const isHomePage = path === '/';
 
@@ -90,8 +172,8 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
     // --- PRIORITÉ : ADMIN Plateforme ---
     // Le backoffice est réservé aux tenants. L'admin reste sur l'accueil uniquement.
     if (profile?.platform_role) {
-      if (!isHomePage) return redirect('/');
-      return next();
+      if (!isHomePage) return finish(await redirect('/'));
+      return finish(await next());
     }
 
     // --- PRIORITÉ : Flow Onboarding (Pending) ---
@@ -112,29 +194,29 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
         (path === '/onboarding' || path === '/signup') && url.searchParams.get('edit') === 'true';
 
       if (onboarding && !isWaitingApprovalPage && !isEditingOnboarding) {
-        return redirect('/waiting-approval');
+        return finish(await redirect('/waiting-approval'));
       }
 
       if (!onboarding && !isOnboardingRoute) {
-        return redirect('/signup');
+        return finish(await redirect('/signup'));
       }
 
-      return next();
+      return finish(await next());
     }
 
     // --- PRIORITÉ : Chauffeur Actif (Onboardé) ---
     if (profile?.tenant_id) {
       if (!isAppRoute) {
-        return redirect('/app/dashboard');
+        return finish(await redirect('/app/dashboard'));
       }
-      return next();
+      return finish(await next());
     }
 
     // --- CAS : Nouveau connecté sans rôle défini (Sécurité) ---
     if (isSaaSRoute && !isOnboardingRoute && !isAdminRoute) {
-      return redirect('/signup');
+      return finish(await redirect('/signup'));
     }
   }
 
-  return next();
+  return finish(await next());
 });

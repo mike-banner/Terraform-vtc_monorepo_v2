@@ -79,6 +79,7 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
                             </button>
                         </div>
                         <p class="text-[10px] text-muted-foreground mt-2">PNG transparent ou SVG recommandé. Max 2 Mo.</p>
+                        <p id="logo-transparency-hint" class="hidden text-[10px] text-muted-foreground mt-2 leading-relaxed"></p>
                     </div>
                 </div>
             </Card>
@@ -202,6 +203,7 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
         const logoPreviewOld = document.getElementById('logo-preview');
         const logoPlaceholder = document.getElementById('logo-placeholder');
         const logoPreviewNew = document.getElementById('logo-preview-new') as HTMLImageElement;
+        const logoTransparencyHint = document.getElementById('logo-transparency-hint');
         let selectedLogoFile: File | null = null;
 
         logoInput?.addEventListener('change', (e) => {
@@ -212,6 +214,13 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
             if (file.size > 2 * 1024 * 1024) {
                 alert("Le fichier est trop volumineux (Max 2Mo)");
                 return;
+            }
+
+            // ponytail: format check (image/jpeg) instead of canvas alpha-scan — one branch, zero false positives, no pixel reads.
+            logoTransparencyHint?.classList.add('hidden');
+            if (file.type === 'image/jpeg' && logoTransparencyHint) {
+                logoTransparencyHint.textContent = "Astuce : ce format (JPEG) a toujours un fond plein. Un logo à fond transparent (PNG/SVG) s'affiche mieux sur le damier — mais garder un fond plein reste un choix valable.";
+                logoTransparencyHint.classList.remove('hidden');
             }
 
             selectedLogoFile = file;
