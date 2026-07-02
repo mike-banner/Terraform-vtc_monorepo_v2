@@ -28,7 +28,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "onboarding@resend.dev", // À changer par ton domaine authentifié
+        from: "mike.webfree@gmail.com", // À changer par ton domaine authentifié
         to: [to],
         subject: subject,
         html: html,

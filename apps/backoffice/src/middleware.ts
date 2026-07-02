@@ -22,12 +22,16 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
             value: c.value ?? '',
           })),
         setAll: (cookiesToSet: any[]) => {
+          console.log("Supabase calling setAll:", cookiesToSet);
           cookiesToSet.forEach(({ name, value, options }) => {
-            // Astro expects sameSite to be strictly typed
             const safeOptions = { ...options };
             if (typeof safeOptions.sameSite === 'string') {
                 const s = safeOptions.sameSite.toLowerCase();
                 safeOptions.sameSite = (s === 'lax' ? 'lax' : s === 'strict' ? 'strict' : s === 'none' ? 'none' : 'lax');
+            }
+            // En local (http), forcer secure à false pour éviter que le navigateur rejette le cookie
+            if (url.protocol === 'http:') {
+                safeOptions.secure = false;
             }
             try {
                 cookies.set(name, value, safeOptions);
