@@ -157,6 +157,19 @@ const getFilterUrl = (params: Record<string, string>) => {
                 </Button>
             </div>
 
+            <!-- Row 3: Live search -->
+            <div class="relative mb-2">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                </svg>
+                <input
+                    id="booking-search-input"
+                    type="search"
+                    placeholder="Rechercher un client, téléphone, réf…"
+                    class="w-full h-10 bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 text-[10px] font-black uppercase tracking-wider text-slate-200 placeholder:text-slate-500 placeholder:normal-case placeholder:tracking-normal placeholder:font-medium focus:outline-none focus:border-primary/50 transition-all"
+                />
+            </div>
+
             <!-- Row 2: Filters side-by-side (even on mobile) -->
             <div class="flex gap-2">
                 <!-- STATUS FILTER -->
@@ -210,7 +223,8 @@ const getFilterUrl = (params: Record<string, string>) => {
         </div>
 
         <!-- SCROLLABLE CONTENT -->
-        <div class="pb-20">
+        <div id="booking-search-results" class="hidden pb-20"></div>
+        <div id="booking-ssr-list" class="pb-20">
             {
                 bookings && bookings.length > 0 ? (
                     <div class="space-y-4">
