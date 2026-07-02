@@ -56,11 +56,11 @@ const logoUrl = tenant?.logo_url;
             <div class="flex flex-row items-center md:items-start gap-4 md:gap-6 text-left">
                 <!-- Logo -->
                 {logoUrl ? (
-                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-white rounded-xl p-2 md:p-2.5 items-center justify-center border border-white/10 flex-shrink-0">
+                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-background rounded-[var(--radius)] p-2 md:p-2.5 items-center justify-center border border-border flex-shrink-0">
                         <img src={logoUrl} alt={tenantName} class="w-full h-full object-contain" />
                     </div>
                 ) : (
-                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-primary rounded-xl items-center justify-center text-primary-foreground font-black text-lg md:text-2xl flex-shrink-0">
+                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-[var(--radius)] items-center justify-center text-primary font-black text-lg md:text-2xl flex-shrink-0">
                         {tenantName.charAt(0).toUpperCase()}
                     </div>
                 )}
