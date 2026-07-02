@@ -452,6 +452,107 @@ const run = (): void => {
     row.addEventListener("click", () => openDetailForRow(row));
   });
 
+  // 🔎 Recherche live (debounce)
+  const searchInput = document.getElementById("booking-search-input") as HTMLInputElement | null;
+  const searchResults = document.getElementById("booking-search-results");
+  const ssrList = document.getElementById("booking-ssr-list");
+
+  const BADGE_TYPE: Record<string, string> = { hourly: "bg-amber-500/10 text-amber-500 border border-amber-500/20", transfer: "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" };
+  const STATUS_BADGE: Record<string, string> = {
+    completed: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+    in_progress: "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30",
+    to_validate: "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+  };
+  const STATUS_LABEL: Record<string, string> = {
+    to_validate: "À Valider",
+    not_started: "Non Démarré",
+    in_progress: "En Cours",
+    completed: "Terminée",
+  };
+
+  const renderSearchCard = (booking: AnyBooking): string => {
+    const name = `${booking.customers?.first_name ?? ""} ${booking.customers?.last_name ?? ""}`.trim() || "Client";
+    const isCancelled = String(booking.status ?? "").startsWith("cancel");
+    const status = String(booking.mission_status ?? "");
+    const statusBadge = isCancelled ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" : (STATUS_BADGE[status] ?? "bg-white/10 text-white border border-white/10");
+    const statusLabel = isCancelled ? "Annulée" : (STATUS_LABEL[status] ?? "Terminée");
+    const type = String(booking.booking_type ?? "transfer");
+    const pickupTime = booking.pickup_time ? new Date(booking.pickup_time) : null;
+    const dateStr = pickupTime && !Number.isNaN(pickupTime.getTime())
+      ? pickupTime.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })
+      : "---";
+    const timeStr = pickupTime && !Number.isNaN(pickupTime.getTime())
+      ? pickupTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+      : "---";
+
+    return `
+      <div class="relative overflow-hidden rounded-[var(--radius)] p-4 bg-card border border-border hover:bg-muted/50 active:scale-[0.98] transition-all cursor-pointer booking-row shadow-sm"
+           data-booking="${encodeURIComponent(JSON.stringify(booking))}">
+        <div class="flex justify-between items-start mb-3">
+          <div class="max-w-[170px]">
+            <p class="text-sm font-bold text-foreground truncate leading-tight">${name}</p>
+            <p class="text-[10px] font-medium text-muted-foreground mt-0.5 truncate">${booking.customers?.phone ?? "Tél inconnu"}</p>
+          </div>
+          <p class="text-xl font-black text-foreground tabular-nums leading-none">${Number(booking.total_amount ?? 0).toFixed(0)}€</p>
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${BADGE_TYPE[type] ?? BADGE_TYPE.transfer}">${type === "hourly" ? "Mise à Dispo" : "Transfert"}</span>
+          <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${statusBadge}">${statusLabel}</span>
+        </div>
+        <div class="flex items-center gap-2 text-[10px] text-muted-foreground font-bold tabular-nums">
+          <span>${dateStr}</span><span class="w-1 h-1 rounded-full bg-border"></span><span>${timeStr}</span>
+        </div>
+      </div>
+    `;
+  };
+
+  if (searchInput && searchResults && ssrList) {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    searchResults.addEventListener("click", (e) => {
+      const row = (e.target as HTMLElement).closest<HTMLElement>(".booking-row");
+      if (row) openDetailForRow(row);
+    });
+
+    const restoreSsrList = (): void => {
+      searchResults.classList.add("hidden");
+      searchResults.innerHTML = "";
+      ssrList.classList.remove("hidden");
+    };
+
+    const runSearch = async (term: string): Promise<void> => {
+      try {
+        const res = await fetch(`/api/tenant/search-bookings?q=${encodeURIComponent(term)}`);
+        const results = (await res.json()) as AnyBooking[];
+
+        ssrList.classList.add("hidden");
+        searchResults.classList.remove("hidden");
+
+        if (!Array.isArray(results) || results.length === 0) {
+          searchResults.innerHTML = `<p class="text-center text-muted-foreground text-xs font-bold py-10">Aucun résultat</p>`;
+          return;
+        }
+
+        searchResults.innerHTML = `<div class="space-y-3">${results.map(renderSearchCard).join("")}</div>`;
+      } catch {
+        searchResults.innerHTML = `<p class="text-center text-rose-500 text-xs font-bold py-10">Erreur de recherche</p>`;
+      }
+    };
+
+    searchInput.addEventListener("input", () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      const term = searchInput.value.trim();
+
+      debounceTimer = setTimeout(() => {
+        if (term.length < 2) {
+          restoreSsrList();
+          return;
+        }
+        void runSearch(term);
+      }, 300);
+    });
+  }
+
   const setupCustomDropdown = (
     btnId: string,
     menuId: string,
