@@ -6,6 +6,9 @@ import { defineMiddleware } from 'astro:middleware';
 export const onRequest = defineMiddleware(async ({ cookies, request, redirect, locals }, next) => {
   const url = new URL(request.url);
   const path = url.pathname;
+  
+  console.log("---- MIDDLEWARE HIT:", path);
+  console.log("COOKIE HEADER:", request.headers.get('Cookie'));
 
   // Initialisation Supabase (SSR)
   const supabase = createServerClient(
@@ -29,7 +32,10 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   locals.supabase = supabase;
   const {
     data: { user },
+    error: authError
   } = await supabase.auth.getUser();
+
+  console.log("USER FETCHED:", !!user, "ERROR:", authError?.message);
 
   // Mapping des types de routes
   const isLoginPage = path === '/login';
@@ -45,6 +51,7 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   // 1. CAS : Utilisateur NON connecté
   if (!user) {
     if (isSaaSRoute && !isAuthPage) {
+      console.log("REDIRECTING TO /login because !user && isSaaSRoute && !isAuthPage");
       return redirect('/login');
     }
     return next();

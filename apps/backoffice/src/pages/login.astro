@@ -220,7 +220,12 @@ import "../styles/global.css";
             } else {
                 messageEl.textContent = "Connexion réussie ! Redirection...";
                 messageEl.className = "mt-4 text-center text-xs font-medium text-emerald-400";
-                window.location.href = "/dashboard";
+                
+                // On s'assure que la session est bien initialisée et le cookie écrit
+                await supabase.auth.getSession();
+                setTimeout(() => {
+                    window.location.href = "/dashboard";
+                }, 500);
             }
         } catch (err) {
             console.error(err);
