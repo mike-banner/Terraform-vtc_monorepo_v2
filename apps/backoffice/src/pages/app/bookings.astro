@@ -732,7 +732,7 @@ const getFilterUrl = (params: Record<string, string>) => {
     <div slot="modals" id="detail-booking-modal" data-driver-id={driverId} class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-500" style="display: none;">
         <div class="absolute inset-0 bg-background/80 backdrop-blur-sm modal-overlay"></div>
         <div class="relative bg-card max-w-2xl w-full max-h-[90vh] rounded-[calc(var(--radius)+8px)] border border-border shadow-2xl overflow-y-auto overflow-x-hidden custom-scrollbar transform scale-95 transition-all duration-500" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
-            <div class="p-8 sm:p-12">
+            <div class="p-6 sm:p-8">
                 <!-- Header Modal -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-10 border-b border-border">
                     <div class="flex items-center gap-5">
@@ -789,9 +789,9 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </a>
                         </div>
 
-                        <div class="bg-muted/10 p-8 rounded-[calc(var(--radius)+8px)] border border-border flex flex-col items-center justify-center text-center">
+                        <div class="bg-muted/10 p-6 sm:p-8 rounded-[calc(var(--radius)+8px)] border border-border flex flex-col items-center justify-center text-center">
                             <p class="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2">Heure du RDV</p>
-                            <h4 id="modal-time" class="text-5xl font-black text-foreground tracking-tighter leading-none mb-2 tabular-nums">---</h4>
+                            <h4 id="modal-time" class="text-3xl font-heading font-black text-foreground tracking-tighter leading-none mb-2 tabular-nums">---</h4>
                             <p id="modal-date" class="text-[10px] font-black uppercase text-muted-foreground tracking-widest underline decoration-primary/30 underline-offset-4">---</p>
                         </div>
                     </div>
@@ -823,7 +823,7 @@ const getFilterUrl = (params: Record<string, string>) => {
 
                     <!-- NOTES -->
                     <div class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
-                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Instructions Chauffeur</p>
+                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Notes / Instructions</p>
                         <p id="modal-notes" class="text-xs text-foreground font-medium leading-relaxed">---</p>
                     </div>
 
@@ -861,13 +861,16 @@ const getFilterUrl = (params: Record<string, string>) => {
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-3 mt-4">
-                            <button id="modal-accept-btn" class="hidden flex-1 py-5 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95 disabled:opacity-50">
-                                Prendre la main sur la course
+                            <button id="modal-invoice-btn" class="hidden flex-1 py-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50">
+                                Facture PDF
                             </button>
-                            <button id="modal-edit-btn" class="hidden flex-1 py-5 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95">
+                            <button id="modal-accept-btn" class="hidden flex-1 py-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50">
+                                Prendre la main
+                            </button>
+                            <button id="modal-edit-btn" class="hidden flex-1 py-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95">
                                 Modifier
                             </button>
-                            <button class="close-detail-modal flex-1 py-5 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95">
+                            <button class="close-detail-modal flex-1 py-4 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95">
                                 Fermer
                             </button>
                         </div>

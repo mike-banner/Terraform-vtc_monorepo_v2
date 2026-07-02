@@ -372,6 +372,47 @@ const run = (): void => {
       const cancelSection = document.getElementById("cancel-section");
       if (cancelSection) cancelSection.classList.toggle("hidden", !preMission);
 
+      // Bouton Facture (post-mission)
+      const invoiceBtn = document.getElementById("modal-invoice-btn") as HTMLButtonElement | null;
+      if (invoiceBtn) {
+        const isCompleted = booking.mission_status === "completed" || booking.status === "paid" || booking.status === "completed";
+        if (isCompleted) {
+          invoiceBtn.classList.remove("hidden");
+          invoiceBtn.onclick = async () => {
+            try {
+              invoiceBtn.innerText = "Génération...";
+              invoiceBtn.disabled = true;
+              
+              const bookingId = booking.id;
+              if (!bookingId) throw new Error("Missing booking id");
+
+              const { data, error } = await supabase.functions.invoke("generate-invoice", {
+                body: { booking_id: bookingId }
+              });
+
+              if (error) throw error;
+              if (data?.invoice_url) {
+                window.open(data.invoice_url, "_blank");
+                invoiceBtn.innerText = "Ouvrir à nouveau";
+              } else if (data?.already_generated) {
+                alert("La facture a déjà été générée pour cette course.");
+                invoiceBtn.innerText = "Facture PDF";
+              } else {
+                alert("Facture générée.");
+                window.location.reload();
+              }
+            } catch (err: any) {
+              alert("Erreur lors de la génération de facture : " + err.message);
+              invoiceBtn.innerText = "Facture PDF";
+            } finally {
+              invoiceBtn.disabled = false;
+            }
+          };
+        } else {
+          invoiceBtn.classList.add("hidden");
+        }
+      }
+
       // Reset panneau annulation
       document.getElementById("cancel-trigger-area")?.classList.remove("hidden");
       document.getElementById("cancel-form-area")?.classList.add("hidden");
