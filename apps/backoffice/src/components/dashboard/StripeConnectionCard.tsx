@@ -81,7 +81,7 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
 
   if (loading) {
     return (
-      <div className='bg-[#0A0A0B]/50 backdrop-blur-xl border border-white/5 rounded-[2rem] p-8 animate-pulse text-center'>
+      <div className='bg-card/50 backdrop-blur-xl border border-white/5 rounded-[2rem] p-8 animate-pulse text-center'>
         <div className='h-8 w-48 bg-white/5 rounded-full mx-auto mb-4' />
         <div className='h-4 w-32 bg-white/5 rounded-full mx-auto opacity-50' />
       </div>
@@ -96,7 +96,7 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
             <AlertTriangle className='w-6 h-6' />
           </div>
           <div>
-            <h3 className='text-sm font-black uppercase text-white tracking-tight'>
+            <h3 className='text-sm font-black uppercase text-foreground tracking-tight'>
               Erreur Stripe
             </h3>
             <p className='text-red-500/60 text-[10px] font-medium uppercase tracking-widest'>
@@ -128,13 +128,13 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
   return (
     <div
       onClick={stripeStatus?.url ? handleAction : undefined}
-      className={`relative overflow-hidden bg-[#0A0A0B]/80 backdrop-blur-xl border rounded-[2rem] px-4 sm:px-8 py-5 sm:py-6 shadow-2xl transition-all duration-500 group w-full ${
+      className={`relative overflow-hidden bg-card/80 backdrop-blur-xl border rounded-[2rem] px-4 sm:px-8 py-5 sm:py-6 shadow-2xl transition-all duration-500 group w-full ${
         stripeStatus?.url ? 'cursor-pointer' : ''
-      } ${isDashboard ? 'border-emerald-500/20' : 'border-indigo-500/20'}`}>
+      } ${isDashboard ? 'border-emerald-500/20' : 'border-primary/20'}`}>
       {/* Background Glow */}
       <div
         className={`absolute -top-24 -right-24 w-64 h-64 blur-[100px] opacity-10 rounded-full transition-all duration-700 ${
-          isDashboard ? 'bg-emerald-500' : 'bg-indigo-500'
+          isDashboard ? 'bg-emerald-500' : 'bg-primary'
         }`}
       />
 
@@ -143,16 +143,16 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
         <div className='grid grid-cols-3 gap-2 md:gap-10 flex-1'>
           {/* Col 1: Total Revenue */}
           <div className='flex flex-col items-center text-center group/kpi hover:bg-white/[0.03] p-2 rounded-2xl transition-all'>
-            <p className='text-[10px] md:text-[10px] font-black uppercase text-slate-500 tracking-wider md:tracking-[0.2em] mb-1 md:mb-2 h-3 flex items-center justify-center whitespace-nowrap group-hover/kpi:text-indigo-400 transition-colors'>
+            <p className='text-[10px] md:text-[10px] font-black uppercase text-muted-foreground tracking-wider md:tracking-[0.2em] mb-1 md:mb-2 h-3 flex items-center justify-center whitespace-nowrap group-hover/kpi:text-primary transition-colors'>
               Balance
             </p>
             <div className='flex items-baseline gap-0.5 md:gap-1 leading-none'>
-              <span className='text-base md:text-xl lg:text-2xl font-black tabular-nums text-white tracking-tighter leading-none group-hover/kpi:scale-110 transition-transform'>
+              <span className='text-base md:text-xl lg:text-2xl font-black tabular-nums text-foreground tracking-tighter leading-none group-hover/kpi:scale-110 transition-transform'>
                 {monthlyRevenue.toLocaleString('fr-FR', {
                   minimumFractionDigits: 0,
                 })}
               </span>
-              <span className='text-indigo-500 font-black text-xs md:text-sm lg:text-base transition-colors leading-none'>
+              <span className='text-primary font-black text-xs md:text-sm lg:text-base transition-colors leading-none'>
                 €
               </span>
             </div>
@@ -160,11 +160,11 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
 
           {/* Col 2: Total Mission (All-time) */}
           <div className='flex flex-col items-center text-center group/kpi hover:bg-white/[0.03] p-2 rounded-2xl transition-all border-l border-white/5'>
-            <p className='text-[10px] md:text-[10px] font-black uppercase text-slate-500 tracking-wider md:tracking-[0.2em] mb-1 md:mb-2 h-3 flex items-center justify-center whitespace-nowrap group-hover/kpi:text-indigo-400 transition-colors'>
+            <p className='text-[10px] md:text-[10px] font-black uppercase text-muted-foreground tracking-wider md:tracking-[0.2em] mb-1 md:mb-2 h-3 flex items-center justify-center whitespace-nowrap group-hover/kpi:text-primary transition-colors'>
               Missions
             </p>
             <div className='flex items-baseline leading-none'>
-              <span className='text-base md:text-xl lg:text-2xl font-black tabular-nums text-white tracking-tighter leading-none group-hover/kpi:scale-110 transition-transform'>
+              <span className='text-base md:text-xl lg:text-2xl font-black tabular-nums text-foreground tracking-tighter leading-none group-hover/kpi:scale-110 transition-transform'>
                 {totalCount}
               </span>
             </div>
@@ -172,11 +172,11 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
 
           {/* Col 3: Note */}
           <div className='flex flex-col items-center text-center group/kpi hover:bg-white/[0.03] p-2 rounded-2xl transition-all border-l border-white/5'>
-            <p className='text-[10px] md:text-[10px] font-black uppercase text-slate-500 tracking-wider md:tracking-[0.2em] mb-1 md:mb-2 h-3 flex items-center justify-center whitespace-nowrap group-hover/kpi:text-amber-400 transition-colors'>
+            <p className='text-[10px] md:text-[10px] font-black uppercase text-muted-foreground tracking-wider md:tracking-[0.2em] mb-1 md:mb-2 h-3 flex items-center justify-center whitespace-nowrap group-hover/kpi:text-amber-400 transition-colors'>
               Note
             </p>
             <div className='flex items-baseline gap-0.5 md:gap-1 leading-none'>
-              <span className='text-base md:text-xl lg:text-2xl font-black tabular-nums text-white tracking-tighter leading-none group-hover/kpi:scale-110 transition-transform'>
+              <span className='text-base md:text-xl lg:text-2xl font-black tabular-nums text-foreground tracking-tighter leading-none group-hover/kpi:scale-110 transition-transform'>
                 {rating.toFixed(1)}
               </span>
               <span className='text-amber-500 font-black text-[10px] md:text-xs lg:text-sm transition-colors leading-none'>
@@ -212,7 +212,7 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
                   ? 'En cours'
                   : 'Actif'}
             </div>
-            <h3 className='text-xs font-black uppercase text-white/40 tracking-widest leading-none'>
+            <h3 className='text-xs font-black uppercase text-muted-foreground tracking-widest leading-none'>
               Stripe Connect
             </h3>
           </div>
@@ -220,18 +220,13 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
           <button
             onClick={(e) => { e.stopPropagation(); handleAction(); }}
             disabled={!stripeStatus?.url}
-            className={`group relative flex items-center justify-center gap-3 px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 overflow-hidden shrink-0 ${
+            className={`px-4 py-3 md:px-6 md:py-3.5 text-xs font-black uppercase tracking-wider rounded-lg md:rounded-xl transition-all active:scale-95 shadow-xl inline-flex items-center justify-center gap-2 shrink-0 min-h-[44px] ${
               isDashboard
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-600/20 border border-emerald-400/20'
-                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-600/20 border border-indigo-400/20'
+                ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20'
+                : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20'
             }`}>
-            {/* Shine effect */}
-            <div className='absolute inset-0 w-1/2 h-full bg-white/10 skew-x-[45deg] -translate-x-full group-hover:translate-x-[250%] transition-transform duration-1000' />
-
-            <span className='relative flex items-center gap-2'>
-              {buttonLabel}
-              <ExternalLink className='w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5' />
-            </span>
+            {buttonLabel}
+            <ExternalLink className='w-3.5 h-3.5' />
           </button>
         </div>
       </div>

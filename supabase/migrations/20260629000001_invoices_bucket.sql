@@ -13,7 +13,7 @@ USING (
   AND (storage.foldername(name))[1] = (
     SELECT t.id::text FROM public.tenants t
     INNER JOIN public.profiles p ON p.tenant_id = t.id
-    WHERE p.user_id = auth.uid()
+    WHERE p.id = auth.uid()
     LIMIT 1
   )
 );

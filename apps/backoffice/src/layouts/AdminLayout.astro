@@ -30,67 +30,42 @@ if (!isPlatform(profile)) {
         <title>{title} | VTC HUB Admin</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;800;900&display=swap"
-            rel="stylesheet"
-        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
         <style is:global>
-            :root {
-                --accent: 79, 70, 229;
-                --accent-light: 224, 204, 250;
-                --accent-dark: 49, 10, 101;
-                --accent-gradient: linear-gradient(
-                    45deg,
-                    rgb(var(--accent)),
-                    rgb(var(--accent-light)) 30%,
-                    white 60%
-                );
-            }
-            html {
-                font-family: 'Inter', system-ui, sans-serif;
-                background-color: #050505;
-                color-scheme: dark;
-            }
-            .font-title {
-                font-family: 'Outfit', 'Inter', sans-serif;
-            }
+            html { color-scheme: dark; }
             .glass {
                 background: rgba(255, 255, 255, 0.01);
                 backdrop-filter: blur(20px);
                 border: 1px solid rgba(255, 255, 255, 0.05);
             }
-            /* FIX: Dropdowns blanc sur blanc */
-            select option {
-                background-color: #0f172a; /* Slate 900 */
-                color: white;
-            }
-            select:focus option {
-                background-color: #0f172a;
-            }
+            select option { background-color: #0f172a; color: white; }
+            select:focus option { background-color: #0f172a; }
         </style>
     </head>
     <body
-        class="bg-[#050505] h-full overflow-hidden text-slate-50 selection:bg-indigo-500/30"
+        class="bg-background h-full overflow-hidden text-foreground font-sans selection:bg-primary/30"
     >
         <Sidebar />
 
         <main class="md:ml-64 h-full overflow-y-auto relative flex flex-col p-8 md:p-12 lg:p-20">
             <!-- Background Decoration -->
-            <div class="absolute top-0 right-0 w-full h-full pointer-events-none opacity-50">
-                <div class="absolute top-[10%] right-[10%] w-[400px] h-[400px] bg-indigo-600/10 blur-[150px] rounded-full"></div>
+            <div class="absolute top-0 right-0 w-full h-full pointer-events-none opacity-30">
+                <div class="absolute top-[10%] right-[10%] w-[400px] h-[400px] bg-primary/8 blur-[150px] rounded-full"></div>
             </div>
 
             <!-- Page Header -->
             <header class="relative mb-12 flex items-center justify-between">
                 <div>
-                    <h1 class="text-xs font-black uppercase tracking-[0.3em] text-indigo-500 mb-2">
+                    <h1 class="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-2">
                         Backoffice Plateforme
                     </h1>
-                    <p class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white font-title">
+                    <p class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-foreground">
                         {title}
                     </p>
                     {description && (
-                        <p class="text-slate-500 text-xs md:text-sm mt-2 font-medium tracking-wide">
+                        <p class="text-muted-foreground text-xs md:text-sm mt-2 font-medium tracking-wide">
                             {description}
                         </p>
                     )}

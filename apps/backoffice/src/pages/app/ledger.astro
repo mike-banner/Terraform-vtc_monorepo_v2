@@ -123,7 +123,7 @@ const fmt = (n: number) =>
             <div class="flex items-center justify-between gap-4 mb-6">
                 <a
                     href={getUrl({ month: null })}
-                    class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors flex-shrink-0"
+                    class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-primary hover:text-primary transition-colors flex-shrink-0"
                 >
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
@@ -151,7 +151,7 @@ const fmt = (n: number) =>
                                     href={getUrl({ year: y, month: null })}
                                     class={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                                         y === currentYear
-                                        ? "bg-indigo-600 text-white"
+                                        ? "bg-primary text-primary-foreground"
                                         : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/5"
                                     }`}
                                 >
@@ -163,21 +163,19 @@ const fmt = (n: number) =>
                 </div>
             </div>
 
-            <!-- Inline month KPIs (compact 3-stat strip, label above) -->
-            <div class="flex items-center gap-5 px-5 py-4 bg-white/[0.03] border border-white/[0.06] rounded-2xl mb-6">
-                <div class="flex flex-col gap-0.5">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Course{monthTotals.bookings > 1 ? "s" : ""}</span>
-                    <span class="text-xl font-black text-white tabular-nums tracking-tighter leading-none">{monthTotals.bookings}</span>
+            <!-- Inline month KPIs -->
+            <div class="flex items-stretch bg-card border border-border rounded-2xl overflow-hidden mb-6">
+                <div class="flex flex-col gap-0.5 px-5 py-4 border-r border-border">
+                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Course{monthTotals.bookings > 1 ? "s" : ""}</span>
+                    <span class="text-lg font-black text-foreground tabular-nums">{monthTotals.bookings}</span>
                 </div>
-                <div class="w-px h-7 bg-white/[0.06]"></div>
-                <div class="flex flex-col gap-0.5">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">CA HT</span>
-                    <span class="text-xl font-black text-white tabular-nums tracking-tighter leading-none">{fmt(monthTotals.net)} €</span>
+                <div class="flex flex-col gap-0.5 px-5 py-4 border-r border-border">
+                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">CA HT</span>
+                    <span class="text-sm font-black text-foreground tabular-nums whitespace-nowrap">{fmt(monthTotals.net)}&nbsp;€</span>
                 </div>
-                <div class="w-px h-7 bg-white/[0.06]"></div>
-                <div class="flex flex-col gap-0.5">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">TVA</span>
-                    <span class="text-xl font-black text-emerald-400 tabular-nums tracking-tighter leading-none">{fmt(monthTotals.vat)} €</span>
+                <div class="flex flex-col gap-0.5 px-5 py-4">
+                    <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">TVA</span>
+                    <span class="text-sm font-black text-emerald-400 tabular-nums whitespace-nowrap">{fmt(monthTotals.vat)}&nbsp;€</span>
                 </div>
             </div>
 
@@ -206,7 +204,7 @@ const fmt = (n: number) =>
                             href={getUrl({ year: y, month: null })}
                             class={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
                                 y === currentYear
-                                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                                 : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/5"
                             }`}
                         >
@@ -227,33 +225,25 @@ const fmt = (n: number) =>
             </div>
 
             <!-- KPI strip -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4 md:p-5">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Courses</div>
-                    <div class="text-2xl md:text-3xl font-black text-white tabular-nums tracking-tighter">
-                        {annualTotals.bookings}
-                    </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 bg-card border border-border rounded-2xl overflow-hidden mb-6">
+                <div class="px-5 py-4 border-r border-b md:border-b-0 border-border">
+                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">Courses</p>
+                    <p class="text-lg font-black text-foreground tabular-nums">{annualTotals.bookings}</p>
                 </div>
-                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4 md:p-5">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">CA HT</div>
-                    <div class="text-2xl md:text-3xl font-black text-white tabular-nums tracking-tighter">
-                        {fmt(annualTotals.net)} €
-                    </div>
-                    <div class="text-[10px] text-slate-600 font-medium mt-1">Hors taxes</div>
+                <div class="px-5 py-4 border-b md:border-b-0 md:border-r border-border">
+                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">CA HT</p>
+                    <p class="text-sm font-black text-foreground tabular-nums whitespace-nowrap">{fmt(annualTotals.net)}&nbsp;€</p>
+                    <p class="text-[10px] text-muted-foreground/50 mt-0.5">Hors taxes</p>
                 </div>
-                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4 md:p-5">
-                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">TVA collectée</div>
-                    <div class="text-2xl md:text-3xl font-black text-emerald-400 tabular-nums tracking-tighter">
-                        {fmt(annualTotals.vat)} €
-                    </div>
-                    <div class="text-[10px] text-slate-600 font-medium mt-1">À reverser</div>
+                <div class="px-5 py-4 border-r border-border">
+                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">TVA collectée</p>
+                    <p class="text-sm font-black text-emerald-400 tabular-nums whitespace-nowrap">{fmt(annualTotals.vat)}&nbsp;€</p>
+                    <p class="text-[10px] text-muted-foreground/50 mt-0.5">À reverser</p>
                 </div>
-                <div class="bg-white rounded-2xl p-4 md:p-5 shadow-xl shadow-indigo-500/5">
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total TTC</div>
-                    <div class="text-2xl md:text-3xl font-black text-slate-900 tabular-nums tracking-tighter">
-                        {fmt(annualTotals.gross)} €
-                    </div>
-                    <div class="text-[10px] text-slate-400 font-medium mt-1">Chiffre d'affaires brut</div>
+                <div class="px-5 py-4">
+                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">Total TTC</p>
+                    <p class="text-sm font-black text-foreground tabular-nums whitespace-nowrap">{fmt(annualTotals.gross)}&nbsp;€</p>
+                    <p class="text-[10px] text-muted-foreground/50 mt-0.5">Brut</p>
                 </div>
             </div>
 
@@ -298,7 +288,7 @@ const fmt = (n: number) =>
                                             {isFuture ? (
                                                 <span class="text-slate-700 text-xs">—</span>
                                             ) : m.hasData ? (
-                                                <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 text-[11px] font-black tabular-nums">
+                                                <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-primary/15 text-primary text-[11px] font-black tabular-nums">
                                                     {m.count}
                                                 </span>
                                             ) : (
@@ -309,8 +299,8 @@ const fmt = (n: number) =>
                                             {isFuture ? (
                                                 <span class="text-slate-700 text-xs">—</span>
                                             ) : (
-                                                <span class={`text-sm tabular-nums font-semibold ${m.hasData ? "text-slate-300" : "text-slate-700"}`}>
-                                                    {fmt(m.net)} €
+                                                <span class={`text-sm tabular-nums font-semibold whitespace-nowrap ${m.hasData ? "text-slate-300" : "text-slate-700"}`}>
+                                                    {fmt(m.net)}&nbsp;€
                                                 </span>
                                             )}
                                         </td>
@@ -318,8 +308,8 @@ const fmt = (n: number) =>
                                             {isFuture ? (
                                                 <span class="text-slate-700 text-xs">—</span>
                                             ) : (
-                                                <span class={`text-sm tabular-nums font-semibold ${m.hasData && m.vat > 0 ? "text-emerald-500" : "text-slate-700"}`}>
-                                                    {m.hasData ? `${fmt(m.vat)} €` : "0,00 €"}
+                                                <span class={`text-sm tabular-nums font-semibold whitespace-nowrap ${m.hasData && m.vat > 0 ? "text-emerald-500" : "text-slate-700"}`}>
+                                                    {m.hasData ? `${fmt(m.vat)} €` : "0,00 €"}
                                                 </span>
                                             )}
                                         </td>
@@ -327,8 +317,8 @@ const fmt = (n: number) =>
                                             {isFuture ? (
                                                 <span class="text-slate-700 text-xs">À venir</span>
                                             ) : (
-                                                <span class={`text-sm tabular-nums font-black ${m.hasData ? "text-white" : "text-slate-700"}`}>
-                                                    {fmt(m.gross)} €
+                                                <span class={`text-sm tabular-nums font-black whitespace-nowrap ${m.hasData ? "text-white" : "text-slate-700"}`}>
+                                                    {fmt(m.gross)}&nbsp;€
                                                 </span>
                                             )}
                                         </td>
