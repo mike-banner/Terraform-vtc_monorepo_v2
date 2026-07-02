@@ -30,16 +30,16 @@ const paddings = {
 };
 
 const roundness = {
-  sm: "rounded-lg",
-  md: "rounded-xl",
-  lg: "rounded-2xl",
-  xl: "rounded-[2rem]",
-  "2xl": "rounded-[2.5rem]",
-  "3xl": "rounded-[3rem]"
+  sm: "rounded-sm md:rounded",
+  md: "rounded md:rounded-md",
+  lg: "rounded-md md:rounded-lg",
+  xl: "rounded-lg md:rounded-xl",
+  "2xl": "rounded-[var(--radius)]",
+  "3xl": "rounded-[calc(var(--radius)+8px)]"
 };
 
-const baseClasses = "glass border border-white/10 bg-white/[0.02] relative z-10 transition-all block";
-const hoverClasses = (hover || href) ? "hover:border-white/20 hover:bg-white/[0.04] cursor-pointer" : "";
+const baseClasses = "bg-card border border-border text-card-foreground relative z-10 transition-all block";
+const hoverClasses = (hover || href) ? "hover:border-primary/50 hover:shadow-md cursor-pointer" : "";
 
 const Element = href ? 'a' : 'div';
 ---
@@ -54,8 +54,4 @@ const Element = href ? 'a' : 'div';
 </Element>
 
 <style>
-  .glass {
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-  }
 </style>
