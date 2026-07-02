@@ -90,7 +90,7 @@ export const DriverList: React.FC<DriverListProps> = ({ tenantId, userId, hidePr
       {loading ? (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
           {[1, 2, 3].map((i) => (
-            <div key={i} className='bg-card border border-border rounded-2xl h-28 animate-pulse' />
+            <div key={i} className='bg-card/50 border border-border/50 rounded-[var(--radius)] h-28 animate-pulse' />
           ))}
         </div>
       ) : (
@@ -106,15 +106,15 @@ export const DriverList: React.FC<DriverListProps> = ({ tenantId, userId, hidePr
                   <DriverCard driver={primaryDriver} onEdit={handleEdit} onDelete={setConfirmDelete} isPrimary />
                 </div>
               ) : (
-                <div className='max-w-2xl bg-card border border-dashed border-border rounded-2xl p-8 flex flex-col items-center text-center gap-4'>
+                <div className='max-w-2xl bg-card border border-dashed border-border rounded-[var(--radius)] p-8 flex flex-col items-center text-center gap-4'>
                   <UserCheck className='w-8 h-8 text-muted-foreground' />
                   <div>
                     <p className='text-sm font-semibold text-foreground mb-1'>Aucun titulaire assigné</p>
-                    <p className='text-xs text-muted-foreground'>Enregistrez-vous comme premier chauffeur pour activer votre profil.</p>
+                    <p className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest'>Enregistrez-vous comme premier chauffeur pour activer votre profil.</p>
                   </div>
                   <button
                     onClick={() => setConfirmInit(true)}
-                    className='px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95'>
+                    className='px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-[var(--radius)] transition-all shadow-sm active:scale-95'>
                     {initLoading ? 'Initialisation...' : "M'ajouter comme chauffeur"}
                   </button>
                 </div>
@@ -131,7 +131,7 @@ export const DriverList: React.FC<DriverListProps> = ({ tenantId, userId, hidePr
               {isOwner && (
                 <button
                   onClick={handleCreate}
-                  className='flex items-center gap-1.5 px-3 py-2 bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/20 transition-all active:scale-95'>
+                  className='flex items-center gap-1.5 px-3 py-2 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-bold uppercase tracking-widest rounded-md transition-all active:scale-95'>
                   <UserPlus className='w-3.5 h-3.5' />
                   Ajouter
                 </button>
@@ -144,8 +144,8 @@ export const DriverList: React.FC<DriverListProps> = ({ tenantId, userId, hidePr
                 ))}
               </div>
             ) : (
-              <div className='bg-card border border-border rounded-2xl p-8 text-center'>
-                <p className='text-xs text-muted-foreground'>Aucun collaborateur enregistré</p>
+              <div className='bg-card/30 border border-border rounded-[var(--radius)] p-8 text-center'>
+                <p className='text-xs font-bold text-muted-foreground uppercase tracking-widest'>Aucun collaborateur enregistré</p>
               </div>
             )}
           </div>
@@ -194,12 +194,12 @@ interface DriverCardProps {
 
 const DriverCard: React.FC<DriverCardProps> = ({ driver, onEdit, onDelete, isPrimary }) => {
   return (
-    <div className={`bg-card border rounded-2xl p-5 flex flex-col gap-4 transition-all ${
-      isPrimary ? 'border-primary/20' : 'border-border'
+    <div className={`bg-card/50 border rounded-[var(--radius)] p-5 flex flex-col gap-4 transition-all hover:shadow-md ${
+      isPrimary ? 'border-primary/50' : 'border-border hover:border-primary/30'
     }`}>
       <div className='flex items-center gap-3'>
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-          isPrimary ? 'bg-primary/10 text-primary' : 'bg-white/5 text-muted-foreground'
+          isPrimary ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
         }`}>
           <Users className='w-5 h-5' />
         </div>
@@ -207,34 +207,34 @@ const DriverCard: React.FC<DriverCardProps> = ({ driver, onEdit, onDelete, isPri
           {isPrimary && (
             <p className='text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5'>Chauffeur N°1</p>
           )}
-          <h3 className='text-base font-black text-foreground uppercase tracking-tighter leading-none truncate'>
+          <h3 className='text-lg font-heading font-black text-foreground uppercase tracking-tight leading-none truncate'>
             {driver.first_name} {driver.last_name}
           </h3>
         </div>
         <div className='flex items-center gap-0.5 flex-shrink-0'>
           <button
             onClick={() => onEdit(driver)}
-            className='p-2 text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg transition-colors'>
+            className='p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors'>
             <Edit2 className='w-4 h-4' />
           </button>
           {!isPrimary && (
             <button
               onClick={() => onDelete({ id: driver.id, name: `${driver.first_name} ${driver.last_name}` })}
-              className='p-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/5 rounded-lg transition-colors'>
+              className='p-2 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-md transition-colors'>
               <Trash2 className='w-4 h-4' />
             </button>
           )}
         </div>
       </div>
 
-      <div className='border-t border-border pt-3 flex flex-col gap-3'>
+      <div className='border-t border-border/50 pt-3 flex flex-col gap-3'>
         <div className='flex items-center gap-2'>
           <Phone className='w-3.5 h-3.5 text-muted-foreground flex-shrink-0' />
-          <span className='text-sm font-medium text-foreground'>{driver.phone || '—'}</span>
+          <span className='text-sm font-semibold text-foreground'>{driver.phone || '—'}</span>
         </div>
         <div className='flex items-center gap-2'>
           <CreditCard className='w-3.5 h-3.5 text-muted-foreground flex-shrink-0' />
-          <span className='text-xs font-mono font-medium text-muted-foreground tracking-widest'>{driver.license_number || '—'}</span>
+          <span className='text-xs font-mono font-black text-muted-foreground tracking-widest'>{driver.license_number || '—'}</span>
         </div>
       </div>
     </div>

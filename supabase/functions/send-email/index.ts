@@ -1,6 +1,7 @@
 import { serve } from "std/http/server";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "mike.webfree@gmail.com";
 
 serve(async (req) => {
   // CORS
@@ -28,7 +29,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "onboarding@resend.dev", // À changer par ton domaine authentifié
+        from: EMAIL_FROM,
         to: [to],
         subject: subject,
         html: html,

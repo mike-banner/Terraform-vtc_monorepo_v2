@@ -56,18 +56,18 @@ const logoUrl = tenant?.logo_url;
             <div class="flex flex-row items-center md:items-start gap-4 md:gap-6 text-left">
                 <!-- Logo -->
                 {logoUrl ? (
-                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-white rounded-xl p-2 md:p-2.5 items-center justify-center border border-white/10 flex-shrink-0">
+                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-background rounded-[var(--radius)] p-2 md:p-2.5 items-center justify-center border border-border flex-shrink-0">
                         <img src={logoUrl} alt={tenantName} class="w-full h-full object-contain" />
                     </div>
                 ) : (
-                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-primary rounded-xl items-center justify-center text-primary-foreground font-black text-lg md:text-2xl flex-shrink-0">
+                    <div class="flex w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-[var(--radius)] items-center justify-center text-primary font-black text-lg md:text-2xl flex-shrink-0">
                         {tenantName.charAt(0).toUpperCase()}
                     </div>
                 )}
 
                 <div class="flex-1 min-w-0">
                     <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-5">
-                        <h2 class="text-xl md:text-2xl font-black text-foreground uppercase tracking-tighter leading-none truncate">{tenantName}</h2>
+                        <h2 class="text-xl md:text-2xl font-heading font-black text-foreground uppercase tracking-tight leading-none truncate">{tenantName}</h2>
                         <Badge variant="emerald">Compte Vérifié</Badge>
                     </div>
 
@@ -133,15 +133,15 @@ const logoUrl = tenant?.logo_url;
     </div>
 
     <!-- MODAL SUPPRESSION -->
-    <div slot="modals" id="delete-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-300">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm delete-modal-overlay"></div>
-        <div class="relative bg-card border border-red-500/20 max-w-lg w-full rounded-2xl shadow-2xl p-8 transform scale-95 transition-all duration-300">
-            <div class="w-10 h-10 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center text-red-500 mb-5">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div slot="modals" id="delete-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-sm delete-modal-overlay"></div>
+        <div class="relative bg-card border border-red-500/20 max-w-lg w-full rounded-[calc(var(--radius)+8px)] shadow-2xl p-6 md:p-8 transform scale-95 transition-all duration-300">
+            <div class="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center text-red-500 mb-6">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
             </div>
-            <h2 class="text-lg font-black uppercase text-foreground mb-2 tracking-tighter">Confirmation de suppression</h2>
+            <h2 class="text-xl font-heading font-black uppercase text-foreground mb-2 tracking-tight">Confirmation de suppression</h2>
             <p class="text-muted-foreground text-sm font-medium mb-5 leading-relaxed">
                 Suppression définitive du compte :<br/>
                 <strong class="text-red-500 uppercase tracking-tighter block mt-1">{tenantName}</strong>
@@ -156,14 +156,14 @@ const logoUrl = tenant?.logo_url;
                 type="text"
                 id="confirmation-input"
                 placeholder="Écrire la phrase de confirmation"
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground focus:border-red-500/50 focus:outline-none font-bold mb-5 transition-all"
+                class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-foreground focus:border-red-500/50 focus:outline-none focus:ring-1 focus:ring-red-500/50 font-bold mb-6 transition-all"
             />
             <div class="flex flex-col sm:flex-row gap-3">
-                <button id="cancel-delete" class="px-6 py-3 bg-white/5 border border-border rounded-xl font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all text-[10px] order-2 sm:order-1">
+                <button id="cancel-delete" class="px-6 py-3 bg-background hover:bg-muted border border-border rounded-[var(--radius)] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all text-[10px] order-2 sm:order-1">
                     Annuler
                 </button>
                 <button id="confirm-delete-btn" disabled
-                    class="flex-1 px-6 py-3 bg-red-600/20 border border-red-600/20 text-red-600/40 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all disabled:cursor-not-allowed order-1 sm:order-2">
+                    class="flex-1 px-6 py-3 bg-red-600/20 border border-red-600/20 text-red-600/40 rounded-[var(--radius)] font-bold uppercase tracking-widest text-[10px] transition-all disabled:cursor-not-allowed order-1 sm:order-2">
                     Supprimer définitivement
                 </button>
             </div>

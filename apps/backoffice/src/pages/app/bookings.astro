@@ -159,14 +159,14 @@ const getFilterUrl = (params: Record<string, string>) => {
 
             <!-- Row 3: Live search -->
             <div class="relative mb-2">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
                 </svg>
                 <input
                     id="booking-search-input"
                     type="search"
                     placeholder="Rechercher un client, téléphone, réf…"
-                    class="w-full h-10 bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 text-[10px] font-black uppercase tracking-wider text-slate-200 placeholder:text-slate-500 placeholder:normal-case placeholder:tracking-normal placeholder:font-medium focus:outline-none focus:border-primary/50 transition-all"
+                    class="w-full h-10 bg-background border border-border rounded-lg pl-9 pr-3 text-[10px] font-black uppercase tracking-wider text-foreground placeholder:text-muted-foreground placeholder:normal-case placeholder:tracking-normal placeholder:font-medium focus:outline-none focus:border-primary/50 transition-all"
                 />
             </div>
 
@@ -498,10 +498,10 @@ const getFilterUrl = (params: Record<string, string>) => {
     {/* 🎭 MODAL: NOUVELLE COURSE MANUELLE */}
     <div slot="modals" id="new-booking-modal" class="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 transition-all duration-300" style="display: none;">
         <div class="absolute inset-0 bg-black/85 backdrop-blur-sm modal-overlay"></div>
-        <div class="relative max-w-xl w-full rounded-2xl md:rounded-3xl border border-white/8 shadow-2xl bg-[#0A0A0B] overflow-y-auto overflow-x-hidden max-h-[94dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+        <div class="relative max-w-xl w-full rounded-[calc(var(--radius)+8px)] border border-border shadow-2xl bg-card overflow-y-auto overflow-x-hidden max-h-[94dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
 
             <!-- Modal header -->
-            <div class="sticky top-0 z-10 bg-[#0A0A0B] border-b border-white/5 px-5 py-4 sm:px-8 flex items-center justify-between">
+            <div class="sticky top-0 z-10 bg-card border-b border-border px-5 py-4 sm:px-8 flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-black uppercase tracking-wide text-white leading-none">Nouvelle course</h2>
                     <p class="text-[10px] text-slate-500 mt-0.5 font-medium">Saisie manuelle</p>
@@ -526,10 +526,10 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </button>
                             <input type="hidden" name="booking_type" id="booking_type_hidden" value="transfer" />
                             <div id="type-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210]">
-                                <button type="button" data-value="transfer" data-label="Transfert" class="custom-option w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors flex items-center gap-3">
+                                <button type="button" data-value="transfer" data-label="Transfert" class="custom-option w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-foreground hover:bg-muted text-left transition-colors flex items-center gap-3">
                                     <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0"></span>Transfert
                                 </button>
-                                <button type="button" data-value="hourly" data-label="Mise à Disposition" class="custom-option w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors flex items-center gap-3">
+                                <button type="button" data-value="hourly" data-label="Mise à Disposition" class="custom-option w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-foreground hover:bg-muted text-left transition-colors flex items-center gap-3">
                                     <span class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>Mise à Disposition
                                 </button>
                             </div>
@@ -537,7 +537,7 @@ const getFilterUrl = (params: Record<string, string>) => {
 
                         <!-- VÉHICULE -->
                         <div class="relative">
-                            <button type="button" id="vehicle-custom-btn" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-200 hover:bg-white/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                            <button type="button" id="vehicle-custom-btn" class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors font-semibold flex items-center justify-between gap-3 min-h-[48px]">
                                 <span id="vehicle-custom-label" class="truncate">
                                     {activeVehicle ? `${activeVehicle.brand} ${activeVehicle.model} — ${activeVehicle.plate_number}` : 'Sélectionner'}
                                 </span>
@@ -546,10 +546,10 @@ const getFilterUrl = (params: Record<string, string>) => {
                             <input type="hidden" name="vehicle_id" id="vehicle_id_hidden" value={activeVehicle?.id || ""} />
                             <input type="hidden" id="vehicle_category_hidden" value={activeVehicle?.category || ""} />
                             <input type="hidden" name="driver_id" value={driverId || ""} />
-                            <div id="vehicle-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210] max-h-52 overflow-y-auto custom-scrollbar">
+                            <div id="vehicle-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-popover border border-border rounded-[var(--radius)] p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210] max-h-52 overflow-y-auto custom-scrollbar">
                                 {vehicles?.map((v: any) => (
-                                    <button type="button" data-value={v.id} data-category={v.category} data-label={`${v.brand} ${v.model} — ${v.plate_number}`} class="custom-option-vehicle w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">
-                                        {v.brand} {v.model} <span class="text-slate-500">— {v.plate_number}</span>
+                                    <button type="button" data-value={v.id} data-category={v.category} data-label={`${v.brand} ${v.model} — ${v.plate_number}`} class="custom-option-vehicle w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-foreground hover:bg-muted text-left transition-colors">
+                                        {v.brand} {v.model} <span class="text-muted-foreground">— {v.plate_number}</span>
                                     </button>
                                 ))}
                             </div>
@@ -558,19 +558,19 @@ const getFilterUrl = (params: Record<string, string>) => {
 
                     <!-- FORFAIT — transfert uniquement -->
                     <div id="forfait-selector-container" class="relative">
-                        <button type="button" id="forfait-custom-btn" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-200 hover:bg-white/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                        <button type="button" id="forfait-custom-btn" class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors font-semibold flex items-center justify-between gap-3 min-h-[48px]">
                             <span id="forfait-custom-label" class="truncate text-slate-400">Aucun forfait</span>
                             <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                         </button>
                         <input type="hidden" name="fixed_route_id" id="fixed_route_id_hidden" value="" />
-                        <div id="forfait-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210] max-h-52 overflow-y-auto custom-scrollbar">
-                            <button type="button" data-value="" data-label="Aucun forfait" class="custom-option-forfait w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white text-left transition-colors">
+                        <div id="forfait-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-popover border border-border rounded-[var(--radius)] p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210] max-h-52 overflow-y-auto custom-scrollbar">
+                            <button type="button" data-value="" data-label="Aucun forfait" class="custom-option-forfait w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground text-left transition-colors">
                                 Aucun forfait
                             </button>
                             {fixedRoutes?.map((r: any) => (
-                                <button type="button" data-value={r.id} data-label={`${r.pickup_zone?.name} → ${r.dropoff_zone?.name}`} class="custom-option-forfait w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">
+                                <button type="button" data-value={r.id} data-label={`${r.pickup_zone?.name} → ${r.dropoff_zone?.name}`} class="custom-option-forfait w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-foreground hover:bg-muted text-left transition-colors">
                                     {r.pickup_zone?.name} → {r.dropoff_zone?.name}
-                                    <span class="text-slate-500 text-xs ml-1.5">{r.vehicle_category.toUpperCase()}</span>
+                                    <span class="text-muted-foreground text-xs ml-1.5">{r.vehicle_category.toUpperCase()}</span>
                                 </button>
                             ))}
                         </div>
@@ -579,40 +579,26 @@ const getFilterUrl = (params: Record<string, string>) => {
                     <!-- MODE FACTURATION — mise à dispo uniquement -->
                     <div class="hidden" id="mads-mode-container">
                         <div class="relative">
-                            <button type="button" id="mads-mode-btn" class="w-full bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3.5 text-sm text-amber-300 hover:bg-amber-500/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                            <button type="button" id="mads-mode-btn" class="w-full bg-amber-500/5 border border-amber-500/20 rounded-[var(--radius)] px-4 py-3.5 text-sm text-amber-300 hover:bg-amber-500/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
                                 <span id="mads-mode-label" class="truncate">Choisir un mode</span>
                                 <svg class="w-4 h-4 text-amber-600/50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                             </button>
                             <input type="hidden" id="mads_mode_hidden" value="" />
-                            <div id="mads-mode-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210]">
-                                <button type="button" data-value="km" data-label="Au kilomètre" class="custom-option-mads w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">Au kilomètre</button>
-                                <button type="button" data-value="hour" data-label="À l'heure" class="custom-option-mads w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">À l'heure</button>
+                            <div id="mads-mode-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-popover border border-border rounded-[var(--radius)] p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210]">
+                                <button type="button" data-value="km" data-label="Au kilomètre" class="custom-option-mads w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-foreground hover:bg-muted text-left transition-colors">Au kilomètre</button>
+                                <button type="button" data-value="hour" data-label="À l'heure" class="custom-option-mads w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-foreground hover:bg-muted text-left transition-colors">À l'heure</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- SECTION: PASSAGERS & BAGAGES -->
-                <div class="space-y-3">
-                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Capacité</p>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-1.5">
-                            <label class="text-[10px] font-semibold text-slate-500">Passagers (max 8)</label>
-                            <input type="number" name="passenger_count" value="1" min="1" max="8" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black focus:outline-none focus:ring-2 focus:ring-primary transition-all font-bold" />
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-[10px] font-semibold text-slate-500">Bagages</label>
-                            <input type="number" name="luggage_count" value="0" min="0" max="12" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black focus:outline-none focus:ring-2 focus:ring-primary transition-all font-bold" />
-                        </div>
-                    </div>
-                </div>
 
                 <!-- SECTION: CLIENT -->
                 <div class="space-y-3">
                     <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Client</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input type="text" name="client_name" placeholder="Nom complet" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all font-medium" />
-                        <input type="email" name="client_email" placeholder="Email" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all font-medium" />
+                        <input type="text" name="client_name" placeholder="Nom complet" required class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium" />
+                        <input type="email" name="client_email" placeholder="Email" required class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium" />
                     </div>
                 </div>
 
@@ -620,10 +606,10 @@ const getFilterUrl = (params: Record<string, string>) => {
                 <div class="space-y-3">
                     <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Itinéraire</p>
                     <div class="space-y-3">
-                        <input type="text" name="pickup" placeholder="Adresse de départ" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all font-medium" />
-                        <input id="dropoff-input" type="text" name="dropoff" placeholder="Adresse d'arrivée" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all font-medium" />
+                        <input type="text" name="pickup" placeholder="Adresse de départ" required class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium" />
+                        <input id="dropoff-input" type="text" name="dropoff" placeholder="Adresse d'arrivée" required class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium" />
                         <div class="relative">
-                            <input type="datetime-local" name="pickup_time" required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pr-11 text-sm text-black focus:outline-none focus:ring-2 focus:ring-primary transition-all font-medium" />
+                            <input type="datetime-local" name="pickup_time" required class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 pr-11 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium" style="color-scheme: dark;" />
                             <div class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -631,14 +617,30 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </div>
                         </div>
 
-                        <!-- KM / HEURES — visibles seulement pour mise à dispo après sélection du mode -->
-                        <div id="distance-km-container" class="hidden items-center gap-3 bg-white/[0.02] border border-white/8 rounded-xl px-4 py-3">
-                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest whitespace-nowrap flex-shrink-0">Distance (km)</label>
-                            <input type="number" id="distance_km" name="distance_km" value="" min="0" step="0.1" placeholder="0.0" class="flex-1 min-w-0 bg-transparent text-sm text-white focus:outline-none font-bold tabular-nums placeholder:text-slate-600" />
+                        <!-- PASSAGERS & BAGAGES -->
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div class="relative">
+                                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                </div>
+                                <input type="number" name="passenger_count" value="1" min="1" max="8" class="w-full bg-background border border-border rounded-[var(--radius)] py-3 pl-10 pr-4 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium tabular-nums" />
+                            </div>
+                            <div class="relative">
+                                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                </div>
+                                <input type="number" name="luggage_count" value="0" min="0" max="12" class="w-full bg-background border border-border rounded-[var(--radius)] py-3 pl-10 pr-4 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium tabular-nums" />
+                            </div>
                         </div>
-                        <div id="duration-hours-container" class="hidden items-center gap-3 bg-white/[0.02] border border-white/8 rounded-xl px-4 py-3">
-                            <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest whitespace-nowrap flex-shrink-0">Durée (heures)</label>
-                            <input type="number" id="duration_hours" name="duration_hours" value="1" min="1" max="24" class="flex-1 min-w-0 bg-transparent text-sm text-white focus:outline-none font-bold tabular-nums" />
+
+                        <!-- KM / HEURES — visibles seulement pour mise à dispo après sélection du mode -->
+                        <div id="distance-km-container" class="hidden items-center gap-3 bg-background border border-border rounded-[var(--radius)] px-4 py-3 focus-within:border-primary/50 transition-colors">
+                            <label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest whitespace-nowrap flex-shrink-0">Distance (km)</label>
+                            <input type="number" id="distance_km" name="distance_km" value="" min="0" step="0.1" placeholder="0.0" class="flex-1 min-w-0 bg-transparent text-sm text-foreground focus:outline-none font-medium tabular-nums placeholder:text-muted-foreground text-right" />
+                        </div>
+                        <div id="duration-hours-container" class="hidden items-center gap-3 bg-background border border-border rounded-[var(--radius)] px-4 py-3 focus-within:border-primary/50 transition-colors">
+                            <label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest whitespace-nowrap flex-shrink-0">Durée (heures)</label>
+                            <input type="number" id="duration_hours" name="duration_hours" value="1" min="1" max="24" class="flex-1 min-w-0 bg-transparent text-sm text-foreground focus:outline-none font-medium tabular-nums text-right" />
                         </div>
                     </div>
                 </div>
@@ -648,25 +650,25 @@ const getFilterUrl = (params: Record<string, string>) => {
                     <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Facturation</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="relative">
-                            <input type="number" name="manual_total" step="0.01" placeholder="Montant" required class="w-full bg-white border border-emerald-500/30 rounded-xl px-4 py-3 pr-8 text-xl text-emerald-600 font-black tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all" />
+                            <input type="number" name="manual_total" step="0.01" placeholder="Montant" required class="w-full bg-primary/5 border border-primary/20 rounded-[var(--radius)] px-4 py-3 pr-8 text-xl text-primary font-black tabular-nums focus:outline-none focus:border-primary transition-colors" />
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500/40 font-black text-lg">€</span>
                         </div>
                         <div class="relative">
-                            <button type="button" id="payment-custom-btn" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-slate-200 hover:bg-white/10 transition-all font-semibold flex items-center justify-between gap-3 min-h-[48px]">
+                            <button type="button" id="payment-custom-btn" class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors font-semibold flex items-center justify-between gap-3 min-h-[48px]">
                                 <span id="payment-custom-label" class="truncate">Espèces</span>
                                 <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                             </button>
                             <input type="hidden" name="payment_mode" id="payment_mode_hidden" value="cash" />
-                            <div id="payment-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-[#0d0d0e] border border-white/10 rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210]">
-                                <button type="button" data-value="cash" data-label="Espèces" class="custom-option-payment w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">Espèces</button>
-                                <button type="button" data-value="card" data-label="Lien Stripe" class="custom-option-payment w-full px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors">Lien Stripe</button>
+                            <div id="payment-custom-menu" class="absolute top-full left-0 right-0 mt-1.5 bg-popover border border-border rounded-[var(--radius)] p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none transition-all z-[210]">
+                                <button type="button" data-value="cash" data-label="Espèces" class="custom-option-payment w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-foreground hover:bg-muted text-left transition-colors">Espèces</button>
+                                <button type="button" data-value="card" data-label="Lien Stripe" class="custom-option-payment w-full px-4 py-2.5 rounded-[calc(var(--radius)-2px)] text-sm font-medium text-foreground hover:bg-muted text-left transition-colors">Lien Stripe</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="pt-2 pb-2">
-                    <Button type="submit" variant="emerald" class="w-full shadow-2xl shadow-emerald-500/20">
+                <div class="sticky bottom-0 z-20 bg-card border-t border-border px-5 py-4 sm:px-8 mt-6 -mx-5 sm:-mx-8 -mb-6">
+                    <Button type="submit" variant="emerald" class="w-full shadow-lg shadow-emerald-500/20">
                         Confirmer la réservation
                     </Button>
                 </div>
@@ -676,9 +678,9 @@ const getFilterUrl = (params: Record<string, string>) => {
 
     <!-- 🎭 MODAL: ÉDITION COURSE (pré-mission) -->
     <div slot="modals" id="edit-booking-modal" style="display: none;" class="fixed inset-0 z-[300] flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
-        <div class="absolute inset-0 bg-black/90 backdrop-blur-md edit-modal-overlay"></div>
-        <div id="edit-modal-inner" class="relative max-w-lg w-full rounded-2xl md:rounded-3xl border border-white/8 shadow-2xl bg-[#0A0A0B] overflow-y-auto max-h-[90dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
-            <div class="sticky top-0 z-10 bg-[#0A0A0B] border-b border-white/5 px-5 py-4 flex items-center justify-between">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-sm edit-modal-overlay"></div>
+        <div id="edit-modal-inner" class="relative max-w-lg w-full rounded-[calc(var(--radius)+8px)] border border-border shadow-2xl bg-card overflow-y-auto max-h-[90dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+            <div class="sticky top-0 z-10 bg-card border-b border-border px-5 py-4 flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-black uppercase tracking-wide text-white leading-none">Modifier la course</h2>
                     <p class="text-[10px] text-slate-500 mt-0.5 font-medium">Le tarif est recalculé automatiquement</p>
@@ -744,11 +746,11 @@ const getFilterUrl = (params: Record<string, string>) => {
 
     <!-- 🎭 MODAL: DÉTAILS MISSION ELITE -->
     <div slot="modals" id="detail-booking-modal" data-driver-id={driverId} class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-500" style="display: none;">
-        <div class="absolute inset-0 bg-black/90 backdrop-blur-md modal-overlay"></div>
-        <div class="relative glass max-w-2xl w-full max-h-[90vh] rounded-[3rem] border border-white/10 shadow-[0_0_100px_rgba(79,70,229,0.1)] overflow-y-auto overflow-x-hidden custom-scrollbar transform scale-95 transition-all duration-500 bg-[#0A0A0B]" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
-            <div class="p-8 sm:p-12">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-sm modal-overlay"></div>
+        <div class="relative bg-card max-w-2xl w-full max-h-[90vh] rounded-[calc(var(--radius)+8px)] border border-border shadow-2xl overflow-y-auto overflow-x-hidden custom-scrollbar transform scale-95 transition-all duration-500" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+            <div class="p-6 sm:p-8">
                 <!-- Header Modal -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-10 border-b border-white/5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-10 border-b border-border">
                     <div class="flex items-center gap-5">
                         <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/40 transform -rotate-3">
                             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -803,31 +805,31 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </a>
                         </div>
 
-                        <div class="glass p-8 rounded-[2.5rem] border border-white/5 bg-primary/[0.03] flex flex-col items-center justify-center text-center">
+                        <div class="bg-muted/10 p-6 sm:p-8 rounded-[calc(var(--radius)+8px)] border border-border flex flex-col items-center justify-center text-center">
                             <p class="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2">Heure du RDV</p>
-                            <h4 id="modal-time" class="text-5xl font-black text-white tracking-tighter leading-none mb-2 tabular-nums">---</h4>
-                            <p id="modal-date" class="text-[10px] font-black uppercase text-slate-500 tracking-widest underline decoration-primary/30 underline-offset-4">---</p>
+                            <h4 id="modal-time" class="text-3xl font-heading font-black text-foreground tracking-tighter leading-none mb-2 tabular-nums">---</h4>
+                            <p id="modal-date" class="text-[10px] font-black uppercase text-muted-foreground tracking-widest underline decoration-primary/30 underline-offset-4">---</p>
                         </div>
                     </div>
 
                     <!-- CARACTÉRISTIQUES -->
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="glass p-5 rounded-[2rem] border border-white/5 flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary">
+                        <div class="bg-muted/10 p-5 rounded-[var(--radius)] border border-border flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary">
                                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                             </div>
                             <div>
-                                <p class="text-[10px] font-black uppercase text-slate-500 mb-0.5">Passagers</p>
-                                <span id="modal-passengers" class="text-lg font-black text-white">---</span>
+                                <p class="text-[10px] font-black uppercase text-muted-foreground mb-0.5">Passagers</p>
+                                <span id="modal-passengers" class="text-lg font-black text-foreground">---</span>
                             </div>
                         </div>
-                        <div class="glass p-5 rounded-[2rem] border border-white/5 flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary">
+                        <div class="bg-muted/10 p-5 rounded-[var(--radius)] border border-border flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary">
                                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                             </div>
                             <div>
-                                <p class="text-[10px] font-black uppercase text-slate-500 mb-0.5">Valises</p>
-                                <span id="modal-luggage" class="text-lg font-black text-white">---</span>
+                                <p class="text-[10px] font-black uppercase text-muted-foreground mb-0.5">Valises</p>
+                                <span id="modal-luggage" class="text-lg font-black text-foreground">---</span>
                             </div>
                         </div>
                     </div>
@@ -836,27 +838,27 @@ const getFilterUrl = (params: Record<string, string>) => {
                     <div id="mission-cockpit-root"></div>
 
                     <!-- NOTES -->
-                    <div class="glass p-6 rounded-[2rem] border border-white/5">
-                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Instructions Chauffeur</p>
-                        <p id="modal-notes" class="text-xs text-slate-500 font-medium leading-relaxed">---</p>
+                    <div class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
+                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Notes / Instructions</p>
+                        <p id="modal-notes" class="text-xs text-foreground font-medium leading-relaxed">---</p>
                     </div>
 
                     <!-- AVIS & QR CODE -->
-                    <div id="modal-rating-section" class="glass p-6 rounded-[2rem] border border-white/5 hidden">
+                    <div id="modal-rating-section" class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border hidden">
                         <!-- Cas 1: avis existant -->
                         <div id="modal-rating-display" class="hidden">
-                            <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-3">Avis Passager</p>
+                            <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Avis Passager</p>
                             <div id="modal-rating-stars" class="flex gap-1.5 mb-3"></div>
-                            <p id="modal-rating-comment" class="text-xs text-slate-400 font-medium leading-relaxed"></p>
+                            <p id="modal-rating-comment" class="text-xs text-foreground font-medium leading-relaxed"></p>
                         </div>
                         <!-- Cas 2: pas encore noté -->
                         <div id="modal-qr-section" class="hidden">
-                            <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-3">Recueillir l'Avis Passager</p>
+                            <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Recueillir l'Avis Passager</p>
                             <div class="flex flex-col sm:flex-row items-center gap-6">
                                 <canvas id="modal-qr-canvas" class="w-28 h-28 rounded-2xl bg-white p-1.5 flex-shrink-0"></canvas>
                                 <div class="text-center sm:text-left">
-                                    <p class="text-xs font-bold text-slate-300">Faites scanner ce QR code au passager</p>
-                                    <p class="text-[10px] text-slate-600 mt-1">Généré localement — aucune donnée envoyée à des tiers</p>
+                                    <p class="text-xs font-bold text-foreground">Faites scanner ce QR code au passager</p>
+                                    <p class="text-[10px] text-muted-foreground mt-1">Généré localement — aucune donnée envoyée à des tiers</p>
                                 </div>
                             </div>
                         </div>
@@ -875,13 +877,16 @@ const getFilterUrl = (params: Record<string, string>) => {
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-3 mt-4">
-                            <button id="modal-accept-btn" class="hidden flex-1 py-5 bg-white text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl active:scale-95 disabled:opacity-50">
-                                Prendre la main sur la course
+                            <button id="modal-invoice-btn" class="hidden flex-1 py-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50">
+                                Facture PDF
                             </button>
-                            <button id="modal-edit-btn" class="hidden flex-1 py-5 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/10 active:scale-95">
+                            <button id="modal-accept-btn" class="hidden flex-1 py-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50">
+                                Prendre la main
+                            </button>
+                            <button id="modal-edit-btn" class="hidden flex-1 py-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95">
                                 Modifier
                             </button>
-                            <button class="close-detail-modal flex-1 py-5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/5 active:scale-95">
+                            <button class="close-detail-modal flex-1 py-4 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95">
                                 Fermer
                             </button>
                         </div>

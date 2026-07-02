@@ -23,10 +23,16 @@ function decodeJwtPayload(accessToken: string): Record<string, any> | null {
 export const onRequest = defineMiddleware(async ({ cookies, request, redirect, locals }, next) => {
   const url = new URL(request.url);
   const path = url.pathname;
+  
+  console.log("---- MIDDLEWARE HIT:", path);
+  console.log("COOKIE HEADER:", request.headers.get('Cookie'));
 
   // options par défaut appliquées par setAll — capturées pour pouvoir les répliquer
   // à l'identique lors du re-set explicite du cookie (seul maxAge doit changer).
-  let defaultCookieOptions: Record<string, any> = {};
+  // path: '/' fixé dès le départ : si setAll ne tourne pas dans cette requête (token pas
+  // près d'expirer), un re-set sans path explicite créait un second cookie sur un path
+  // différent du path='/' posé au login — collision de cookies homonymes détectée en prod.
+  let defaultCookieOptions: Record<string, any> = { path: '/' };
 
   // Initialisation Supabase (SSR)
   const supabase = createServerClient(
@@ -41,8 +47,13 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
           })),
         setAll: (cookiesToSet: any[]) =>
           cookiesToSet.forEach(({ name, value, options }) => {
-            defaultCookieOptions = options as any;
-            cookies.set(name, value, options as any);
+            const safeOptions = { ...options };
+            // En local (http), forcer secure à false pour éviter que le navigateur rejette le cookie
+            if (url.protocol === 'http:') {
+              safeOptions.secure = false;
+            }
+            defaultCookieOptions = safeOptions as any;
+            cookies.set(name, value, safeOptions as any);
           }),
       },
     },
@@ -51,7 +62,10 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   locals.supabase = supabase;
   const {
     data: { user },
+    error: authError
   } = await supabase.auth.getUser();
+
+  console.log("USER FETCHED:", !!user, "ERROR:", authError?.message);
 
   // Mapping des types de routes
   const isLoginPage = path === '/login';
@@ -67,6 +81,7 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   // 1. CAS : Utilisateur NON connecté
   if (!user) {
     if (isSaaSRoute && !isAuthPage) {
+      console.log("REDIRECTING TO /login because !user && isSaaSRoute && !isAuthPage");
       return redirect('/login');
     }
     return next();

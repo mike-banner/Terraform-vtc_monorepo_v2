@@ -65,16 +65,16 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
 
                     <div class="flex-1 min-w-0">
                         <p class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Nom de l'entreprise</p>
-                        <p class="text-xl font-black tracking-tight text-foreground mb-3">{tenantName}</p>
+                        <p class="text-2xl font-heading font-black tracking-tight text-foreground mb-3">{tenantName}</p>
                         <div class="flex flex-wrap gap-2">
-                            <label class="cursor-pointer px-4 py-2.5 bg-white/5 border border-white/10 text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all active:scale-95 inline-flex items-center gap-2">
-                                <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <label class="cursor-pointer px-5 py-2.5 bg-background border border-border text-foreground text-[10px] font-bold uppercase tracking-widest rounded-[var(--radius)] hover:bg-muted transition-all active:scale-95 inline-flex items-center gap-2">
+                                <svg class="w-3.5 h-3.5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                 </svg>
                                 Changer le logo
-                                <input type="file" id="logo-input" class="hidden" accept="image/*" />
+                                <input type="file" id="logo-input" class="hidden" accept="image/png, image/svg+xml" />
                             </label>
-                            <button id="save-logo-btn" class="hidden px-4 py-2.5 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button id="save-logo-btn" class="hidden px-5 py-2.5 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-[var(--radius)] hover:bg-primary/90 transition-all shadow-sm shadow-primary/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                                 Enregistrer
                             </button>
                         </div>
@@ -93,7 +93,7 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-foreground font-black text-sm">Grille Tarifaire</p>
+                        <p class="text-foreground font-heading font-black text-lg">Grille Tarifaire</p>
                         <p class="text-muted-foreground text-xs mt-0.5 leading-relaxed">Prix de prise en charge, au km et minimum.</p>
                     </div>
                     <svg class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +107,7 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-foreground font-black text-sm">Gestion des Véhicules</p>
+                        <p class="text-foreground font-heading font-black text-lg">Gestion des Véhicules</p>
                         <p class="text-muted-foreground text-xs mt-0.5 leading-relaxed">Véhicules de l'entreprise et véhicule actif.</p>
                     </div>
                     <svg class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,8 +119,8 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
             <!-- 4. FISCALITÉ -->
             <Card rounded="xl" padding="md">
                 <div class="flex items-center gap-3 mb-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                    <h3 class="text-base font-black uppercase tracking-tight text-foreground">Fiscalité</h3>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                    <h3 class="text-2xl font-heading font-black tracking-tight text-foreground">Fiscalité</h3>
                 </div>
                 <p class="text-muted-foreground text-xs mb-7 leading-relaxed pl-5">Le taux TVA est calculé automatiquement selon votre forme juridique. Les prix de votre grille tarifaire sont traités comme TTC.</p>
 
@@ -131,7 +131,7 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
                         <div class="relative group">
                             <select
                                 id="legal-form-select"
-                                class="w-full bg-white/5 border border-white/10 rounded-2xl pl-4 pr-10 py-3 text-foreground focus:outline-none focus:border-primary/40 font-bold text-sm appearance-none cursor-pointer"
+                                class="w-full bg-background border border-border rounded-[var(--radius)] pl-4 pr-10 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-bold text-sm appearance-none cursor-pointer"
                             >
                                 {[
                                     { value: "auto_entrepreneur", label: "Auto-entrepreneur" },
@@ -178,13 +178,13 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
                         id="vat-number-input"
                         placeholder="FR00 000 000 000"
                         value={tenant?.vat_number ?? ""}
-                        class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/40 font-bold text-sm font-mono mb-5"
+                        class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-bold text-sm font-mono mb-5"
                     />
                 </div>
 
                 <button
                     id="save-vat-btn"
-                    class="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95"
+                    class="px-5 py-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-[var(--radius)] transition-all shadow-sm shadow-primary/20 active:scale-95"
                 >
                     Enregistrer
                 </button>

@@ -36,29 +36,30 @@ if (error) {
 ---
 
 <AppLayout title="Gestion Pricing">
-    <div class="flex flex-col px-6 py-10 md:px-12 md:py-16">
+    <div class="flex flex-col px-4 py-8 sm:px-8 sm:py-12 max-w-7xl mx-auto w-full">
         <!-- BACK LINK -->
-        <a href="/app/settings" class="inline-flex items-center gap-2 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors mb-8 flex-shrink-0">
+        <a href="/app/settings" class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase tracking-widest transition-colors mb-8 flex-shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
             Retour aux réglages
         </a>
+        
         <!-- HEADER -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 flex-shrink-0">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 flex-shrink-0">
             <div>
                 <Badge variant="primary">Configuration Financière</Badge>
-                <p class="text-slate-500 mt-2 font-medium">Gérez vos forfaits et vos tarifs au kilomètre.</p>
+                <p class="text-muted-foreground mt-2 font-medium text-sm sm:text-base">Gérez vos forfaits et vos grilles tarifaires.</p>
             </div>
 
             <div class="flex flex-wrap items-center gap-4">
                 <!-- TABS -->
-                <div class="flex bg-white/5 p-1 rounded-xl md:rounded-2xl border border-white/5">
-                   <button id="tab-standard" class="px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl text-[10px] md:text-[10px] font-black uppercase tracking-widest transition-all bg-primary text-primary-foreground shadow-lg shadow-primary/20">Standard</button>
-                   <button id="tab-transfer" class="px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl text-[10px] md:text-[10px] font-black uppercase tracking-widest transition-all text-slate-500 hover:text-white">Transferts</button>
+                <div class="flex bg-card p-1 rounded-[calc(var(--radius)+4px)] border border-border shadow-sm">
+                   <button id="tab-standard" class="px-5 py-2.5 rounded-[var(--radius)] text-[10px] font-bold uppercase tracking-widest transition-all bg-primary text-primary-foreground shadow-sm shadow-primary/20">Standard</button>
+                   <button id="tab-transfer" class="px-5 py-2.5 rounded-[var(--radius)] text-[10px] font-bold uppercase tracking-widest transition-all text-muted-foreground hover:text-foreground hover:bg-card/50">Transferts</button>
                 </div>
 
-                <!-- HEADER ACTIONS (TABS ONLY NOW) -->
+                <!-- HEADER ACTIONS -->
                 <div id="actions-transfer" class="hidden"></div>
             </div>
         </div>
@@ -68,56 +69,52 @@ if (error) {
 
             <!-- SECTION 1: STANDARD PRICING -->
             <div id="section-standard" class="space-y-8 animate-in fade-in duration-500">
-                <div class="flex items-center justify-between gap-4">
-                    <h3 class="text-lg md:text-xl font-black uppercase tracking-tighter text-white leading-none">Grille KM / MIN</h3>
-                    <Button id="add-rule-btn">
+                <div class="flex items-center justify-between gap-4 border-b border-border pb-4">
+                    <h3 class="text-xl sm:text-2xl font-heading font-bold text-foreground">Tarification Standard</h3>
+                    <Button id="add-rule-btn" variant="white" class="h-9 px-4 text-[10px]">
                         + Ajouter
                     </Button>
                 </div>
 
-                <div class="space-y-4">
+                <div class="grid grid-cols-1 gap-4">
                     {rules?.length
                         ? rules.map((r) => (
-                            <Card padding="sm" rounded="xl" hover={true} class="group">
-                                <div class="flex items-center justify-between mb-6">
+                            <div class="bg-card/50 border border-border rounded-[var(--radius)] p-5 transition-all hover:border-primary/50 hover:shadow-md group">
+                                <div class="flex items-center justify-between mb-5">
                                     <div class="flex items-center gap-3">
-                                        <div class={`w-2 h-2 rounded-full ${r.active ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-700'}`}></div>
-                                        <span class="font-black text-white uppercase tracking-tighter text-base md:text-xl">{r.service_category}</span>
+                                        <div class={`w-2.5 h-2.5 rounded-full ${r.active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-muted-foreground'}`}></div>
+                                        <span class="font-heading font-black text-foreground uppercase tracking-wide text-lg sm:text-xl">{r.service_category}</span>
                                     </div>
-                                    <Button
-                                        variant="outline"
-                                        class="edit-rule-btn px-4 py-2"
+                                    <button
+                                        class="edit-rule-btn text-xs font-semibold text-primary hover:text-primary/80 transition-colors px-3 py-1.5 rounded-md hover:bg-primary/10"
                                         data-rule={JSON.stringify(r)}
                                     >
                                         Modifier
-                                    </Button>
+                                    </button>
                                 </div>
 
-                                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 border-t border-white/5">
-                                    <div class="flex items-center gap-1.5">
-                                        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Base</p>
-                                        <p class="text-xs md:text-lg font-black text-white tabular-nums leading-none">{r.base_price?.toFixed(2)}€</p>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-border/50">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Base de départ</span>
+                                        <span class="text-base sm:text-lg font-bold text-foreground tabular-nums">{r.base_price?.toFixed(2)}€</span>
                                     </div>
-                                    <span class="w-1 h-1 rounded-full bg-white/10 hidden sm:block"></span>
-                                    <div class="flex items-center gap-1.5">
-                                        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">KM</p>
-                                        <p class="text-xs md:text-lg font-black text-primary tabular-nums leading-none">{r.price_per_km?.toFixed(2)}€</p>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Prix au Km</span>
+                                        <span class="text-base sm:text-lg font-bold text-foreground tabular-nums">{r.price_per_km?.toFixed(2)}€</span>
                                     </div>
-                                    <span class="w-1 h-1 rounded-full bg-white/10 hidden sm:block"></span>
-                                    <div class="flex items-center gap-1.5">
-                                        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">HR</p>
-                                        <p class="text-xs md:text-lg font-black text-amber-400 tabular-nums leading-none">{r.price_per_hour?.toFixed(2)}€</p>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Taux Horaire</span>
+                                        <span class="text-base sm:text-lg font-bold text-foreground tabular-nums">{r.price_per_hour?.toFixed(2)}€</span>
                                     </div>
-                                    <span class="w-1 h-1 rounded-full bg-white/10 hidden sm:block"></span>
-                                    <div class="flex items-center gap-1.5">
-                                        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Seuil</p>
-                                        <p class="text-xs md:text-lg font-black text-slate-400 tabular-nums leading-none">{r.minimum_fare?.toFixed(2)}€</p>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Course Minimum</span>
+                                        <span class="text-base sm:text-lg font-bold text-foreground tabular-nums">{r.minimum_fare?.toFixed(2)}€</span>
                                     </div>
                                 </div>
-                            </Card>
+                            </div>
                         ))
                         : (
-                        <div class="glass p-10 rounded-[2rem] border border-white/5 text-center text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                        <div class="bg-card/30 p-10 rounded-[var(--radius)] border border-border text-center text-muted-foreground text-xs font-bold uppercase tracking-widest">
                             Aucun tarif configuré
                         </div>
                         )}
@@ -126,13 +123,13 @@ if (error) {
 
             <!-- SECTION 2: TRANSFERS -->
             <div id="section-transfer" class="hidden space-y-8 animate-in fade-in duration-500">
-                <div class="flex items-center justify-between gap-4">
-                    <h3 class="text-lg md:text-xl font-black uppercase tracking-tighter text-white leading-none">Forfaits</h3>
+                <div class="flex items-center justify-between gap-4 border-b border-border pb-4">
+                    <h3 class="text-xl sm:text-2xl font-heading font-bold text-foreground">Forfaits & Transferts</h3>
                     <div class="flex gap-2">
-                        <Button id="btn-new-transfer-content">
+                        <Button id="btn-new-transfer-content" variant="white" class="h-9 px-4 text-[10px]">
                             + Nouveau
                         </Button>
-                        <Button id="btn-manage-zones">
+                        <Button id="btn-manage-zones" variant="outline" class="h-9 px-4 text-[10px]">
                             Zones
                         </Button>
                     </div>
@@ -143,108 +140,107 @@ if (error) {
     </div>
 
     <!-- MODAL EDIT/ADD -->
-    <div id="pricing-modal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6 pb-16 sm:pb-0 opacity-0 pointer-events-none transition-all duration-300">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm modal-overlay"></div>
-        <div class="relative glass w-full sm:max-w-lg rounded-t-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300 flex flex-col max-h-[76dvh] sm:max-h-[90vh] overflow-hidden">
+    <div id="pricing-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-sm modal-overlay"></div>
+        <div class="relative bg-card w-full max-w-lg rounded-[calc(var(--radius)+8px)] border border-border shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh] overflow-hidden modal-content">
 
-            <!-- HEADER (fixe) -->
-            <div class="flex-shrink-0 flex items-center justify-between gap-4 px-6 pt-6 pb-5 border-b border-white/5">
+            <!-- HEADER -->
+            <div class="flex-shrink-0 flex items-center justify-between gap-4 px-6 py-5 border-b border-border bg-card/50">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 flex-shrink-0">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <div>
-                        <h2 id="modal-title" class="text-lg font-black uppercase text-white tracking-tighter leading-none">Édition Tarif</h2>
-                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Grille financière du service</p>
+                        <h2 id="modal-title" class="text-lg font-heading font-black uppercase text-foreground tracking-tight leading-none">Édition Tarif</h2>
+                        <p class="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-1">Grille financière du service</p>
                     </div>
                 </div>
-                <button type="button" class="close-modal w-8 h-8 flex items-center justify-center rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-all flex-shrink-0">
+                <button type="button" class="close-modal w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            <!-- FORM : englobe body scrollable + footer pour que le submit fonctionne -->
+            <!-- FORM -->
             <form id="pricing-form" class="flex flex-col flex-1 min-h-0" data-tenant-id={profile?.tenant_id}>
                 <input type="hidden" name="rule_id" id="rule-id">
 
-                <!-- SCROLLABLE BODY -->
-                <div class="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-6 py-6 space-y-6">
-
+                <!-- BODY -->
+                <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
                     <!-- Identité -->
-                    <div class="space-y-3">
-                        <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-600">Identité</p>
-                        <div class="flex items-center gap-4">
-                            <div class="flex-1">
-                                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2 block">Nom du service</label>
-                                <input type="text" name="service_category" id="service-category" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold text-sm" placeholder="Ex: BUSINESS">
+                    <div class="space-y-4">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-primary border-b border-border pb-2">1. Identité du Service</p>
+                        <div class="flex gap-4 items-end">
+                            <div class="flex-1 space-y-1.5">
+                                <label class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">Nom du service</label>
+                                <input type="text" name="service_category" id="service-category" class="w-full bg-background border border-border rounded-[var(--radius)] px-4 py-2.5 text-foreground font-semibold text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="Ex: BUSINESS">
                             </div>
-                            <div class="flex-shrink-0 pt-6">
+                            <div class="flex-shrink-0 pb-1">
                                 <label class="relative inline-flex items-center cursor-pointer gap-2">
                                     <input type="checkbox" name="active" id="is-active" class="sr-only peer">
-                                    <div class="w-10 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 peer-checked:text-white transition-colors whitespace-nowrap">Actif</span>
+                                    <div class="w-10 h-5 bg-muted rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                    <span class="text-xs font-semibold text-muted-foreground peer-checked:text-foreground transition-colors">Actif</span>
                                 </label>
                             </div>
                         </div>
                     </div>
 
                     <div class="space-y-4 pt-2">
-                        <!-- Section: Trajet A-B -->
-                        <div class="space-y-4 p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/5">
-                            <div class="flex items-center gap-3 border-b border-white/5 pb-3">
-                                <div class="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
+                        <!-- Trajet Classique -->
+                        <div class="space-y-4 p-5 rounded-[var(--radius)] bg-muted/30 border border-border">
+                            <div class="flex items-center gap-3 border-b border-border pb-3">
+                                <div class="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-white">Trajet Classique</p>
-                                    <p class="text-[10px] text-slate-500 font-bold mt-0.5">Point A vers Point B</p>
+                                    <p class="text-[11px] font-bold uppercase tracking-wider text-foreground">Trajet Classique</p>
+                                    <p class="text-[10px] text-muted-foreground font-medium mt-0.5">Tarification de Point A à Point B</p>
                                 </div>
                             </div>
                             
                             <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Base de départ (€)</label>
-                                    <input type="number" step="0.01" min="0" name="base_price" id="base-price" class="w-full bg-black/20 focus:bg-white/5 border border-white/10 focus:border-primary rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0 transition-all" placeholder="0.00">
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Base de départ (€)</label>
+                                    <input type="number" step="0.01" min="0" name="base_price" id="base-price" class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground font-semibold tabular-nums text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="0.00">
                                 </div>
-                                <div>
-                                    <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Prix / km (€)</label>
-                                    <input type="number" step="0.01" min="0" name="price_per_km" id="price-per-km" class="w-full bg-black/20 focus:bg-white/5 border border-white/10 focus:border-primary rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0 transition-all" placeholder="0.00">
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Prix / km (€)</label>
+                                    <input type="number" step="0.01" min="0" name="price_per_km" id="price-per-km" class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground font-semibold tabular-nums text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="0.00">
                                 </div>
-                                <div class="col-span-2">
-                                    <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Course Minimum (€)</label>
-                                    <input type="number" step="0.01" min="0" name="minimum_fare" id="minimum-fare" class="w-full bg-black/20 focus:bg-white/5 border border-white/10 focus:border-primary rounded-xl px-4 py-3 text-white font-bold tabular-nums text-sm transition-all" placeholder="0.00">
+                                <div class="col-span-2 space-y-1.5">
+                                    <label class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Course Minimum (€)</label>
+                                    <input type="number" step="0.01" min="0" name="minimum_fare" id="minimum-fare" class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground font-semibold tabular-nums text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="0.00">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Section: Mise à disposition -->
-                        <div class="space-y-4 p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/5">
-                            <div class="flex items-center gap-3 border-b border-white/5 pb-3">
-                                <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                        <!-- Mise à disposition -->
+                        <div class="space-y-4 p-5 rounded-[var(--radius)] bg-muted/30 border border-border">
+                            <div class="flex items-center gap-3 border-b border-border pb-3">
+                                <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-white">Mise à disposition</p>
-                                    <p class="text-[10px] text-slate-500 font-bold mt-0.5">Location à l'heure</p>
+                                    <p class="text-[11px] font-bold uppercase tracking-wider text-foreground">Mise à disposition</p>
+                                    <p class="text-[10px] text-muted-foreground font-medium mt-0.5">Location à l'heure</p>
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2 block">Taux horaire (€)</label>
-                                <input type="number" step="0.01" min="0" name="price_per_hour" id="price-per-hour" class="w-full bg-black/20 focus:bg-white/5 border border-white/10 focus:border-amber-500 rounded-xl px-3 py-3 text-white font-bold tabular-nums text-sm min-w-0 transition-all" placeholder="0.00">
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Taux horaire (€)</label>
+                                <input type="number" step="0.01" min="0" name="price_per_hour" id="price-per-hour" class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground font-semibold tabular-nums text-sm focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-all" placeholder="0.00">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- FOOTER (fixe) — dans la form pour que type="submit" fonctionne -->
-                <div class="flex-shrink-0 flex flex-row gap-3 px-6 py-5 border-t border-white/5">
-                    <button type="button" class="close-modal px-5 py-4 glass border border-white/10 rounded-xl font-black uppercase tracking-widest text-[10px] text-slate-500 hover:text-white transition-all">
+                <!-- FOOTER -->
+                <div class="flex-shrink-0 flex gap-3 px-6 py-4 border-t border-border bg-card/50">
+                    <button type="button" class="close-modal w-1/3 py-2.5 bg-muted text-muted-foreground rounded-[var(--radius)] font-bold text-xs uppercase tracking-wider hover:bg-muted/80 transition-colors">
                         Annuler
                     </button>
-                    <button type="submit" id="save-rule-btn" class="flex-1 px-5 py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-primary/30 active:scale-95">
+                    <button type="submit" id="save-rule-btn" class="w-2/3 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[var(--radius)] font-bold text-xs uppercase tracking-wider transition-all shadow-sm shadow-primary/20">
                         Sauvegarder
                     </button>
                 </div>
@@ -254,27 +250,12 @@ if (error) {
 </AppLayout>
 
 <style is:global>
-    .glass {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-    }
     #pricing-modal.is-active {
         opacity: 1;
         pointer-events: auto;
     }
-    /* mobile: slide up from bottom */
-    #pricing-modal.is-active > div:last-child {
-        transform: translateY(0);
-    }
-    /* desktop: scale in */
-    @media (min-width: 640px) {
-        #pricing-modal > div:last-child {
-            transform: scale(0.95);
-        }
-        #pricing-modal.is-active > div:last-child {
-            transform: scale(1);
-        }
+    #pricing-modal.is-active .modal-content {
+        transform: scale(1);
     }
 </style>
 
@@ -297,20 +278,20 @@ if (error) {
 
     const toggleTabs = (mode: 'standard' | 'transfer') => {
         if (mode === 'standard') {
-            btnStandard?.classList.add('bg-primary', 'text-primary-foreground', 'shadow-lg', 'shadow-primary/20');
-            btnStandard?.classList.remove('text-slate-500');
-            btnTransfer?.classList.remove('bg-primary', 'text-primary-foreground', 'shadow-lg', 'shadow-primary/20');
-            btnTransfer?.classList.add('text-slate-500');
+            btnStandard?.classList.add('bg-primary', 'text-primary-foreground', 'shadow-sm', 'shadow-primary/20');
+            btnStandard?.classList.remove('text-muted-foreground', 'hover:text-foreground', 'hover:bg-card/50');
+            btnTransfer?.classList.remove('bg-primary', 'text-primary-foreground', 'shadow-sm', 'shadow-primary/20');
+            btnTransfer?.classList.add('text-muted-foreground', 'hover:text-foreground', 'hover:bg-card/50');
 
             secStandard?.classList.remove('hidden');
             secTransfer?.classList.add('hidden');
 
             actTransfer?.classList.add('hidden');
         } else {
-            btnTransfer?.classList.add('bg-primary', 'text-primary-foreground', 'shadow-lg', 'shadow-primary/20');
-            btnTransfer?.classList.remove('text-slate-500');
-            btnStandard?.classList.remove('bg-primary', 'text-primary-foreground', 'shadow-lg', 'shadow-primary/20');
-            btnStandard?.classList.add('text-slate-500');
+            btnTransfer?.classList.add('bg-primary', 'text-primary-foreground', 'shadow-sm', 'shadow-primary/20');
+            btnTransfer?.classList.remove('text-muted-foreground', 'hover:text-foreground', 'hover:bg-card/50');
+            btnStandard?.classList.remove('bg-primary', 'text-primary-foreground', 'shadow-sm', 'shadow-primary/20');
+            btnStandard?.classList.add('text-muted-foreground', 'hover:text-foreground', 'hover:bg-card/50');
 
             secTransfer?.classList.remove('hidden');
             secStandard?.classList.add('hidden');

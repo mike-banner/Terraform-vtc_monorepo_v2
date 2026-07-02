@@ -50,14 +50,14 @@ export const DriverModal: React.FC<DriverModalProps> = ({
 
   if (!isOpen) return null;
 
-  const inputClass = 'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-all placeholder:text-muted-foreground/40';
+  const inputClass = 'w-full bg-background border border-border rounded-[var(--radius)] px-4 py-2.5 text-sm font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-muted-foreground';
 
   return (
-    <div className='fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-sm bg-black/80'>
-      <div className='relative bg-card border border-border max-w-lg w-full rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in duration-200'>
+    <div className='fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm bg-background/80'>
+      <div className='relative bg-card border border-border max-w-lg w-full rounded-[calc(var(--radius)+8px)] shadow-2xl p-6 md:p-8 animate-in zoom-in-95 duration-200'>
         <button
           onClick={onClose}
-          className='absolute top-6 right-6 p-2 text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg transition-colors'>
+          className='absolute top-6 right-6 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors'>
           <X className='w-4 h-4' />
         </button>
 
@@ -66,7 +66,7 @@ export const DriverModal: React.FC<DriverModalProps> = ({
             <UserPlus className='w-5 h-5' />
           </div>
           <div>
-            <h3 className='text-lg font-black uppercase text-foreground tracking-tighter leading-none mb-0.5'>
+            <h3 className='text-lg font-heading font-black uppercase text-foreground tracking-tight leading-none mb-1'>
               {driver ? "Modifier Chauffeur" : "Nouveau Chauffeur"}
             </h3>
             <p className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>
@@ -106,7 +106,7 @@ export const DriverModal: React.FC<DriverModalProps> = ({
           <button
             type='submit'
             disabled={loading}
-            className='w-full mt-2 flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95'>
+            className='w-full mt-2 flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-[var(--radius)] transition-all shadow-sm shadow-primary/20 disabled:opacity-50 active:scale-95'>
             {loading ? (
               <span className='w-4 h-4 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin' />
             ) : (
