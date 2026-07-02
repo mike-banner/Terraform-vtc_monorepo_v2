@@ -134,16 +134,32 @@ const fmt = (n: number) =>
                     <h2 class="text-xl font-black uppercase tracking-tighter text-white leading-none">
                         {MONTH_FULL[currentMonth - 1]}
                     </h2>
-                    <a
-                        href={`/api/tenant/export-csv?month=${currentYear}-${String(currentMonth).padStart(2, '0')}`}
-                        download
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-600/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600/25 transition-all"
-                    >
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        CSV
-                    </a>
+                    <div class="relative group">
+                        <button
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-600/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600/25 transition-all"
+                        >
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Exporter
+                            <svg class="w-3 h-3 opacity-60 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div class="absolute right-0 top-full mt-1.5 bg-card border border-border rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all z-50 min-w-[140px]">
+                            <a
+                                href={`/api/tenant/export-csv?month=${currentYear}-${String(currentMonth).padStart(2, '0')}`}
+                                download
+                                class="block px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-foreground hover:bg-muted transition-colors"
+                            >
+                                Format CSV
+                            </a>
+                            <button
+                                onclick="alert('Export PDF du bilan en cours de développement.')"
+                                class="w-full text-left px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:bg-muted transition-colors flex items-center justify-between"
+                            >
+                                Format PDF <span class="text-[8px] bg-primary/20 text-primary px-1.5 py-0.5 rounded ml-2">Bientôt</span>
+                            </button>
+                        </div>
+                    </div>
                     {years.length > 1 && (
                         <div class="flex items-center gap-2">
                             {years.map(y => (
@@ -215,16 +231,32 @@ const fmt = (n: number) =>
                             {y}
                         </a>
                     ))}
-                    <a
-                        href={`/api/tenant/export-csv?fiscal_year=${currentYear}`}
-                        download
-                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-emerald-600/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600/25 transition-all"
-                    >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        CSV exercice
-                    </a>
+                    <div class="relative group">
+                        <button
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-emerald-600/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600/25 transition-all"
+                        >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Exporter Bilan
+                            <svg class="w-3.5 h-3.5 opacity-60 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        <div class="absolute right-0 top-full mt-1.5 bg-card border border-border rounded-xl p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all z-50 min-w-[160px]">
+                            <a
+                                href={`/api/tenant/export-csv?fiscal_year=${currentYear}`}
+                                download
+                                class="block px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-foreground hover:bg-muted transition-colors"
+                            >
+                                Format CSV
+                            </a>
+                            <button
+                                onclick="alert('Export PDF du bilan annuel en cours de développement.')"
+                                class="w-full text-left px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:bg-muted transition-colors flex items-center justify-between"
+                            >
+                                Format PDF <span class="text-[8px] bg-primary/20 text-primary px-1.5 py-0.5 rounded ml-2">Bientôt</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -233,17 +265,17 @@ const fmt = (n: number) =>
                 <!-- Ligne 1 : TTC & Courses -->
                 <div class="flex flex-col justify-center px-5 py-4 border-r border-b border-border">
                     <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total TTC</p>
-                    <p class="text-2xl font-heading font-black text-foreground tabular-nums whitespace-nowrap">{fmt(annualTotals.gross)}&nbsp;€</p>
+                    <p class="text-xl font-heading font-black text-foreground tabular-nums whitespace-nowrap">{fmt(annualTotals.gross)}&nbsp;€</p>
                 </div>
                 <div class="flex flex-col justify-center px-5 py-4 border-b border-border">
                     <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Courses</p>
-                    <p class="text-xl font-heading font-black text-muted-foreground tabular-nums">{annualTotals.bookings}</p>
+                    <p class="text-lg font-heading font-black text-muted-foreground tabular-nums">{annualTotals.bookings}</p>
                 </div>
                 
                 <!-- Ligne 2 : CA HT & TVA -->
                 <div class="flex flex-col justify-center px-5 py-6 md:py-8 border-r border-border bg-muted/5">
                     <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Chiffre d'Affaires HT</p>
-                    <p class="text-3xl font-heading font-black text-primary tabular-nums whitespace-nowrap tracking-tight">{fmt(annualTotals.net)}&nbsp;€</p>
+                    <p class="text-2xl font-heading font-black text-primary tabular-nums whitespace-nowrap tracking-tight">{fmt(annualTotals.net)}&nbsp;€</p>
                     <p class="text-[10px] text-muted-foreground font-medium mt-1">Revenu net hors taxes</p>
                 </div>
                 <div class="flex flex-col justify-center px-5 py-6 md:py-8 bg-muted/5">

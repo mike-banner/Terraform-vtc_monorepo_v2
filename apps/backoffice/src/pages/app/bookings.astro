@@ -487,7 +487,7 @@ const getFilterUrl = (params: Record<string, string>) => {
         <div class="relative max-w-xl w-full rounded-2xl md:rounded-3xl border border-white/8 shadow-2xl bg-[#0A0A0B] overflow-y-auto overflow-x-hidden max-h-[94dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
 
             <!-- Modal header -->
-            <div class="sticky top-0 z-10 bg-[#0A0A0B] border-b border-white/5 px-5 py-4 sm:px-8 flex items-center justify-between">
+            <div class="sticky top-0 z-10 bg-card border-b border-border px-5 py-4 sm:px-8 flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-black uppercase tracking-wide text-white leading-none">Nouvelle course</h2>
                     <p class="text-[10px] text-slate-500 mt-0.5 font-medium">Saisie manuelle</p>
@@ -662,9 +662,9 @@ const getFilterUrl = (params: Record<string, string>) => {
 
     <!-- 🎭 MODAL: ÉDITION COURSE (pré-mission) -->
     <div slot="modals" id="edit-booking-modal" style="display: none;" class="fixed inset-0 z-[300] flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
-        <div class="absolute inset-0 bg-black/90 backdrop-blur-md edit-modal-overlay"></div>
-        <div id="edit-modal-inner" class="relative max-w-lg w-full rounded-2xl md:rounded-3xl border border-white/8 shadow-2xl bg-[#0A0A0B] overflow-y-auto max-h-[90dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
-            <div class="sticky top-0 z-10 bg-[#0A0A0B] border-b border-white/5 px-5 py-4 flex items-center justify-between">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-sm edit-modal-overlay"></div>
+        <div id="edit-modal-inner" class="relative max-w-lg w-full rounded-[calc(var(--radius)+8px)] border border-border shadow-2xl bg-card overflow-y-auto max-h-[90dvh] custom-scrollbar transform scale-95 transition-all duration-300" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+            <div class="sticky top-0 z-10 bg-card border-b border-border px-5 py-4 flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-black uppercase tracking-wide text-white leading-none">Modifier la course</h2>
                     <p class="text-[10px] text-slate-500 mt-0.5 font-medium">Le tarif est recalculé automatiquement</p>
@@ -730,11 +730,11 @@ const getFilterUrl = (params: Record<string, string>) => {
 
     <!-- 🎭 MODAL: DÉTAILS MISSION ELITE -->
     <div slot="modals" id="detail-booking-modal" data-driver-id={driverId} class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-500" style="display: none;">
-        <div class="absolute inset-0 bg-black/90 backdrop-blur-md modal-overlay"></div>
-        <div class="relative glass max-w-2xl w-full max-h-[90vh] rounded-[3rem] border border-white/10 shadow-[0_0_100px_rgba(79,70,229,0.1)] overflow-y-auto overflow-x-hidden custom-scrollbar transform scale-95 transition-all duration-500 bg-[#0A0A0B]" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+        <div class="absolute inset-0 bg-background/80 backdrop-blur-sm modal-overlay"></div>
+        <div class="relative bg-card max-w-2xl w-full max-h-[90vh] rounded-[calc(var(--radius)+8px)] border border-border shadow-2xl overflow-y-auto overflow-x-hidden custom-scrollbar transform scale-95 transition-all duration-500" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
             <div class="p-8 sm:p-12">
                 <!-- Header Modal -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-10 border-b border-white/5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-10 border-b border-border">
                     <div class="flex items-center gap-5">
                         <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/40 transform -rotate-3">
                             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -789,31 +789,31 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </a>
                         </div>
 
-                        <div class="glass p-8 rounded-[2.5rem] border border-white/5 bg-primary/[0.03] flex flex-col items-center justify-center text-center">
+                        <div class="bg-muted/10 p-8 rounded-[calc(var(--radius)+8px)] border border-border flex flex-col items-center justify-center text-center">
                             <p class="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2">Heure du RDV</p>
-                            <h4 id="modal-time" class="text-5xl font-black text-white tracking-tighter leading-none mb-2 tabular-nums">---</h4>
-                            <p id="modal-date" class="text-[10px] font-black uppercase text-slate-500 tracking-widest underline decoration-primary/30 underline-offset-4">---</p>
+                            <h4 id="modal-time" class="text-5xl font-black text-foreground tracking-tighter leading-none mb-2 tabular-nums">---</h4>
+                            <p id="modal-date" class="text-[10px] font-black uppercase text-muted-foreground tracking-widest underline decoration-primary/30 underline-offset-4">---</p>
                         </div>
                     </div>
 
                     <!-- CARACTÉRISTIQUES -->
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="glass p-5 rounded-[2rem] border border-white/5 flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary">
+                        <div class="bg-muted/10 p-5 rounded-[var(--radius)] border border-border flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary">
                                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                             </div>
                             <div>
-                                <p class="text-[10px] font-black uppercase text-slate-500 mb-0.5">Passagers</p>
-                                <span id="modal-passengers" class="text-lg font-black text-white">---</span>
+                                <p class="text-[10px] font-black uppercase text-muted-foreground mb-0.5">Passagers</p>
+                                <span id="modal-passengers" class="text-lg font-black text-foreground">---</span>
                             </div>
                         </div>
-                        <div class="glass p-5 rounded-[2rem] border border-white/5 flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary">
+                        <div class="bg-muted/10 p-5 rounded-[var(--radius)] border border-border flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-primary">
                                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                             </div>
                             <div>
-                                <p class="text-[10px] font-black uppercase text-slate-500 mb-0.5">Valises</p>
-                                <span id="modal-luggage" class="text-lg font-black text-white">---</span>
+                                <p class="text-[10px] font-black uppercase text-muted-foreground mb-0.5">Valises</p>
+                                <span id="modal-luggage" class="text-lg font-black text-foreground">---</span>
                             </div>
                         </div>
                     </div>
@@ -822,27 +822,27 @@ const getFilterUrl = (params: Record<string, string>) => {
                     <div id="mission-cockpit-root"></div>
 
                     <!-- NOTES -->
-                    <div class="glass p-6 rounded-[2rem] border border-white/5">
-                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Instructions Chauffeur</p>
-                        <p id="modal-notes" class="text-xs text-slate-500 font-medium leading-relaxed">---</p>
+                    <div class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
+                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Instructions Chauffeur</p>
+                        <p id="modal-notes" class="text-xs text-foreground font-medium leading-relaxed">---</p>
                     </div>
 
                     <!-- AVIS & QR CODE -->
-                    <div id="modal-rating-section" class="glass p-6 rounded-[2rem] border border-white/5 hidden">
+                    <div id="modal-rating-section" class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border hidden">
                         <!-- Cas 1: avis existant -->
                         <div id="modal-rating-display" class="hidden">
-                            <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-3">Avis Passager</p>
+                            <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Avis Passager</p>
                             <div id="modal-rating-stars" class="flex gap-1.5 mb-3"></div>
-                            <p id="modal-rating-comment" class="text-xs text-slate-400 font-medium leading-relaxed"></p>
+                            <p id="modal-rating-comment" class="text-xs text-foreground font-medium leading-relaxed"></p>
                         </div>
                         <!-- Cas 2: pas encore noté -->
                         <div id="modal-qr-section" class="hidden">
-                            <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-3">Recueillir l'Avis Passager</p>
+                            <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Recueillir l'Avis Passager</p>
                             <div class="flex flex-col sm:flex-row items-center gap-6">
                                 <canvas id="modal-qr-canvas" class="w-28 h-28 rounded-2xl bg-white p-1.5 flex-shrink-0"></canvas>
                                 <div class="text-center sm:text-left">
-                                    <p class="text-xs font-bold text-slate-300">Faites scanner ce QR code au passager</p>
-                                    <p class="text-[10px] text-slate-600 mt-1">Généré localement — aucune donnée envoyée à des tiers</p>
+                                    <p class="text-xs font-bold text-foreground">Faites scanner ce QR code au passager</p>
+                                    <p class="text-[10px] text-muted-foreground mt-1">Généré localement — aucune donnée envoyée à des tiers</p>
                                 </div>
                             </div>
                         </div>
@@ -861,13 +861,13 @@ const getFilterUrl = (params: Record<string, string>) => {
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-3 mt-4">
-                            <button id="modal-accept-btn" class="hidden flex-1 py-5 bg-white text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl active:scale-95 disabled:opacity-50">
+                            <button id="modal-accept-btn" class="hidden flex-1 py-5 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95 disabled:opacity-50">
                                 Prendre la main sur la course
                             </button>
-                            <button id="modal-edit-btn" class="hidden flex-1 py-5 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/10 active:scale-95">
+                            <button id="modal-edit-btn" class="hidden flex-1 py-5 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95">
                                 Modifier
                             </button>
-                            <button class="close-detail-modal flex-1 py-5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/5 active:scale-95">
+                            <button class="close-detail-modal flex-1 py-5 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-sm active:scale-95">
                                 Fermer
                             </button>
                         </div>
