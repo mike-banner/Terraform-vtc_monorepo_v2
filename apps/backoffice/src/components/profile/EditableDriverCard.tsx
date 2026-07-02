@@ -58,32 +58,32 @@ export const EditableDriverCard: React.FC<EditableDriverCardProps> = ({ driver, 
   };
 
   return (
-    <div className='bg-card border border-border rounded-2xl p-5 md:p-6 flex flex-col gap-5 w-full'>
+    <div className='bg-card border border-border rounded-[var(--radius)] p-5 md:p-6 flex flex-col gap-5 w-full'>
 
       {/* HEADER */}
       <div className='flex items-center gap-4'>
-        <div className='w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0'>
+        <div className='w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0'>
           <User className='w-5 h-5' />
         </div>
         <div className='flex-1 min-w-0'>
           <p className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1'>
             Chauffeur Titulaire
           </p>
-          <h3 className='text-base md:text-lg font-black text-foreground uppercase tracking-tighter leading-none truncate'>
+          <h3 className='text-lg md:text-xl font-heading font-black text-foreground uppercase tracking-tight leading-none truncate'>
             {firstName} {lastName}
           </h3>
         </div>
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className='p-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0'>
+            className='p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0'>
             <Edit2 className='w-4 h-4' />
           </button>
         )}
       </div>
 
       {/* INFO / EDIT */}
-      <div className='border-t border-border pt-4 w-full'>
+      <div className='border-t border-border/50 pt-4 w-full'>
         {isEditing ? (
           <div className='space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 max-w-lg'>
             <div className='grid grid-cols-2 gap-3'>
@@ -93,7 +93,7 @@ export const EditableDriverCard: React.FC<EditableDriverCardProps> = ({ driver, 
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder='Jean'
-                  className='w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-all font-medium'
+                  className='w-full bg-background border border-border rounded-[var(--radius)] px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all font-medium'
                 />
               </div>
               <div className='space-y-1.5'>
@@ -102,7 +102,7 @@ export const EditableDriverCard: React.FC<EditableDriverCardProps> = ({ driver, 
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder='Dupont'
-                  className='w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-all font-medium'
+                  className='w-full bg-background border border-border rounded-[var(--radius)] px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all font-medium'
                 />
               </div>
             </div>
@@ -114,7 +114,7 @@ export const EditableDriverCard: React.FC<EditableDriverCardProps> = ({ driver, 
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder='06 12 34 56 78'
-                  className='w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-all font-medium'
+                  className='w-full bg-background border border-border rounded-[var(--radius)] pl-11 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all font-medium'
                 />
               </div>
             </div>
@@ -126,20 +126,20 @@ export const EditableDriverCard: React.FC<EditableDriverCardProps> = ({ driver, 
                   value={licenseNumber}
                   onChange={handleLicenseChange}
                   placeholder='000 000 000 000'
-                  className='w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/40 transition-all font-mono tracking-widest'
+                  className='w-full bg-background border border-border rounded-[var(--radius)] pl-11 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all font-mono tracking-widest'
                 />
               </div>
             </div>
             {error && (
-              <div className='p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-xs font-medium'>
+               <div className='mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-[var(--radius)] text-rose-500 text-xs font-bold uppercase tracking-widest text-center'>
                 {error}
               </div>
             )}
-            <div className='flex items-center gap-3 pt-1'>
+            <div className='flex items-center gap-3 pt-2'>
               <button
                 onClick={handleSave}
                 disabled={loading}
-                className='flex-1 py-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95 flex items-center justify-center gap-2'>
+                className='flex-1 py-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-[var(--radius)] transition-all shadow-sm shadow-primary/20 disabled:opacity-50 active:scale-95 flex items-center justify-center gap-2'>
                 {loading ? (
                   <span className='w-4 h-4 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin' />
                 ) : (
@@ -149,7 +149,7 @@ export const EditableDriverCard: React.FC<EditableDriverCardProps> = ({ driver, 
               </button>
               <button
                 onClick={handleCancel}
-                className='px-5 py-3 bg-white/5 hover:bg-white/10 text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2'>
+                className='px-5 py-3 bg-background hover:bg-muted border border-border text-muted-foreground text-[10px] font-bold uppercase tracking-widest rounded-[var(--radius)] transition-all flex items-center gap-2'>
                 <X className='w-4 h-4' />
                 <span>Annuler</span>
               </button>
