@@ -17,10 +17,27 @@ jobs:
         run: |
           echo "Démarrage du Ping vers Supabase pour empêcher la mise en veille (auto-pause)..."
           
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Erreur : Les secrets SUPABASE_URL ou SUPABASE_ANON_KEY ne sont pas définis."
+            exit 1
+          fi
+          
+          # Désactiver temporairement 'set -e' si c'est activé par défaut par GitHub Actions,
+          # pour pouvoir capturer le code d'erreur de curl
+          set +e
+          
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -X GET "$SUPABASE_URL/rest/v1/" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          CURL_EXIT_CODE=$?
+          
+          set -e
+          
+          if [ $CURL_EXIT_CODE -ne 0 ]; then
+            echo "❌ Erreur curl ($CURL_EXIT_CODE). L'URL configurée est peut-être invalide."
+            exit 1
+          fi
             
           echo "Réponse HTTP de Supabase : $HTTP_STATUS"
           
