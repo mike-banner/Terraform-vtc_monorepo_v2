@@ -13,6 +13,12 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
+// ponytail: facture générée en PDF local (sans Stripe Invoicing) — le compte
+// Stripe connecté de démo a un réglage d'auto-encaissement qui casse le flux
+// paid_out_of_band. Avant la vraie prod : élucider ce réglage côté Stripe
+// dashboard (Settings > Invoicing du compte connecté) et restaurer le flux
+// Stripe (création facture + invoiceItems + finalize + pay), qui reste le
+// seul moyen d'avoir une facture réellement encaissable/comptable côté Stripe.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
