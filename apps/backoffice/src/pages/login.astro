@@ -59,6 +59,27 @@ import "../styles/global.css";
           </p>
         </div>
 
+        <!-- 1-Click Demo Login (test-demo) -->
+        <div class="p-3 rounded-2xl bg-amber-500/[0.04] border border-amber-500/20 mb-1">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              Accès Démo Rapide
+            </span>
+            <span class="text-[9px] font-mono text-amber-300/60">test-demo</span>
+          </div>
+          <button
+            type="button"
+            id="demo-login-btn"
+            class="relative inline-flex items-center justify-center whitespace-nowrap rounded-[var(--radius)] text-[11px] font-bold transition-all focus-visible:outline-none bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-500/50 shadow-sm h-9 w-full overflow-hidden uppercase tracking-wider gap-2 group active:scale-[0.98]"
+          >
+            <svg class="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>Connexion Démo (1-Click)</span>
+          </button>
+        </div>
+
         <form id="login-form" action="/api/auth/login" method="POST" class="space-y-3">
           <div class="space-y-3">
             <div class="space-y-1 relative group">
@@ -181,6 +202,21 @@ import "../styles/global.css";
     const passwordInput = document.querySelector("#password") as HTMLInputElement;
     const eyeIcon = document.querySelector("#eye-icon") as SVGElement;
     const eyeOffIcon = document.querySelector("#eye-off-icon") as SVGElement;
+
+    const demoBtn = document.querySelector("#demo-login-btn") as HTMLButtonElement;
+    const emailInput = document.querySelector("#email") as HTMLInputElement;
+
+    demoBtn?.addEventListener("click", () => {
+        if (emailInput && passwordInput && form) {
+            emailInput.value = "test-demo@vtc.fr";
+            passwordInput.value = "TestDemo2026!";
+            submitBtn.disabled = true;
+            loader.classList.remove("hidden");
+            btnText.style.opacity = "0";
+            if (messageEl) messageEl.textContent = "Connexion au compte test-demo...";
+            form.submit();
+        }
+    });
 
     toggleBtn?.addEventListener("click", () => {
         const isHidden = passwordInput.type === "password";
