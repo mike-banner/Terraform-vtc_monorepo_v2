@@ -75,6 +75,7 @@ async function main() {
         capital_social: 10000,
         address: '25 Avenue des Champs-Élysées, 75008 Paris',
         vat_number: 'FR99988877700',
+        logo_url: '/logo-vtc-elite.png',
         setup_completed: true
       })
       .select()
@@ -86,8 +87,8 @@ async function main() {
     }
     tenantId = newTenant.id;
   } else {
-    // S'assurer que setup_completed est true
-    await supabase.from('tenants').update({ setup_completed: true }).eq('id', tenantId);
+    // S'assurer que setup_completed est true et logo_url est défini
+    await supabase.from('tenants').update({ setup_completed: true, logo_url: '/logo-vtc-elite.png' }).eq('id', tenantId);
   }
 
   // 3. Profile Owner
