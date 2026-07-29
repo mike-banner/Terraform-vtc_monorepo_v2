@@ -130,18 +130,18 @@ async function main() {
   ]);
 
   // 5. Chauffeurs de la flotte (Drivers)
-  console.log("Création des chauffeurs...");
-  // Check / Upsert Driver Titulaire
-  const { data: existingOwnerDriver } = await supabase
+  console.log("Création et mise à jour du Chauffeur Principal & Collaborateurs...");
+  
+  // S'assurer d'abord que le driver titulaire (owner) existe
+  let { data: ownerDriver } = await supabase
     .from('drivers')
     .select('*')
     .eq('tenant_id', tenantId)
     .eq('user_id', userId)
     .maybeSingle();
 
-  let ownerDriverId = existingOwnerDriver?.id;
-  if (!ownerDriverId) {
-    const { data: d1 } = await supabase.from('drivers').insert({
+  if (!ownerDriver) {
+    const { data: newDriver } = await supabase.from('drivers').insert({
       tenant_id: tenantId,
       user_id: userId,
       first_name: 'Alexandre',
@@ -149,7 +149,36 @@ async function main() {
       phone: '06 12 34 56 78',
       license_number: 'VTC-75-2026-001'
     }).select().single();
-    ownerDriverId = d1?.id;
+    ownerDriver = newDriver;
+  } else {
+    await supabase.from('drivers').update({
+      first_name: 'Alexandre',
+      last_name: 'Dupont',
+      phone: '06 12 34 56 78',
+      license_number: 'VTC-75-2026-001'
+    }).eq('id', ownerDriver.id);
+  }
+
+  const ownerDriverId = ownerDriver.id;
+
+  // Deuxième chauffeur (Collaborateur)
+  const { data: secondaryDriver } = await supabase
+    .from('drivers')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('license_number', 'VTC-75-2026-002')
+    .maybeSingle();
+
+  let secondaryDriverId = secondaryDriver?.id;
+  if (!secondaryDriverId) {
+    const { data: d2 } = await supabase.from('drivers').insert({
+      tenant_id: tenantId,
+      first_name: 'Karim',
+      last_name: 'Benali',
+      phone: '06 87 65 43 21',
+      license_number: 'VTC-75-2026-002'
+    }).select().single();
+    secondaryDriverId = d2?.id;
   }
 
   // 6. Flotte de Véhicules (Vehicles)
@@ -165,20 +194,23 @@ async function main() {
     },
     {
       tenant_id: tenantId,
-      brand: 'BMW',
-      model: 'i7 xDrive60 Limousine',
-      plate_number: 'FS-456-EV'
-    },
-    {
-      tenant_id: tenantId,
+      driver_id: secondaryDriverId,
       brand: 'Mercedes-Benz',
       model: 'Classe V 300d Extra-Long',
       plate_number: 'GH-123-VN'
+    },
+    {
+      tenant_id: tenantId,
+      brand: 'BMW',
+      model: 'i7 xDrive60 Limousine',
+      plate_number: 'FS-456-EV'
     }
   ]);
 
   // 7. Base de Clients (Customers)
-  console.log("Création du répertoire clients...");
+  console.log("Nettoyage et création du répertoire clients...");
+  await supabase.from('financial_movements').delete().eq('tenant_id', tenantId);
+  await supabase.from('bookings').delete().eq('current_tenant_id', tenantId);
   await supabase.from('customers').delete().eq('tenant_id', tenantId);
 
   const { data: customersData, error: custError } = await supabase.from('customers').insert([
@@ -233,12 +265,13 @@ async function main() {
   const dateTomorrowUpcoming = new Date(now.getTime() + 14 * 60 * 60 * 1000).toISOString(); // Demain matin
   const dateIn3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Insert Bookings
+  // Insert Bookings (Assignées au Chauffeur Principal Alexandre Dupont)
   const { data: bookingsData, error: bookError } = await supabase.from('bookings').insert([
     {
       original_tenant_id: tenantId,
       current_tenant_id: tenantId,
       customer_id: c1,
+      driver_id: ownerDriverId,
       booking_type: 'transfer',
       booking_source: 'customer',
       pricing_mode: 'direct',
@@ -256,6 +289,7 @@ async function main() {
       original_tenant_id: tenantId,
       current_tenant_id: tenantId,
       customer_id: c2,
+      driver_id: ownerDriverId,
       booking_type: 'transfer',
       booking_source: 'customer',
       pricing_mode: 'direct',
@@ -273,6 +307,7 @@ async function main() {
       original_tenant_id: tenantId,
       current_tenant_id: tenantId,
       customer_id: c3,
+      driver_id: ownerDriverId,
       booking_type: 'transfer',
       booking_source: 'customer',
       pricing_mode: 'direct',
@@ -290,6 +325,7 @@ async function main() {
       original_tenant_id: tenantId,
       current_tenant_id: tenantId,
       customer_id: c2,
+      driver_id: ownerDriverId,
       booking_type: 'hourly',
       booking_source: 'manual_driver',
       pricing_mode: 'manual',
@@ -307,6 +343,7 @@ async function main() {
       original_tenant_id: tenantId,
       current_tenant_id: tenantId,
       customer_id: c3,
+      driver_id: secondaryDriverId,
       booking_type: 'transfer',
       booking_source: 'customer',
       pricing_mode: 'direct',
