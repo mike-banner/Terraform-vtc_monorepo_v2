@@ -1,4 +1,4 @@
-﻿/* src/sites/elite-lyon/styles/theme.css */
+/* src/sites/elite-lyon/styles/theme.css */
 @import 'tailwindcss';
 
 @plugin "daisyui" {
@@ -49,16 +49,61 @@
     color: var(--color-on-surface-variant);
   }
 
+  /* BOUTON PRINCIPAL UNIFORME SUR TOUT LE SITE */
   .btn-premium {
     background: #6185B2;
-    color: white;
+    color: #ffffff;
+    font-family: var(--font-headline);
     font-weight: 700;
-    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    border-radius: 0.75rem; /* rounded-xl */
+    min-height: 48px;
+    padding: 0.75rem 2rem;
+    box-shadow: 0 10px 25px -5px rgba(97, 133, 178, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .btn-premium:hover {
     background: #446598;
-    box-shadow: 0 10px 30px -10px rgba(97, 133, 178, 0.5);
+    box-shadow: 0 15px 35px -5px rgba(97, 133, 178, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .btn-premium:active {
+    transform: scale(0.96);
+  }
+
+  /* BOUTON SECONDAIRE / GLASS UNIFORME SUR TOUT LE SITE */
+  .btn-secondary-glass {
+    background: rgba(21, 26, 36, 0.6);
+    color: #ffffff;
+    font-family: var(--font-headline);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    border-radius: 0.75rem; /* rounded-xl */
+    border: 1px solid rgba(97, 133, 178, 0.3);
+    backdrop-filter: blur(12px);
+    min-height: 48px;
+    padding: 0.75rem 2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-secondary-glass:hover {
+    background: rgba(21, 26, 36, 0.9);
+    border-color: rgba(97, 133, 178, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary-glass:active {
+    transform: scale(0.96);
   }
 
   .shadow-accent {
