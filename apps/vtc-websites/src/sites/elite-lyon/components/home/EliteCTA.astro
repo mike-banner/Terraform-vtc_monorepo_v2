@@ -22,18 +22,19 @@ const tenantPhone = tenant?.phone || '+33 6 00 00 00 00';
       Votre Partenaire Stratégique Pour Une Logistique Sans Faille
     </p>
 
-    <!-- BOUTON UNIFORME & LIGNE DIRECTE -->
+    <!-- BOUTON UNIFORME & LIGNE DIRECTE CIBLÉE (#direct-line) -->
     <div class='flex flex-col sm:flex-row justify-center items-center gap-8 sm:gap-12'>
       <a
-        href='#booking'
-        class='btn-premium px-10 py-4 font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl active:scale-95 text-center min-h-[50px] flex items-center justify-center gap-3 group'>
+        href='#services'
+        class='btn-premium px-10 py-4 font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl text-center flex items-center justify-center gap-3 group'>
         <span>Réserver l'Expérience</span>
         <svg class='w-4 h-4 transition-transform group-hover:translate-x-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
           <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M14 5l7 7m0 0l-7 7m7-7H3' />
         </svg>
       </a>
 
-      <div class='text-center sm:text-left border-t sm:border-t-0 sm:border-l border-[#6185B2]/30 pt-6 sm:pt-0 sm:pl-10'>
+      <!-- ID DIRECT-LINE POUR L'ANCRE HEADER -->
+      <div id='direct-line' class='text-center sm:text-left border-t sm:border-t-0 sm:border-l border-[#6185B2]/30 pt-6 sm:pt-0 sm:pl-10 scroll-mt-28'>
         <span
           class='text-[10px] font-label uppercase tracking-[0.3em] font-bold text-[#719DCC] block mb-1.5'
           >Ligne Directe 24/7</span

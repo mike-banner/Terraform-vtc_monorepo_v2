@@ -18,7 +18,7 @@ import EliteBookingWidget from './EliteBookingWidget.astro';
       format='webp'
       quality='high'
     />
-    <!-- Spotlight Radial : Éclaire le véhicule et adoucit le fond sous le texte -->
+    <!-- Spotlight Radial -->
     <div class='absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(97,133,178,0.25)_0%,rgba(11,15,21,0.4)_50%,rgba(11,15,21,0.85)_100%)]'></div>
     <div class='absolute inset-0 bg-gradient-to-r from-[#0B0F15]/90 via-[#0B0F15]/40 to-transparent'></div>
     <div class='absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[#0B0F15] to-transparent'></div>
@@ -26,7 +26,7 @@ import EliteBookingWidget from './EliteBookingWidget.astro';
 
   <div class='container mx-auto px-6 sm:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center'>
     
-    <!-- CONTENU GAUCHE : ACCROCHE & CTAS BLEU ACIER -->
+    <!-- CONTENU GAUCHE : ACCROCHE & UNIQUE CTA BLEU ACIER -->
     <div class='lg:col-span-7 flex flex-col justify-center items-center lg:items-start text-center lg:text-left pt-4 lg:pt-0'>
       
       <!-- BADGE EYEBROW BLEU ACIER -->
@@ -43,28 +43,20 @@ import EliteBookingWidget from './EliteBookingWidget.astro';
         Chauffeur <br /> <span class='text-transparent bg-clip-text bg-gradient-to-r from-[#A8C0E0] via-[#6185B2] to-[#719DCC]'>Privé De Luxe</span>
       </h1>
 
-      <!-- SOUS-TITRE LEGEREMENT OMBRE PAR SÉCURITÉ -->
+      <!-- SOUS-TITRE LEGEREMENT OMBRE -->
       <p class='text-slate-200 font-body text-base sm:text-lg lg:text-xl max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed font-normal drop-shadow-md'>
         L'excellence opérationnelle pour vos déplacements stratégiques. Discrétion, ponctualité et prestige garantis 24/7.
       </p>
 
-      <!-- BOUTONS CTAS REFONDUS (DESIGN SYSTEM BLEU ACIER) -->
+      <!-- BOUTON UNIQUE DE RÉSERVATION -> RENVOI VERS LA SECTION SUR-MESURE (#services) -->
       <div class='flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto'>
-        <!-- CTA PRINCIPAL AVEC HALO LUMINEUX -->
         <a
-          href='#booking'
-          class='w-full sm:w-auto px-9 py-4 bg-[#6185B2] hover:bg-[#446598] text-white font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] rounded-xl transition-all duration-300 shadow-[0_0_30px_-5px_rgba(97,133,178,0.5)] hover:shadow-[0_0_40px_0px_rgba(97,133,178,0.7)] active:scale-95 text-center min-h-[50px] flex items-center justify-center gap-3 group'>
+          href='#services'
+          class='btn-premium w-full sm:w-auto px-10 py-4 font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl text-center flex items-center justify-center gap-3 group'>
           <span>Réserver un trajet</span>
           <svg class='w-4 h-4 transition-transform group-hover:translate-x-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M14 5l7 7m0 0l-7 7m7-7H3' />
           </svg>
-        </a>
-
-        <!-- CTA SECONDAIRE GLASSMORPHISM -->
-        <a
-          href='#services'
-          class='w-full sm:w-auto px-9 py-4 bg-[#151A24]/60 hover:bg-[#151A24]/90 text-white font-headline font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] rounded-xl transition-all duration-300 border border-[#6185B2]/30 hover:border-[#6185B2]/60 active:scale-95 text-center backdrop-blur-xl min-h-[50px] flex items-center justify-center'>
-          Découvrir la flotte
         </a>
       </div>
     </div>
