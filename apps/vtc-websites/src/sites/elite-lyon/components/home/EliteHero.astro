@@ -6,55 +6,73 @@ import EliteBookingWidget from './EliteBookingWidget.astro';
 
 <section
   id='hero'
-  class='relative min-h-[100dvh] flex items-center pt-28 pb-16 lg:py-20 overflow-hidden bg-[#0B0F15]'>
-  <!-- PHOTO D'ARRIÈRE-PLAN D'ORIGINE RESTAURÉE -->
+  class='relative min-h-[100dvh] flex items-center pt-28 pb-16 lg:py-24 overflow-hidden bg-[#0B0F15]'>
+  
+  <!-- PHOTO D'ARRIÈRE-PLAN : SPOTLIGHT LUMINEUX & MISE EN VALEUR EN PLEINE LUMIÈRE -->
   <div class='absolute inset-0 z-0 pointer-events-none'>
     <Image
-      class='w-full h-full object-cover object-center opacity-90 scale-105 lg:scale-100 transition-transform duration-1000'
+      class='w-full h-full object-cover object-center brightness-110 contrast-105 scale-105 transition-all duration-1000'
       src={heroImage}
-      alt='Elite Chauffeur Privé Lyon'
+      alt='Elite Chauffeur Privé Lyon - Véhicule de Prestige'
       loading='eager'
       format='webp'
       quality='high'
     />
-    <!-- Filtre Bleu Acier Léger (#6185B2) -->
-    <div class='absolute inset-0 bg-[#6185b2]/15 mix-blend-color'></div>
-    <!-- Dégradé Réduit -->
-    <div class='absolute inset-0 bg-gradient-to-t from-[#0B0F15] via-[#0B0F15]/50 to-transparent'></div>
-    <div class='absolute inset-0 bg-gradient-to-r from-[#0B0F15]/80 via-transparent to-transparent'></div>
+    <!-- Spotlight Radial : Éclaire le véhicule et adoucit légèrement le fond sous le texte -->
+    <div class='absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(97,133,178,0.25)_0%,rgba(11,15,21,0.4)_50%,rgba(11,15,21,0.85)_100%)]'></div>
+    <div class='absolute inset-0 bg-gradient-to-r from-[#0B0F15]/90 via-[#0B0F15]/40 to-transparent'></div>
+    <div class='absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[#0B0F15] to-transparent'></div>
   </div>
 
   <div class='container mx-auto px-6 sm:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center'>
-    <!-- CONTENU GAUCHE -->
-    <div class='lg:col-span-7 flex flex-col justify-center items-center lg:items-start text-center lg:text-left pt-6 lg:pt-0'>
-      <span class='text-elite-accent font-label font-bold tracking-[0.3em] uppercase mb-4 text-[10px] sm:text-xs'>
-        Premium Fleet Service
-      </span>
-      <h1 class='text-white font-headline text-4xl sm:text-6xl lg:text-8xl font-extrabold tracking-tighter leading-[0.9] mb-6 uppercase'>
-        Chauffeur<br class="hidden lg:inline" /> <span class='text-elite-accent'>Privé</span> De Luxe
+    
+    <!-- CONTENU GAUCHE : ACCROCHE & CTAS BLEU ACIER -->
+    <div class='lg:col-span-7 flex flex-col justify-center items-center lg:items-start text-center lg:text-left pt-4 lg:pt-0'>
+      
+      <!-- BADGE EYEBROW BLEU ACIER -->
+      <div class='inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#6185B2]/15 border border-[#6185B2]/30 text-[#719DCC] text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] mb-6 shadow-lg shadow-[#6185B2]/10 backdrop-blur-md'>
+        <span class='relative flex h-2 w-2'>
+          <span class='motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[#719DCC] opacity-75'></span>
+          <span class='relative inline-flex rounded-full h-2 w-2 bg-[#6185B2]'></span>
+        </span>
+        Premium Fleet Service — Lyon & Rhône-Alpes
+      </div>
+
+      <!-- TITRE PRINCIPAL -->
+      <h1 class='text-white font-headline text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[0.95] mb-6 uppercase drop-shadow-lg'>
+        Chauffeur <br /> <span class='text-transparent bg-clip-text bg-gradient-to-r from-[#A8C0E0] via-[#6185B2] to-[#719DCC]'>Privé De Luxe</span>
       </h1>
-      <p class='text-white/80 font-body text-base sm:text-lg lg:text-xl max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed font-normal'>
-        L'excellence opérationnelle pour vos déplacements stratégiques. Discrétion, ponctualité et prestige.
+
+      <!-- SOUS-TITRE LEGEREMENT OMBRE PAR SÉCURITÉ -->
+      <p class='text-slate-200 font-body text-base sm:text-lg lg:text-xl max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed font-normal drop-shadow-md'>
+        L'excellence opérationnelle pour vos déplacements stratégiques. Discrétion, ponctualité et prestige garantis 24/7.
       </p>
 
-      <!-- BOUTONS CTAs BLEU ACIER VISIBLES MOBILE ET DESKTOP -->
+      <!-- BOUTONS CTAS REFONDUS (DESIGN SYSTEM BLEU ACIER) -->
       <div class='flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto'>
+        <!-- CTA PRINCIPAL AVEC HALO LUMINEUX -->
         <a
           href='#booking'
-          class='btn-premium w-full sm:w-auto px-8 py-4 rounded-sm font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] text-center min-h-[48px] flex items-center justify-center active:scale-95 shadow-accent'>
-          Réserver un trajet
+          class='w-full sm:w-auto px-9 py-4 bg-[#6185B2] hover:bg-[#446598] text-white font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] rounded-xl transition-all duration-300 shadow-[0_0_30px_-5px_rgba(97,133,178,0.5)] hover:shadow-[0_0_40px_0px_rgba(97,133,178,0.7)] active:scale-95 text-center min-h-[50px] flex items-center justify-center gap-3 group'>
+          <span>Réserver un trajet</span>
+          <svg class='w-4 h-4 transition-transform group-hover:translate-x-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M14 5l7 7m0 0l-7 7m7-7H3' />
+          </svg>
         </a>
+
+        <!-- CTA SECONDAIRE GLASSMORPHISM -->
         <a
           href='#services'
-          class='w-full sm:w-auto px-8 py-4 border border-white/20 text-white rounded-sm font-headline font-medium text-xs sm:text-sm uppercase tracking-[0.2em] text-center backdrop-blur-sm hover:bg-white/10 transition-colors min-h-[48px] flex items-center justify-center active:scale-95'>
-          La Flotte
+          class='w-full sm:w-auto px-9 py-4 bg-[#151A24]/60 hover:bg-[#151A24]/90 text-white font-headline font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] rounded-xl transition-all duration-300 border border-[#6185B2]/30 hover:border-[#6185B2]/60 active:scale-95 text-center backdrop-blur-xl min-h-[50px] flex items-center justify-center'>
+          Découvrir la flotte
         </a>
       </div>
     </div>
 
     <!-- WIDGET DE RÉSERVATION DROITE -->
-    <div id='booking' class='lg:col-span-5 flex items-center w-full mt-4 lg:mt-0'>
+    <div id='booking' class='lg:col-span-5 flex items-center w-full mt-6 lg:mt-0'>
       <EliteBookingWidget />
     </div>
+
   </div>
 </section>
