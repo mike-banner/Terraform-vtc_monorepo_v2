@@ -6,56 +6,48 @@ import EliteBookingWidget from './EliteBookingWidget.astro';
 
 <section
   id='hero'
-  class='relative min-h-[100dvh] flex items-center pt-28 pb-16 lg:py-24 overflow-hidden bg-black'>
-  <!-- BACKGROUND IMAGE & GRADIENT SCRIMS -->
+  class='relative min-h-[100dvh] flex items-center pt-28 pb-16 lg:py-20 overflow-hidden bg-[#0B0F15]'>
+  <!-- PHOTO D'ARRIÈRE-PLAN D'ORIGINE RESTAURÉE -->
   <div class='absolute inset-0 z-0 pointer-events-none'>
     <Image
-      class='w-full h-full object-cover object-center opacity-40 scale-105 transition-transform duration-1000'
+      class='w-full h-full object-cover object-center opacity-90 scale-105 lg:scale-100 transition-transform duration-1000'
       src={heroImage}
       alt='Elite Chauffeur Privé Lyon'
       loading='eager'
       format='webp'
       quality='high'
     />
-    <!-- Gradient Overlay Sombre & Or -->
-    <div class='absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40'></div>
-    <div class='absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent'></div>
-    <div class='absolute top-1/4 left-10 w-96 h-96 bg-amber-500/10 blur-[140px] rounded-full'></div>
+    <!-- Filtre Bleu Acier Léger (#6185B2) -->
+    <div class='absolute inset-0 bg-[#6185b2]/15 mix-blend-color'></div>
+    <!-- Dégradé Réduit -->
+    <div class='absolute inset-0 bg-gradient-to-t from-[#0B0F15] via-[#0B0F15]/50 to-transparent'></div>
+    <div class='absolute inset-0 bg-gradient-to-r from-[#0B0F15]/80 via-transparent to-transparent'></div>
   </div>
 
   <div class='container mx-auto px-6 sm:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center'>
     <!-- CONTENU GAUCHE -->
     <div class='lg:col-span-7 flex flex-col justify-center items-center lg:items-start text-center lg:text-left pt-6 lg:pt-0'>
-      <!-- BADGE EYEBROW -->
-      <div class='inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-[0.25em] mb-6 shadow-lg shadow-amber-500/5'>
-        <span class='relative flex h-2 w-2'>
-          <span class='motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75'></span>
-          <span class='relative inline-flex rounded-full h-2 w-2 bg-amber-500'></span>
-        </span>
-        Chauffeur Privé & Conciergerie Lyon
-      </div>
-
-      <!-- TITRE PRINCIPAL -->
-      <h1 class='text-white font-headline text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[0.95] mb-6 uppercase'>
-        L'Excellence <br /> <span class='text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500'>Du Sur-Mesure</span>
+      <span class='text-elite-accent font-label font-bold tracking-[0.3em] uppercase mb-4 text-[10px] sm:text-xs'>
+        Premium Fleet Service
+      </span>
+      <h1 class='text-white font-headline text-4xl sm:text-6xl lg:text-8xl font-extrabold tracking-tighter leading-[0.9] mb-6 uppercase'>
+        Chauffeur<br class="hidden lg:inline" /> <span class='text-elite-accent'>Privé</span> De Luxe
       </h1>
-
-      <!-- SOUS-TITRE -->
-      <p class='text-slate-300 font-body text-sm sm:text-base lg:text-lg max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed font-medium'>
-        Service de transfert haut de gamme, berlines & vans de prestige. Discrétion absolue, ponctualité garantie 24/7 sur Lyon et sa région.
+      <p class='text-white/80 font-body text-base sm:text-lg lg:text-xl max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed font-normal'>
+        L'excellence opérationnelle pour vos déplacements stratégiques. Discrétion, ponctualité et prestige.
       </p>
 
-      <!-- BOUTONS CTAs (Accessibles Mobile & Desktop) -->
-      <div class='flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto'>
+      <!-- BOUTONS CTAs BLEU ACIER VISIBLES MOBILE ET DESKTOP -->
+      <div class='flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto'>
         <a
           href='#booking'
-          class='w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-headline font-black text-xs sm:text-sm uppercase tracking-[0.2em] rounded-xl transition-all shadow-xl shadow-amber-500/20 active:scale-95 text-center min-h-[48px] flex items-center justify-center'>
-          Réserver une course
+          class='btn-premium w-full sm:w-auto px-8 py-4 rounded-sm font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] text-center min-h-[48px] flex items-center justify-center active:scale-95 shadow-accent'>
+          Réserver un trajet
         </a>
         <a
           href='#services'
-          class='w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] rounded-xl transition-all border border-white/10 active:scale-95 text-center backdrop-blur-md min-h-[48px] flex items-center justify-center'>
-          Découvrir la flotte
+          class='w-full sm:w-auto px-8 py-4 border border-white/20 text-white rounded-sm font-headline font-medium text-xs sm:text-sm uppercase tracking-[0.2em] text-center backdrop-blur-sm hover:bg-white/10 transition-colors min-h-[48px] flex items-center justify-center active:scale-95'>
+          La Flotte
         </a>
       </div>
     </div>
