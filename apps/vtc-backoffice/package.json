@@ -1,5 +1,5 @@
 {
-  "name": "@vtc/backoffice",
+  "name": "@vtc/vtc-backoffice",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
