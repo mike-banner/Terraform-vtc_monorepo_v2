@@ -4,21 +4,49 @@ const { tenant } = Astro.locals;
 const tenantName = tenant?.name || 'Elite Lyon';
 ---
 
-<header class='fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl border-b border-elite-accent/20'>
-  <nav
-    class='flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto font-headline text-white font-bold text-sm lg:text-base'>
-    <div class='text-xl font-bold tracking-tighter text-elite-accent uppercase'>
-      {tenantName}
-    </div>
-    <div
-      class='hidden md:flex items-center space-x-8 uppercase tracking-widest text-[10px] font-bold'>
-      <a class='text-elite-accent' href='#services'>Services</a>
-      <a class='opacity-60 hover:opacity-100 transition-opacity' href='#fleet'>Fleet</a>
-      <a class='opacity-60 hover:opacity-100 transition-opacity' href='#concierge'>Concierge</a>
-      <a class='opacity-60 hover:opacity-100 transition-opacity' href='#experience'>Experience</a>
-    </div>
-    <a href='#booking' class='btn-premium px-6 py-2 rounded-sm text-xs uppercase tracking-widest'>
-      Book Now
+<header class='fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-[#6185B2]/20 shadow-sm transition-all duration-300'>
+  <nav class='flex justify-between items-center px-6 sm:px-8 py-3.5 max-w-screen-2xl mx-auto font-headline'>
+    
+    <!-- BRAND / LOGO -->
+    <a href='/' class='flex items-center gap-3 group'>
+      <div class='w-9 h-9 rounded-lg bg-[#6185B2] flex items-center justify-center text-white font-black text-sm shadow-md group-hover:bg-[#446598] transition-colors'>
+        E
+      </div>
+      <div class='text-lg sm:text-xl font-extrabold tracking-tighter text-[#0F172A] uppercase'>
+        {tenantName}
+      </div>
     </a>
+
+    <!-- NAVIGATION LINKS (DESKTOP) -->
+    <div class='hidden md:flex items-center space-x-8 uppercase tracking-widest text-[11px] font-bold text-[#0F172A]/70'>
+      <a class='hover:text-[#6185B2] transition-colors' href='#services'>Services</a>
+      <a class='hover:text-[#6185B2] transition-colors' href='#fleet'>La Flotte</a>
+      <a class='hover:text-[#6185B2] transition-colors' href='#concierge'>Conciergerie</a>
+      <a class='hover:text-[#6185B2] transition-colors' href='#experience'>Expérience</a>
+    </div>
+
+    <!-- MODULE DE RÉSERVATION RAPIDE & APPEL DIRECT -->
+    <div class='flex items-center gap-3 sm:gap-4'>
+      <!-- Appel Direct 24/7 (Hidden on small mobile) -->
+      <a
+        href='tel:+33400000000'
+        class='hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-[#6185B2]/10 hover:bg-[#6185B2]/20 text-[#6185B2] text-xs font-bold transition-colors'>
+        <svg class='w-3.5 h-3.5' fill='currentColor' viewBox='0 0 24 24'>
+          <path d='M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1.003 1.003 0 011.02-.24c1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'/>
+        </svg>
+        <span>24/7 Direct</span>
+      </a>
+
+      <!-- BOUTON MODULE DE RÉSERVATION -->
+      <a
+        href='#booking'
+        class='btn-premium px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2'>
+        <svg class='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
+        </svg>
+        <span>Réserver</span>
+      </a>
+    </div>
+
   </nav>
 </header>
