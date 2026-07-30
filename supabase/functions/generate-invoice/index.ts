@@ -336,6 +336,49 @@ Deno.serve(async (req) => {
       }).catch((err) => console.error("SEND EMAIL ERROR", err));
     }
 
+    // --- Email ---
+    const customerEmail = customer?.email;
+    if (customerEmail && invoiceUrl) {
+      const html = generateInvoiceEmail({
+        invoiceNumber,
+        invoiceUrl,
+        tenant: {
+          name: tenant.name ?? "",
+          email: tenant.email,
+          phone: tenant.phone,
+          siret: tenant.siret,
+          vat_number: tenant.vat_number,
+          is_vat_exempt: tenant.is_vat_exempt,
+          vat_rate: tenant.vat_rate,
+          legal_form: tenant.legal_form,
+          capital_social: tenant.capital_social,
+        },
+        customer: {
+          first_name: customer?.first_name,
+          last_name: customer?.last_name,
+          email: customer?.email,
+          company_name: customer?.company_name,
+        },
+        booking: {
+          pickup_address: booking.pickup_address,
+          dropoff_address: booking.dropoff_address,
+          pickup_time: booking.pickup_time,
+          subtotal_amount: booking.subtotal_amount,
+          vat_amount: booking.vat_amount,
+          total_amount: booking.total_amount,
+          payment_mode: booking.payment_mode,
+        },
+      });
+
+      await sendEmailLog({
+        bookingId: booking_id,
+        emailType: "invoice",
+        recipientEmail: customerEmail,
+        subject: `Votre facture ${invoiceNumber} — ${tenant.name ?? ""}`,
+        html,
+      }).catch((err) => console.error("SEND EMAIL ERROR", err));
+    }
+
     return new Response(
       JSON.stringify({ success: true, invoice_number: invoiceNumber, invoice_url: invoiceUrl }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
