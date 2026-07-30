@@ -4,7 +4,7 @@ const { tenant } = Astro.locals;
 const tenantName = tenant?.name || 'Elite Lyon';
 ---
 
-<header class='fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-[#6185B2]/20 shadow-sm transition-all duration-300'>
+<header class='fixed top-0 w-full z-50 bg-[#0B0F15]/90 backdrop-blur-xl border-b border-[#6185B2]/20 shadow-xl transition-all duration-300'>
   <nav class='flex justify-between items-center px-6 sm:px-8 py-3.5 max-w-screen-2xl mx-auto font-headline'>
     
     <!-- BRAND / LOGO -->
@@ -12,25 +12,25 @@ const tenantName = tenant?.name || 'Elite Lyon';
       <div class='w-9 h-9 rounded-lg bg-[#6185B2] flex items-center justify-center text-white font-black text-sm shadow-md group-hover:bg-[#446598] transition-colors'>
         E
       </div>
-      <div class='text-lg sm:text-xl font-extrabold tracking-tighter text-[#0F172A] uppercase'>
+      <div class='text-lg sm:text-xl font-extrabold tracking-tighter text-white uppercase'>
         {tenantName}
       </div>
     </a>
 
     <!-- NAVIGATION LINKS (DESKTOP) -->
-    <div class='hidden md:flex items-center space-x-8 uppercase tracking-widest text-[11px] font-bold text-[#0F172A]/70'>
-      <a class='hover:text-[#6185B2] transition-colors' href='#services'>Services</a>
-      <a class='hover:text-[#6185B2] transition-colors' href='#fleet'>La Flotte</a>
-      <a class='hover:text-[#6185B2] transition-colors' href='#concierge'>Conciergerie</a>
-      <a class='hover:text-[#6185B2] transition-colors' href='#experience'>Expérience</a>
+    <div class='hidden md:flex items-center space-x-8 uppercase tracking-widest text-[11px] font-bold text-white/70'>
+      <a class='hover:text-[#719DCC] transition-colors' href='#services'>Services</a>
+      <a class='hover:text-[#719DCC] transition-colors' href='#fleet'>La Flotte</a>
+      <a class='hover:text-[#719DCC] transition-colors' href='#concierge'>Conciergerie</a>
+      <a class='hover:text-[#719DCC] transition-colors' href='#experience'>Expérience</a>
     </div>
 
     <!-- MODULE DE RÉSERVATION RAPIDE & APPEL DIRECT -->
     <div class='flex items-center gap-3 sm:gap-4'>
-      <!-- Appel Direct 24/7 (Hidden on small mobile) -->
+      <!-- Appel Direct 24/7 -->
       <a
         href='tel:+33400000000'
-        class='hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-[#6185B2]/10 hover:bg-[#6185B2]/20 text-[#6185B2] text-xs font-bold transition-colors'>
+        class='hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#6185B2]/15 border border-[#6185B2]/30 text-[#719DCC] text-xs font-bold transition-colors hover:bg-[#6185B2]/25'>
         <svg class='w-3.5 h-3.5' fill='currentColor' viewBox='0 0 24 24'>
           <path d='M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1.003 1.003 0 011.02-.24c1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'/>
         </svg>

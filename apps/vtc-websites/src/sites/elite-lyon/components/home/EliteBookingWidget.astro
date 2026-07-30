@@ -2,15 +2,12 @@
 // src/sites/elite-lyon/components/home/EliteBookingWidget.astro
 ---
 
-<div class='bg-white p-6 sm:p-8 rounded-2xl w-full shadow-2xl border border-slate-100 relative overflow-hidden group'>
-  <!-- BARRE ACCENTUATION BLEU ACIER EN HAUT -->
-  <div class='absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#6185B2] via-[#719DCC] to-[#446598]'></div>
-
+<div class='bg-[#151F2B] p-6 sm:p-8 rounded-2xl w-full shadow-2xl border border-white/10 border-t-4 border-t-[#6185B2] relative overflow-hidden backdrop-blur-xl'>
   <div class='flex items-center justify-between mb-6'>
-    <h3 class='font-headline text-xl sm:text-2xl font-bold text-[#0F172A] uppercase tracking-tight'>
-      Planifiez votre trajet
+    <h3 class='font-headline text-xl sm:text-2xl font-bold text-white uppercase tracking-tight'>
+      Planifiez votre voyage
     </h3>
-    <span class='px-2.5 py-1 rounded-full bg-[#6185B2]/10 text-[#6185B2] text-[10px] font-bold uppercase tracking-widest'>
+    <span class='px-2.5 py-1 rounded-full bg-[#6185B2]/20 text-[#719DCC] text-[10px] font-bold uppercase tracking-widest border border-[#6185B2]/30'>
       Instantané
     </span>
   </div>
@@ -18,19 +15,19 @@
   <div class='space-y-4'>
     <!-- CHAMP PRISE EN CHARGE -->
     <div>
-      <label class='block font-label text-[10px] font-bold uppercase mb-1.5 tracking-[0.2em] text-[#0F172A]/60'>
+      <label class='block font-label text-[10px] font-bold uppercase mb-1.5 tracking-[0.2em] text-white/50'>
         Prise en charge
       </label>
       <div class='relative'>
-        <div class='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6185B2]'>
+        <div class='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#719DCC]'>
           <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' />
             <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 11a3 3 0 11-6 0 3 3 0 016 0z' />
           </svg>
         </div>
         <input
-          class='w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#6185B2]/50 focus:border-[#6185B2] focus:bg-white focus:outline-none transition-all font-body text-sm text-[#0F172A] placeholder:text-slate-400'
-          placeholder='Aéroport, Gare, Hôtel, Adresse...'
+          class='w-full pl-10 pr-4 py-3.5 bg-[#151A24] border border-white/10 rounded-xl focus:ring-2 focus:ring-[#6185B2]/50 focus:border-[#6185B2] focus:outline-none transition-all font-body text-sm text-white placeholder:text-white/30'
+          placeholder='Aéroport, Gare, Hôtel...'
           type='text'
         />
       </div>
@@ -38,17 +35,17 @@
 
     <!-- CHAMP DESTINATION -->
     <div>
-      <label class='block font-label text-[10px] font-bold uppercase mb-1.5 tracking-[0.2em] text-[#0F172A]/60'>
+      <label class='block font-label text-[10px] font-bold uppercase mb-1.5 tracking-[0.2em] text-white/50'>
         Destination
       </label>
       <div class='relative'>
-        <div class='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6185B2]'>
+        <div class='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#719DCC]'>
           <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9' />
           </svg>
         </div>
         <input
-          class='w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#6185B2]/50 focus:border-[#6185B2] focus:bg-white focus:outline-none transition-all font-body text-sm text-[#0F172A] placeholder:text-slate-400'
+          class='w-full pl-10 pr-4 py-3.5 bg-[#151A24] border border-white/10 rounded-xl focus:ring-2 focus:ring-[#6185B2]/50 focus:border-[#6185B2] focus:outline-none transition-all font-body text-sm text-white placeholder:text-white/30'
           placeholder='Où allez-vous ?'
           type='text'
         />
@@ -58,7 +55,7 @@
     <!-- BOUTON VALIDER / DEVIS -->
     <a
       href='/tunnels/transfert'
-      class='btn-premium w-full py-4 rounded-xl font-headline font-bold text-xs uppercase tracking-[0.2em] mt-2 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-center'>
+      class='btn-premium w-full py-4 rounded-xl font-headline font-bold text-xs uppercase tracking-[0.2em] mt-2 shadow-xl hover:shadow-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-center'>
       <span>Calculer mon tarif</span>
       <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
         <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M14 5l7 7m0 0l-7 7m7-7H3' />
