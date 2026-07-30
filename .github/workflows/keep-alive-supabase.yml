@@ -17,17 +17,26 @@ jobs:
         run: |
           echo "Démarrage du Ping vers Supabase pour empêcher la mise en veille (auto-pause)..."
           
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "Erreur : Les secrets SUPABASE_URL ou SUPABASE_ANON_KEY ne sont pas définis."
+          MISSING_SECRETS=""
+          if [ -z "$SUPABASE_URL" ]; then MISSING_SECRETS="$MISSING_SECRETS SUPABASE_URL"; fi
+          if [ -z "$SUPABASE_ANON_KEY" ]; then MISSING_SECRETS="$MISSING_SECRETS SUPABASE_ANON_KEY"; fi
+
+          if [ -n "$MISSING_SECRETS" ]; then
+            echo "❌ Erreur : Secret(s) GitHub manquant(s) :$MISSING_SECRETS"
+            echo "👉 Ajoutez-les dans Repository Settings > Secrets and variables > Actions"
             exit 1
           fi
+          
+          # Nettoyage de l'URL (suppression du slash final éventuel)
+          CLEAN_URL="${SUPABASE_URL%/}"
           
           # Désactiver temporairement 'set -e' si c'est activé par défaut par GitHub Actions,
           # pour pouvoir capturer le code d'erreur de curl
           set +e
           
+          # /rest/v1/ exige désormais la clé secret_role. /storage/v1/status fonctionne avec la clé ANON et réveille la DB.
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X GET "$SUPABASE_URL/rest/v1/" \
+            -X GET "$CLEAN_URL/storage/v1/status" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
           CURL_EXIT_CODE=$?
@@ -44,5 +53,6 @@ jobs:
           if [ "$HTTP_STATUS" -eq 200 ]; then
             echo "✅ Ping réussi ! La base de données est réveillée."
           else
-            echo "⚠️ Ping terminé, mais statut HTTP inattendu."
+            echo "❌ Échec du Ping : statut HTTP $HTTP_STATUS (attendu: 200)."
+            exit 1
           fi

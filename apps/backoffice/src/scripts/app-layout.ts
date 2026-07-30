@@ -97,11 +97,13 @@ function initMissionBanner(): void {
     currentBannerBooking = booking;
     addrEl.textContent = booking.dropoff_address.split(",")[0].trim();
     banner.classList.remove("hidden");
+    document.documentElement.classList.add("has-active-mission");
   };
 
   const hideBanner = () => {
     banner.classList.add("hidden");
     currentBannerBooking = null;
+    document.documentElement.classList.remove("has-active-mission");
   };
 
   const checkBanner = async () => {
