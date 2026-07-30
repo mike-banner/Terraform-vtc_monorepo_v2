@@ -204,7 +204,7 @@ const tenantName = tenant?.name || "VTC HUB";
                 </header>
 
                 <!-- SLOT — seule zone scrollable -->
-                <div class="flex-1 min-h-0 overflow-y-auto">
+                <div class="flex-1 min-h-0 overflow-y-auto slot-scroll-container">
                     <slot />
                 </div>
                 <!-- PORTAL MODALS — outside overflow-y-auto so position:fixed works on iOS Safari -->
@@ -214,12 +214,12 @@ const tenantName = tenant?.name || "VTC HUB";
         </div>
 
         <!-- ═══════════════════════════════════
-             MISSION COMPLETION BANNER — sticky above mobile nav
-             Visible uniquement sur mobile, uniquement si mission in_progress
-             JS retire la classe "hidden" quand une mission active est détectée
+             MISSION COMPLETION BANNER — fixed above mobile nav
+             Visible uniquement si mission in_progress
+             Ancrée immédiatement au-dessus de la barre de nav mobile
              ═══════════════════════════════════ -->
-        <div id="mission-banner" class="hidden flex-shrink-0 bg-gradient-to-r from-green-950/90 to-emerald-950/70 border-t border-green-500/25 px-4 py-3">
-            <div class="flex items-center justify-between gap-3">
+        <div id="mission-banner" class="hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] inset-x-0 z-40 bg-gradient-to-r from-green-950/95 via-emerald-950/90 to-green-950/95 border-t border-green-500/30 px-4 py-3 shadow-2xl backdrop-blur-md transition-all duration-300">
+            <div class="flex items-center justify-between gap-3 max-w-7xl mx-auto">
                 <div class="flex items-center gap-3 min-w-0 flex-1">
                     <span class="relative flex-shrink-0">
                         <span class="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
@@ -237,10 +237,10 @@ const tenantName = tenant?.name || "VTC HUB";
         </div>
 
         <!-- ═══════════════════════════════════
-             MOBILE FOOTER NAV — in-flow, flex-shrink-0
+             MOBILE FOOTER NAV — fixed bottom
              Toujours visible, jamais scrollable
              ═══════════════════════════════════ -->
-        <nav class="md:hidden flex-shrink-0 z-50 flex justify-around items-stretch bg-background/80 backdrop-blur-xl border-t border-border/30" style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
+        <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 flex justify-around items-stretch bg-background/95 backdrop-blur-xl border-t border-border/30 shadow-2xl" style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);">
             <a href="/app/dashboard" class={`flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 transition-colors ${pathname === "/app/dashboard" ? "text-primary" : "text-muted-foreground"}`}>
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -400,11 +400,28 @@ const tenantName = tenant?.name || "VTC HUB";
             .overflow-y-auto {
                 -webkit-overflow-scrolling: touch;
             }
+
+            /* Padding de sécurité en bas du contenu pour la nav mobile fixe */
+            .slot-scroll-container {
+                padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+            }
+            @media (min-width: 768px) {
+                .slot-scroll-container {
+                    padding-bottom: 2rem;
+                }
+            }
+            /* Adaptations dynamiques lorsque la mission est en cours */
+            html.has-active-mission .slot-scroll-container {
+                padding-bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px));
+            }
+            html.has-active-mission #toast-container {
+                bottom: calc(8.75rem + env(safe-area-inset-bottom, 0px));
+            }
         </style>
 
-        <!-- TOAST CONTAINER — au-dessus de la nav mobile, centré -->
+        <!-- TOAST CONTAINER — au-dessus de la nav mobile et bannière, centré -->
         <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"
-             class="fixed bottom-[4.75rem] md:bottom-6 inset-x-0 flex flex-col items-center gap-2 z-[200] pointer-events-none px-4">
+             class="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-6 inset-x-0 flex flex-col items-center gap-2 z-[200] pointer-events-none px-4 transition-all duration-300">
         </div>
 
         <script>
