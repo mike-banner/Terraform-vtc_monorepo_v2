@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
     const [{ data: tenant }, { data: customer }] = await Promise.all([
       supabase.from("tenants").select(
-        "name, email, phone, siret, vat_number, vat_rate, is_vat_exempt, " +
+        "name, logo_url, email, phone, siret, vat_number, vat_rate, is_vat_exempt, " +
         "legal_form, rcs_number, capital_social"
       ).eq("id", booking.current_tenant_id).single(),
       supabase.from("customers").select(
@@ -80,10 +80,39 @@ Deno.serve(async (req) => {
 
     let y = height - 60;
 
-    // En-tête
-    page.drawText(tenant.name ?? "", { x: 50, y, size: 18, font: fontBold, color: blue });
+    // En-tête avec Logo si présent
     page.drawText("DEVIS", { x: width - 150, y, size: 22, font: fontBold, color: blue });
-    y -= 22;
+
+    let logoEmbedded = false;
+    if (tenant.logo_url) {
+      try {
+        const logoResp = await fetch(tenant.logo_url);
+        if (logoResp.ok) {
+          const logoBytes = new Uint8Array(await logoResp.arrayBuffer());
+          const isPng = tenant.logo_url.toLowerCase().includes(".png");
+          const logoImage = isPng
+            ? await pdfDoc.embedPng(logoBytes)
+            : await pdfDoc.embedJpg(logoBytes);
+
+          page.drawImage(logoImage, {
+            x: 50,
+            y: y - 35,
+            width: 45,
+            height: 45,
+          });
+          page.drawText(tenant.name ?? "", { x: 105, y: y - 10, size: 16, font: fontBold, color: blue });
+          logoEmbedded = true;
+          y -= 45;
+        }
+      } catch (e) {
+        console.warn("Could not load tenant logo in Devis PDF:", e);
+      }
+    }
+
+    if (!logoEmbedded) {
+      page.drawText(tenant.name ?? "", { x: 50, y, size: 18, font: fontBold, color: blue });
+      y -= 22;
+    }
 
     for (const line of [
       tenant.email,

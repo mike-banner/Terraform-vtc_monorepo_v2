@@ -21,8 +21,8 @@ CREATE POLICY "tenant_select_email_logs" ON email_logs
   USING (
     booking_id IN (
       SELECT b.id FROM bookings b
-      JOIN tenant_users tu ON tu.tenant_id = b.current_tenant_id
-      WHERE tu.user_id = auth.uid()
+      JOIN profiles p ON p.tenant_id = b.current_tenant_id
+      WHERE p.id = auth.uid()
     )
   );
 
@@ -32,7 +32,7 @@ CREATE POLICY "superadmin_select_email_logs" ON email_logs
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'superadmin'
+      WHERE id = auth.uid() AND platform_role = 'super_admin'
     )
   );
 
