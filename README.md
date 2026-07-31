@@ -5,7 +5,7 @@
 
 ---
 
-## ⚡ En Un Coup d'Œil (Pour Recruteurs & Tech Leads)
+## ⚡ En Un Coup d'Œil 
 
 | Axe du Projet | Stack Principale | Rôle Métier / Utilité Produit |
 | :--- | :--- | :--- |
