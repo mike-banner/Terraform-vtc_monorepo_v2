@@ -1,108 +1,64 @@
-# VTC Cloud Platform — Multi-Tenant SaaS Architecture
+# VTC Cloud Platform — Multi-Tenant SaaS & Multi-Site Ecosystem
 
-> A production-ready, highly scalable multi-tenant platform built for the transportation industry, showcasing modern architectural patterns, Infrastructure as Code (IaC), and GitOps CI/CD workflows.
-
----
-
-## 🏗️ Architecture Overview
-
-This project is structured as a **Monorepo** to decouple concerns while maximizing code reuse across multiple frontend applications and a centralized backend.
-
-### The Stack
-- **Frontend Layer**: 
-  - **Backoffice**: [Astro](https://astro.build/) with React & Ark UI (Hybrid SSR/SSG).
-  - **Drivers-Front**: Astro with DaisyUI (High performance, SEO-first).
-  - **Superadmin**: React + Vite SPA (Client-side rendering for heavy dashboarding).
-  - **Styling**: TailwindCSS across all apps.
-- **Backend Layer**: [Supabase](https://supabase.com/) (PostgreSQL, Row Level Security, Edge Functions).
-- **Infrastructure Layer**: [Terraform](https://www.terraform.io/) (HCP Terraform Backend), Cloudflare Pages.
-- **CI/CD Pipeline**: GitHub Actions (GitOps).
-
-### Key Engineering Highlights
-
-#### 1. Multi-Tenant Edge Architecture (Cloudflare for SaaS)
-Instead of provisioning separate instances for each driver or agency, the `drivers-front` application acts as a single multi-tenant SSR server deployed on Cloudflare Pages. It dynamically renders tailored interfaces based on custom hostnames (via Cloudflare for SaaS API), drastically reducing infrastructure overhead and deployment times.
-
-#### 2. Fully Automated GitOps Pipeline
-Infrastructure changes are strictly peer-reviewed and deployed via GitHub Actions:
-- **Pull Requests**: Trigger `terraform plan` to validate and preview infrastructure drift securely.
-- **Merges to `dev`/`main`**: Automatically execute `terraform apply`, provisioning Cloudflare Pages instances and injecting production secrets at build time.
-
-#### 3. Centralized Infrastructure as Code (IaC)
-All cloud resources are codified in the `terraform/` directory. The state is securely managed via HashiCorp Cloud Platform (HCP), preventing deployment conflicts via state locking and providing a full audit trail of architectural changes.
-
-#### 4. Type-Safe Monorepo
-Leveraging `pnpm` workspaces, the architecture shares a single `packages/database` module containing Supabase generated TypeScript definitions. This ensures end-to-end type safety from the PostgreSQL schema down to the UI components.
+> **Plateforme SaaS B2B & Moteur de Sites Vitrines Multi-Tenants pour Chauffeurs Indépendants et Agences VTC.**  
+> Architecture Monorepo moderne, SSR Edge, Facturation Légale automatisée (Art. L441-3) et GitOps IaC.
 
 ---
 
-## 📂 Project Structure
+## ⚡ En Un Coup d'Œil 
 
-```text
-vtc_repo_v2/
-├── apps/
-│   ├── backoffice/     # Agency management dashboard (Astro + React)
-│   ├── drivers-front/  # Multi-tenant public-facing sites for drivers (Astro)
-│   └── superadmin/     # Platform administration console (React SPA + Vite)
-├── packages/
-│   └── database/       # Shared TS types and Supabase client logic
-├── supabase/
-│   ├── migrations/     # Version-controlled PostgreSQL schemas
-│   ├── seed.sql        # Deterministic local development data
-│   └── config.toml     # Supabase local environment configuration
-├── terraform/            
-│   ├── main.tf         # Providers and HCP Backend configuration
-│   ├── pages.tf        # Cloudflare Pages deployment definitions
-│   └── variables.tf    # Environment-agnostic variable definitions
-└── .github/workflows/
-    └── terraform.yml   # GitOps CI/CD pipeline
-```
+| Axe du Projet | Stack Principale | Rôle Métier / Utilité Produit |
+| :--- | :--- | :--- |
+| 🏢 **`apps/vtc-backoffice`** | Astro SSR, React 19, Tailwind v4, Supabase | **Dashboard SaaS Chauffeur & Agence** : Gestion des courses, tarification par zone, comptabilité/ledger fiscal, facturation PDF. |
+| 🚗 **`apps/vtc-websites`** | Astro SSR Edge, Cloudflare Pages, Supabase RLS | **Moteur Multi-Site Vitrine** : Génération dynamique de sites vitrines sur-mesure pour chauffeurs solos et groupements/agences connectés (logos Supabase Storage, 4 tunnels de réservation). |
+| 🛡️ **`apps/superadmin`** | React + Vite SPA, TailwindCSS | **Console Admin Plateforme** : Superviseur global des tenants, des abonnements et de la télémétrie SaaS. |
+| 📦 **`packages/database`** | TypeScript, Supabase CLI | **Types Partagés** : Auto-génération des types TypeScript PostgreSQL pour un typage 100% strict du backend aux UIs. |
 
 ---
 
-## 🚀 Deployment & Operations
+## 🛠️ Stack Technique Globale
 
-### Prerequisites
-- Node.js 20+ & `pnpm` 9+
-- Terraform CLI ≥ 1.5.0
-- Supabase CLI
+- **Frontend & Edge** : Astro (SSR Edge Mode), React 19, TailwindCSS v4, DaisyUI, Glassmorphic Design System.
+- **Backend & Data** : Supabase (PostgreSQL, Row Level Security isolation tenant, Edge Functions Deno, Realtime).
+- **Infrastructures & Cloud** : Cloudflare Pages, Terraform IaC (HCP Backend), GitHub Actions (CI/CD GitOps).
+- **Services & Intégrations** : Stripe Connect (Paiements/Webhooks), Resend (Emails transactionnels PDF), API Géolocalisation.
 
-### Local Development Setup
+---
 
-1. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
+## 🌟 Points Forts d'Ingénierie & Architecture
 
-2. **Start the local Supabase stack**
-   ```bash
-   supabase start
-   ```
+### 1. Multi-Tenancy & Multi-Sites Vitrines (`apps/vtc-websites`)
+- **Résolution d'hôte dynamique (`resolveTenant`)** : Une seule instance SSR Cloudflare Pages sert une infinité de sites vitrines personnalisés (ex: `elite-lyon.fr`, `vtc-prestige-paris.fr`).
+- **Branding Sur-Mesure** : Chargement automatique des logos depuis Supabase Storage (`tenant.logo_url`), du nom de société et des grilles tarifaires spécifiques à chaque chauffeur ou groupement d'agences.
+- **4 Tunnels de Réservation Connectés** : Transfert A ➔ B, Mise à disposition horaire, Longue Distance interurbaine, et Devis Business VIP.
 
-3. **Run the development servers**
-   ```bash
-   pnpm dev --filter backoffice
-   ```
+### 2. Confort Métier & Conformité Légale (`apps/vtc-backoffice`)
+- **Facturation Légale Automatisée** : Séquençage strict des numéros de factures (`FAC-YYYY-xxxx`) conforme à l'article L441-3 du Code de Commerce.
+- **Génération PDF & Webhooks** : Edge Functions Deno pour l'édition de proformas/factures PDF et synchronisation temps réel avec Stripe Connect.
 
-### Infrastructure Deployment (CI/CD)
+### 3. Pipeline GitOps & IaC Complètement Automatisé
+- **Terraform (HCP Backend)** : Tout l'infrastructure Cloudflare Pages est définie sous forme de code dans `terraform/`.
+- **CI/CD GitHub Actions** : `terraform plan` automatique sur chaque PR et `terraform apply` au merge sur `dev`/`main`.
 
-The infrastructure is fully automated. Pushing to `dev` or `main` will trigger the GitHub Actions workflow, which securely handles:
-- Cloudflare Pages provisioning for the 3 frontend apps.
-- Secure injection of third-party credentials (Stripe, Resend, Supabase).
-- Automatic builds and distributed CDN edge deployments.
+---
 
-For manual infrastructure emergency overrides:
+## 📂 Navigation dans la Documentation (`/docs`)
+
+- 📐 [docs/ARCHITECTURE.md](file:///home/mike/projects/vtc/vtc_repo_v2/docs/ARCHITECTURE.md) : Découpage technique du Monorepo & isolation Supabase RLS.
+- 🚗 [docs/MULTI_TENANCY_WEBSITES.md](file:///home/mike/projects/vtc/vtc_repo_v2/docs/MULTI_TENANCY_WEBSITES.md) : Fonctionnement détaillé des sites vitrines multi-tenants pour chauffeurs & groupements.
+- 💳 [docs/BILLING.md](file:///home/mike/projects/vtc/vtc_repo_v2/docs/BILLING.md) : Flux de facturation, webhooks Stripe Connect & exports comptables.
+
+---
+
+## 🚀 Démarrage Rapide (Développement Local)
+
 ```bash
-cd terraform/
-terraform init
-terraform plan
-terraform apply
+# 1. Installation des dépendances du monorepo
+pnpm install
+
+# 2. Lancement du stack local Supabase
+supabase start
+
+# 3. Lancement des serveurs de dev
+pnpm dev
 ```
-
----
-
-## 🔐 Security Standards
-
-- **Row Level Security (RLS)**: PostgreSQL policies isolate tenant data at the database layer.
-- **Secret Management**: No secrets are stored in the repository. They are injected at pipeline execution via GitHub Secrets.
-- **Principle of Least Privilege**: Cloudflare API tokens and Terraform service accounts are restricted solely to the resources they govern.
