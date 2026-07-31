@@ -2,19 +2,30 @@
 // src/sites/elite-lyon/components/home/EliteHeader.astro
 const { tenant } = Astro.locals;
 const tenantName = tenant?.name || 'Elite Lyon';
+const logoUrl = tenant?.logo_url;
 ---
 
 <header class='fixed top-0 w-full z-50 bg-[#0B0F15]/90 backdrop-blur-xl border-b border-[#6185B2]/20 shadow-xl transition-all duration-300'>
-  <nav class='flex justify-between items-center px-6 sm:px-8 py-3.5 max-w-screen-2xl mx-auto font-headline'>
+  <nav class='flex justify-between items-center px-6 sm:px-8 py-3 max-w-screen-2xl mx-auto font-headline'>
     
-    <!-- BRAND / LOGO -->
+    <!-- BRAND / LOGO (SUPPORT DYNAMIQUE DU LOGO DE CHAQUE TENANT) -->
     <a href='/' class='flex items-center gap-3 group'>
-      <div class='w-9 h-9 rounded-lg bg-[#6185B2] flex items-center justify-center text-white font-black text-sm shadow-md group-hover:bg-[#446598] transition-colors'>
-        E
-      </div>
-      <div class='text-lg sm:text-xl font-extrabold tracking-tighter text-white uppercase'>
-        {tenantName}
-      </div>
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={tenantName}
+          class='h-9 sm:h-11 w-auto max-w-[170px] object-contain transition-transform group-hover:scale-105 drop-shadow-md'
+        />
+      ) : (
+        <div class='w-9 h-9 rounded-lg bg-[#6185B2] flex items-center justify-center text-white font-black text-sm shadow-md group-hover:bg-[#446598] transition-colors'>
+          {tenantName.charAt(0).toUpperCase()}
+        </div>
+      )}
+      {!logoUrl && (
+        <div class='text-lg sm:text-xl font-extrabold tracking-tighter text-white uppercase'>
+          {tenantName}
+        </div>
+      )}
     </a>
 
     <!-- NAVIGATION LINKS (DESKTOP) -->

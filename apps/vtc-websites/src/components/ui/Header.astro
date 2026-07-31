@@ -1,15 +1,24 @@
 ---
 // src/components/ui/Header.astro
 const { tenant } = Astro.locals;
+const logoUrl = tenant?.logo_url;
 ---
 
 <header class="fixed top-0 left-0 right-0 z-[100] bg-black/90 backdrop-blur-md border-b border-white/5 font-sans">
   <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-    <!-- Logo -->
-    <a href="/" class="flex items-center gap-2 group">
-      <span class="text-xl font-bold tracking-tight uppercase text-white group-hover:text-zinc-400 transition-colors">
-        {tenant.name}
-      </span>
+    <!-- Logo Dynamique du Tenant -->
+    <a href="/" class="flex items-center gap-3 group">
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={tenant.name}
+          class="h-10 sm:h-12 w-auto max-w-[180px] object-contain transition-transform group-hover:scale-105"
+        />
+      ) : (
+        <span class="text-xl font-bold tracking-tight uppercase text-white group-hover:text-zinc-400 transition-colors">
+          {tenant.name}
+        </span>
+      )}
     </a>
 
     <!-- Navigation Line -->
@@ -30,10 +39,10 @@ const { tenant } = Astro.locals;
         </span>
       </a>
 
-      <!-- Lien vers la nouvelle page de réservation -->
+      <!-- Lien vers la réservation -->
       <a
         href="/booking-transfert"
-        class="bg-luxe-red text-white px-8 py-3 rounded-sm text-[11px] font-bold uppercase tracking-[0.15em] hover:brightness-110 transition-all shadow-lg active:scale-95"
+        class="bg-[#6185B2] text-white px-8 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] hover:bg-[#446598] transition-all shadow-lg active:scale-95"
       >
         Réserver
       </a>
