@@ -4,35 +4,48 @@ const { tenant } = Astro.locals;
 const tenantPhone = tenant?.phone || '+33 6 00 00 00 00';
 ---
 
-<section class='py-40 bg-black text-white text-center relative overflow-hidden'>
-  <div
-    class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20">
-  </div>
+<section class='py-32 bg-[#151F2B] text-white text-center relative overflow-hidden border-t border-[#6185B2]/30 shadow-2xl'>
+  <!-- Motif d'ambiance géométrique -->
+  <div class='absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(97,133,178,0.2)_0%,transparent_70%)] pointer-events-none'></div>
+  <div class='absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#6185B2] to-transparent'></div>
 
-  <div class='relative z-10 container mx-auto px-8'>
+  <div class='relative z-10 container mx-auto px-6 sm:px-8'>
+    <span class='text-[#719DCC] font-label font-bold tracking-[0.3em] uppercase text-xs mb-4 block'>
+      Excellence Logistique
+    </span>
     <h2
-      class='font-headline text-5xl md:text-8xl font-extrabold mb-12 uppercase tracking-tighter leading-[0.85]'>
-      L'Exception<br /><span class='text-elite-accent'>Au Quotidien</span>
+      class='font-headline text-4xl sm:text-6xl lg:text-7xl font-extrabold mb-6 uppercase tracking-tighter leading-[0.95] drop-shadow-md'>
+      L'Exception <br /><span class='text-[#719DCC]'>Au Quotidien</span>
     </h2>
     <p
-      class='text-white/40 text-[10px] uppercase tracking-[0.4em] mb-16 max-w-xl mx-auto font-bold'>
+      class='text-slate-300 text-xs sm:text-sm uppercase tracking-[0.3em] mb-12 max-w-xl mx-auto font-medium leading-relaxed'>
       Votre Partenaire Stratégique Pour Une Logistique Sans Faille
     </p>
-    <div class='flex flex-col md:flex-row justify-center items-center gap-16'>
+
+    <!-- BOUTON UNIFORME & LIGNE DIRECTE CIBLÉE (#direct-line) -->
+    <div class='flex flex-col sm:flex-row justify-center items-center gap-8 sm:gap-12'>
       <a
-        href='#booking'
-        class='btn-premium px-16 py-8 rounded-none font-bold text-xs uppercase tracking-[0.3em] shadow-2xl'>
-        Réserver Experience
+        href='#services'
+        class='btn-premium px-10 py-4 font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl text-center flex items-center justify-center gap-3 group'>
+        <span>Réserver l'Expérience</span>
+        <svg class='w-4 h-4 transition-transform group-hover:translate-x-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M14 5l7 7m0 0l-7 7m7-7H3' />
+        </svg>
       </a>
-      <div class='text-left border-l border-elite-accent/30 pl-12'>
+
+      <!-- ID DIRECT-LINE POUR L'ANCRE HEADER -->
+      <div id='direct-line' class='text-center sm:text-left border-t sm:border-t-0 sm:border-l border-[#6185B2]/30 pt-6 sm:pt-0 sm:pl-10 scroll-mt-28'>
         <span
-          class='text-[9px] font-label uppercase tracking-[0.4em] font-bold text-elite-accent block mb-2'
-          >Direct Line</span
+          class='text-[10px] font-label uppercase tracking-[0.3em] font-bold text-[#719DCC] block mb-1.5'
+          >Ligne Directe 24/7</span
         >
         <a
           href={`tel:${tenantPhone}`}
-          class='font-headline text-3xl font-bold tracking-tighter hover:text-elite-accent transition-colors'>
-          {tenantPhone}
+          class='font-headline text-2xl sm:text-3xl font-extrabold tracking-tighter text-white hover:text-[#719DCC] transition-colors flex items-center gap-2 justify-center sm:justify-start'>
+          <svg class='w-5 h-5 text-[#6185B2]' fill='currentColor' viewBox='0 0 24 24'>
+            <path d='M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1.003 1.003 0 011.02-.24c1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'/>
+          </svg>
+          <span>{tenantPhone}</span>
         </a>
       </div>
     </div>

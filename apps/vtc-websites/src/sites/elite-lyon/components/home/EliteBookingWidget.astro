@@ -1,37 +1,149 @@
-﻿---
+---
 // src/sites/elite-lyon/components/home/EliteBookingWidget.astro
 ---
 
-<div class='bg-[#151F2B] p-8 rounded-sm w-full shadow-2xl border-t-4 border-[#6185B2]'>
-  <h3 class='font-headline text-2xl font-bold mb-6 text-white uppercase tracking-tighter'>
-    Planifiez votre voyage
-  </h3>
-  <div class='space-y-6'>
-    <div>
-      <label
-        class='block font-label text-[10px] font-bold uppercase mb-2 tracking-[0.2em] text-white/50'
-        >Prise en charge</label
-      >
-      <input
-        class='w-full px-4 py-4 bg-[#151A24] border border-white/10 rounded-none focus:ring-1 focus:ring-[#6185B2]/50 focus:outline-none transition-all font-body text-sm text-white placeholder:text-white/30'
-        placeholder='Aeroport, Gare, Hotel...'
-        type='text'
-      />
-    </div>
-    <div>
-      <label
-        class='block font-label text-[10px] font-bold uppercase mb-2 tracking-[0.2em] text-white/50'
-        >Destination</label
-      >
-      <input
-        class='w-full px-4 py-4 bg-[#151A24] border border-white/10 rounded-none focus:ring-1 focus:ring-[#6185B2]/50 focus:outline-none transition-all font-body text-sm text-white placeholder:text-white/30'
-        placeholder='Ou allez-vous ?'
-        type='text'
-      />
-    </div>
-    <button
-      class='btn-premium w-full py-5 rounded-none font-headline font-bold text-xs uppercase tracking-[0.2em] mt-4 shadow-xl active:scale-[0.98]'>
-      Obtenir un devis
+<div class='bg-[#151F2B] p-6 sm:p-8 rounded-2xl w-full shadow-2xl border border-white/10 border-t-4 border-t-[#6185B2] relative overflow-hidden backdrop-blur-xl font-headline'>
+  
+  <!-- ONGLETS SÉLECTEURS DE SERVICES -->
+  <div class='grid grid-cols-4 gap-1 p-1 bg-[#0B0F15]/60 rounded-xl mb-6 border border-white/10 text-[10px] sm:text-xs font-bold uppercase tracking-wider'>
+    <button type='button' data-service='transfert' class='service-tab active py-2.5 rounded-lg text-center transition-all bg-[#6185B2] text-white shadow-md'>
+      Transfert
+    </button>
+    <button type='button' data-service='availability' class='service-tab py-2.5 rounded-lg text-center transition-all text-white/60 hover:text-white hover:bg-white/5'>
+      Horaires
+    </button>
+    <button type='button' data-service='long-distance' class='service-tab py-2.5 rounded-lg text-center transition-all text-white/60 hover:text-white hover:bg-white/5'>
+      Distance
+    </button>
+    <button type='button' data-service='business' class='service-tab py-2.5 rounded-lg text-center transition-all text-white/60 hover:text-white hover:bg-white/5'>
+      Business
     </button>
   </div>
+
+  <!-- FORMULAIRE ACTIF CONNECTÉ AUX TUNNELS -->
+  <form id='hero-booking-form' action='/tunnels/transfert' method='GET' class='space-y-4'>
+    
+    <!-- FIELD 1 : PRISE EN CHARGE (TOUS SERVICES) -->
+    <div>
+      <label id='lbl-pickup' class='block font-label text-[10px] font-bold uppercase mb-1.5 tracking-[0.2em] text-white/60'>
+        Point de prise en charge
+      </label>
+      <div class='relative'>
+        <div class='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#719DCC]'>
+          <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' />
+            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 11a3 3 0 11-6 0 3 3 0 016 0z' />
+          </svg>
+        </div>
+        <input
+          name='pickup'
+          id='hero-pickup'
+          required
+          class='w-full pl-10 pr-4 py-3.5 bg-[#151A24] border border-white/10 rounded-xl focus:ring-2 focus:ring-[#6185B2]/50 focus:border-[#6185B2] focus:outline-none transition-all font-body text-sm text-white placeholder:text-white/30'
+          placeholder='Aéroport St Exupéry, Gare Part-Dieu...'
+          type='text'
+        />
+      </div>
+    </div>
+
+    <!-- FIELD 2 : DESTINATION (TRANSFERT & LONGUE DISTANCE) -->
+    <div id='container-dropoff'>
+      <label class='block font-label text-[10px] font-bold uppercase mb-1.5 tracking-[0.2em] text-white/60'>
+        Destination
+      </label>
+      <div class='relative'>
+        <div class='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#719DCC]'>
+          <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9' />
+          </svg>
+        </div>
+        <input
+          name='dropoff'
+          id='hero-dropoff'
+          class='w-full pl-10 pr-4 py-3.5 bg-[#151A24] border border-white/10 rounded-xl focus:ring-2 focus:ring-[#6185B2]/50 focus:border-[#6185B2] focus:outline-none transition-all font-body text-sm text-white placeholder:text-white/30'
+          placeholder='Où allez-vous ? (Adresse, Hôtel...)'
+          type='text'
+        />
+      </div>
+    </div>
+
+    <!-- FIELD DURATION : (DURÉE EN HEURES POUR MISE À DISPOSITION) -->
+    <div id='container-hours' class='hidden'>
+      <label class='block font-label text-[10px] font-bold uppercase mb-1.5 tracking-[0.2em] text-white/60'>
+        Durée de réservation
+      </label>
+      <select
+        name='hours'
+        id='hero-hours'
+        class='w-full px-4 py-3.5 bg-[#151A24] border border-white/10 rounded-xl focus:ring-2 focus:ring-[#6185B2]/50 focus:border-[#6185B2] focus:outline-none transition-all font-body text-sm text-white appearance-none cursor-pointer'>
+        <option value='2'>2 Heures (Forfait Urbain)</option>
+        <option value='4'>4 Heures (Demi-Journée)</option>
+        <option value='8' selected>8 Heures (Journée Complète)</option>
+        <option value='12'>12 Heures (Prestige VIP)</option>
+      </select>
+    </div>
+
+    <!-- BOUTON D'ACTION DYNAMIQUE CONNECTÉ AU TUNNEL -->
+    <button
+      type='submit'
+      class='btn-premium w-full py-4 text-xs font-bold uppercase tracking-[0.2em] mt-2 flex items-center justify-center gap-2 text-center shadow-xl active:scale-[0.98] transition-all'>
+      <span id='btn-submit-label'>Calculer mon tarif</span>
+      <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M14 5l7 7m0 0l-7 7m7-7H3' />
+      </svg>
+    </button>
+  </form>
 </div>
+
+<script>
+  // SCRIPT INTERACTIF POUR LES ONGLETS ET INPUTS DYNAMIQUES
+  const tabs = document.querySelectorAll('.service-tab');
+  const form = document.getElementById('hero-booking-form') as HTMLFormElement;
+  const containerDropoff = document.getElementById('container-dropoff');
+  const containerHours = document.getElementById('container-hours');
+  const lblPickup = document.getElementById('lbl-pickup');
+  const btnSubmitLabel = document.getElementById('btn-submit-label');
+  const pickupInput = document.getElementById('hero-pickup') as HTMLInputElement;
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Activer l'onglet visuellement
+      tabs.forEach(t => t.classList.remove('bg-[#6185B2]', 'text-white', 'shadow-md'));
+      tabs.forEach(t => t.classList.add('text-white/60', 'hover:bg-white/5'));
+      tab.classList.add('bg-[#6185B2]', 'text-white', 'shadow-md');
+      tab.classList.remove('text-white/60');
+
+      const service = (tab as HTMLElement).dataset.service;
+
+      if (service === 'transfert') {
+        form.action = '/tunnels/transfert';
+        containerDropoff?.classList.remove('hidden');
+        containerHours?.classList.add('hidden');
+        if (lblPickup) lblPickup.textContent = 'Point de prise en charge';
+        if (pickupInput) pickupInput.placeholder = 'Aéroport St Exupéry, Gare Part-Dieu...';
+        if (btnSubmitLabel) btnSubmitLabel.textContent = 'Calculer mon tarif';
+      } else if (service === 'availability') {
+        form.action = '/tunnels/availability';
+        containerDropoff?.classList.add('hidden');
+        containerHours?.classList.remove('hidden');
+        if (lblPickup) lblPickup.textContent = 'Lieu de prise en charge';
+        if (pickupInput) pickupInput.placeholder = 'Hôtel, Bureau, Adresse...';
+        if (btnSubmitLabel) btnSubmitLabel.textContent = 'Réserver mes heures';
+      } else if (service === 'long-distance') {
+        form.action = '/tunnels/long-distance';
+        containerDropoff?.classList.remove('hidden');
+        containerHours?.classList.add('hidden');
+        if (lblPickup) lblPickup.textContent = 'Ville de départ';
+        if (pickupInput) pickupInput.placeholder = 'Lyon, Annecy, Genève...';
+        if (btnSubmitLabel) btnSubmitLabel.textContent = 'Estimer la longue distance';
+      } else if (service === 'business') {
+        form.action = '/tunnels/business';
+        containerDropoff?.classList.remove('hidden');
+        containerHours?.classList.add('hidden');
+        if (lblPickup) lblPickup.textContent = 'Lieu de congrès ou entreprise';
+        if (pickupInput) pickupInput.placeholder = 'Eurexpo Lyon, Siège social...';
+        if (btnSubmitLabel) btnSubmitLabel.textContent = 'Demander un devis VIP';
+      }
+    });
+  });
+</script>
