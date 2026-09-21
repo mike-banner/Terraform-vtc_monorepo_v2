@@ -1,10 +1,12 @@
-# Règles — drivers-front
+# Règles — vtc-websites (drivers-front)
 
 Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de réservation. **Vitrine passive : aucune logique critique ou financière ne vit ici**, tout est délégué au backoffice. Décision d'architecture : `docs/decisions/drivers-front/0002-resolution-domaine-multi-tenant.md`.
 
+> Conventions transverses (commits sans marque IA, gestion des secrets) : `AGENTS.md` à la racine.
+
 ## Résolution du tenant
 
-- `resolveTenant(host)` mappe le `Host` HTTP → `tenants.primary_domain` → `tenant_id` (middleware, requête Supabase unique par requête SSR).
+- `resolveTenant(host)` mappe le `Host` HTTP → RPC `get_public_tenant` → champs publics du tenant (middleware, requête Supabase unique par requête SSR).
 - Dev local : variable `PUBLIC_SITE` pour forcer le site testé. Preview Cloudflare : alias ou sous-domaine `*.pages.dev`.
 - Toute requête de lecture doit filtrer par le `tenant_id` résolu — pas d'exception.
 
@@ -12,8 +14,10 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 
 | Table | Accès front | Canal |
 |---|---|---|
-| `tenants`, `vehicles`, `pricing_rules`, `local_pages` | Lecture publique | SDK direct |
-| `bookings` | Écriture interdite | Edge Function backoffice uniquement |
+| `tenants` | Champs publics uniquement (`id`, `name`, `logo_url`, `primary_domain`, `phone`, `email`) | RPC `get_public_tenant` — **pas de lecture directe** |
+| `vehicles`, `pricing_rules`, `local_pages` | Lecture publique | SDK direct |
+| `bookings` | Aucune lecture directe. Résultat d'une réservation payée : RPC `get_public_booking_result(session_id)` | RPC / Edge Function backoffice |
+| `customers`, `stripe_events` | Interdit total | — |
 | `transactions` | Interdit total | — |
 
 ## Interdits

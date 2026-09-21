@@ -2,6 +2,8 @@
 
 Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, véhicules, onboarding. Astro SSR + React (îlots interactifs uniquement, `client:load`). Décisions d'architecture : `docs/decisions/ADR-001-monorepo-split-supabase-root.md` (monorepo-wide) et `docs/decisions/backoffice/ADR-*.md`.
 
+> Conventions transverses (commits sans marque IA, gestion des secrets) : `AGENTS.md` à la racine.
+
 ## Fichiers cœur (à lire avant d'y toucher)
 
 | Fichier | Rôle |

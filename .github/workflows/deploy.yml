@@ -5,9 +5,58 @@ on:
     branches:
       - main
       - dev
+  pull_request:
+    branches:
+      - main
+      - dev
 
 jobs:
+  # Garde-fous avant tout déploiement : secrets versionnés + typecheck.
+  # (apps/vtc-backoffice n'est pas encore typecheck-clean : ~17 erreurs
+  # pré-existantes à corriger avant de l'ajouter ici.)
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Refuser les secrets versionnés
+        run: |
+          if git ls-files --error-unmatch apps/vtc-backoffice/.dev.vars >/dev/null 2>&1; then
+            echo "::error file=apps/vtc-backoffice/.dev.vars::Ce fichier contient des secrets et ne doit pas être versionné."
+            exit 1
+          fi
+          if git grep -n -I -E 'sb_secret_[A-Za-z0-9_-]{10,}|SUPABASE_SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[A-Za-z0-9._-]{20,}' -- . ':!*.md' ':!*.example'; then
+            echo "::error::Clé secrète détectée dans un fichier versionné."
+            exit 1
+          fi
+
+      - name: Typecheck vtc-websites
+        run: pnpm --filter @vtc/vtc-websites exec tsc --noEmit
+
+      - name: Typecheck superadmin
+        run: pnpm --filter superadmin exec tsc -b
+
   build-and-deploy:
+    needs: verify
+    # On ne déploie que sur push (pas sur les pull requests).
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     

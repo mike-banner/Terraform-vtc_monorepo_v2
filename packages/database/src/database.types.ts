@@ -1094,6 +1094,7 @@ export type Database = {
           share_fee_rate: number | null
           siren: string | null
           siret: string | null
+          status: string
           stripe_account_id: string | null
           vat_number: string | null
           vat_rate: number | null
@@ -1121,6 +1122,7 @@ export type Database = {
           share_fee_rate?: number | null
           siren?: string | null
           siret?: string | null
+          status?: string
           stripe_account_id?: string | null
           vat_number?: string | null
           vat_rate?: number | null
@@ -1148,6 +1150,7 @@ export type Database = {
           share_fee_rate?: number | null
           siren?: string | null
           siret?: string | null
+          status?: string
           stripe_account_id?: string | null
           vat_number?: string | null
           vat_rate?: number | null
@@ -1635,6 +1638,28 @@ export type Database = {
       get_fiscal_summary: {
         Args: { f_year: number; t_id: string }
         Returns: Json
+      }
+      get_public_booking_result: {
+        Args: { p_session_id: string }
+        Returns: {
+          booking_id: string
+          customer_email: string
+          customer_first_name: string
+          dropoff_address: string
+          pickup_address: string
+          total_amount: number
+        }[]
+      }
+      get_public_tenant: {
+        Args: { p_host: string; p_id?: string }
+        Returns: {
+          email: string
+          id: string
+          logo_url: string
+          name: string
+          phone: string
+          primary_domain: string
+        }[]
       }
       initiate_refund: {
         Args: { p_booking_id: string; p_reason: string }

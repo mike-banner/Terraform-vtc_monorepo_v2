@@ -229,6 +229,9 @@ import "../styles/global.css";
     if (urlParams.get('reason') === 'inactivity' && messageEl) {
         messageEl.textContent = "Vous avez été déconnecté pour inactivité.";
         messageEl.className = "mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center text-xs font-medium text-amber-500";
+    } else if (urlParams.get('reason') === 'suspended' && messageEl) {
+        messageEl.textContent = "Votre entreprise a été suspendue. Contactez le support.";
+        messageEl.className = "mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-center text-xs font-medium text-red-500";
     }
 
     form?.addEventListener("submit", async (e) => {

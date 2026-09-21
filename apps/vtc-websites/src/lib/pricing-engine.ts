@@ -15,7 +15,7 @@ async function findZoneId(address: string, tenantId: string) {
   if (!zones) return null;
 
   // On cherche si un mot-clé (ex: "CDG") est présent dans l'adresse tapée
-  const matchedZone = zones.find((zone) =>
+  const matchedZone = zones.find((zone: { id: string; name: string }) =>
     trimmedAddress.includes(zone.name.trim().toLowerCase()),
   );
 

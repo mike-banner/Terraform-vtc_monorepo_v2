@@ -26,15 +26,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     // 2. Résolution fallback par ID du .env
+    //    La table `tenants` n'est plus lisible par `anon` : on passe par la RPC
+    //    `get_public_tenant` qui n'expose que les colonnes publiques.
     if (!resolvedTenant && tenantId) {
       try {
         const { data, error } = await supabase
-          .from("tenants")
-          .select("*")
-          .eq("id", tenantId)
-          .single();
+          .rpc("get_public_tenant", { p_host: hostname, p_id: tenantId })
+          .maybeSingle();
         if (data) {
           resolvedTenant = data;
+        } else if (error) {
+          console.error("[Middleware] Error resolving tenant by env ID:", error);
         }
       } catch (e) {
         console.error("[Middleware] Error resolving tenant by env ID:", e);
@@ -47,10 +49,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
       resolvedTenant = {
         id: tenantId || "default-id",
         name: "Elite Lyon",
-        primary_domain: "localhost:4321",
-        theme: "luxury",
-        platform_fee_rate: 0.1,
-        created_at: new Date().toISOString(),
+        primary_domain: host,
+        logo_url: null,
       };
     }
 

@@ -141,3 +141,39 @@
 | 5 | Suppression compte RPC | 🟡 Moyenne | Faible |
 | 6 | Headers Cloudflare | 🟡 Moyenne | Faible |
 | 7 | Middleware session | 🟡 Moyenne | Faible |
+
+---
+
+## ✅ Épisode 8 — Durcissement plateforme (audit complet) — *2026-09-22*
+
+**Migrations :** `supabase/migrations/20260921000000_security_hardening.sql`, `supabase/migrations/20260922000000_tenant_status_kill_switch.sql`
+
+**Problèmes corrigés :**
+1. 🔴 **Escalade de privilèges** — `profiles_update_own` (`USING (id = auth.uid())`, sans `WITH CHECK`) permettait à tout utilisateur connecté de s'attribuer `platform_role = 'super_admin'` ou un autre `tenant_id` via PostgREST.
+   → Trigger `prevent_profile_privilege_escalation` (bloque `platform_role` / `tenant_role` / `tenant_id` pour les rôles `anon`/`authenticated`) + policy resserrée.
+2. 🔴 **Aspiration de la base clients** — policies `to anon using (true)` sur `bookings`, `customers`, `stripe_events`, jamais droppées. La clé publishable étant publique, `GET /rest/v1/customers?select=*` exposait tous les clients de tous les tenants.
+   → Policies supprimées, remplacées par la RPC `get_public_booking_result(session_id)` (SECURITY DEFINER, colonnes limitées, clé = session Stripe non devinable).
+3. 🔴 **Fuite d'informations tenant** — `public_read_tenants USING (true)` exposait `stripe_account_id`, `siret`, `vat_number`, adresses…
+   → Remplacée par `get_public_tenant(host | id)` (`id, name, logo_url, primary_domain, phone, email`).
+4. 🔴 **Backdoor superadmin** — allowlist d'emails en dur (`super@admin.com`, `mike.webfree@gmail.com`) dans `apps/superadmin/src/layouts/AdminLayout.tsx`.
+   → Supprimée ; seule source d'autorité : `profiles.platform_role`.
+5. 🔴 **Secrets versionnés** — `apps/vtc-backoffice/.dev.vars` (clé `sb_secret_*`, bypass RLS total) était tracké dans un repo **public**, ainsi que `scratch-tenant.ts` et `schema.json` (dump PostgREST complet).
+   → Untrackés/supprimés, `.dev.vars` ajouté au `.gitignore` (+ `_headers` et garde-fou CI).
+   ⚠️ La clé doit être **rotée** dans le dashboard Supabase (elle reste lisible dans l'historique git).
+6. 🟠 **Kill Switch inopérant** — le superadmin écrivait `tenants.status`, colonne inexistante, sans policy UPDATE.
+   → Colonne `status` + contrainte + policy `tenants_platform_admin_write` (super_admin), et **application réelle** de la suspension dans `apps/vtc-backoffice/src/middleware.ts`.
+7. 🟠 **Webhook Stripe en 401** — `verify_jwt = true` sur `stripe_webhook` alors que Stripe n'envoie pas de JWT (`supabase/config.toml`).
+   → `verify_jwt = false` + suppression du bloc mort `[functions.handle_stripe_webhook]`.
+8. 🟠 **Cookies de session loggés** dans le middleware backoffice, `console.log` du logo.
+   → Retirés.
+9. 🟠 **Aucun header de sécurité sur le site vitrine** → `apps/vtc-websites/public/_headers`.
+10. 🟠 **Écriture silencieusement perdue** — le logo (`settings.astro`) était enregistré par un UPDATE direct depuis le navigateur sans policy.
+    → Route serveur `POST /api/tenant/update-logo` (admin client, scopé au tenant, URL restreinte au bucket public).
+11. 🟡 **CI sans garde-fou** → job `verify` (secrets versionnés + typecheck) requis avant déploiement.
+
+**Restes à traiter :**
+- [ ] **Roter la clé `sb_secret_*`** exposée dans l'historique git (action manuelle, dashboard Supabase).
+- [ ] Restaurer le typecheck de `apps/vtc-backoffice` (~17 erreurs pré-existantes) puis l'ajouter au job `verify`.
+- [ ] Corriger l'import cassé `./database.types` dans `src/lib/supabase/client.ts` (type-only, sans impact runtime, mais prive le client navigateur de tout typage).
+- [ ] Ajouter des tests (aucun test unitaire/intégration : `tsc` + `build` uniquement).
+- [ ] `pricing_rules` reste en lecture publique (by design) ; CSP avec `'unsafe-inline'` requis par les scripts `is:inline` d'Astro.

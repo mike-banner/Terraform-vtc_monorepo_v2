@@ -242,7 +242,6 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
 
             saveLogoBtn.disabled = true;
             saveLogoBtn.innerText = "TÉLÉCHARGEMENT...";
-            console.log("[Logo] Start upload for:", selectedLogoFile.name);
 
             try {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -278,15 +277,16 @@ const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
 
                 const finalUrl = `${publicUrl}?t=${Date.now()}`;
 
-                // 3. Update Tenant
-                const { error: updateError } = await supabase
-                    .from('tenants')
-                    .update({ logo_url: finalUrl })
-                    .eq('id', tid);
+                // 3. Update Tenant — via l'API serveur : aucun UPDATE RLS n'est
+                // ouvert aux utilisateurs tenant sur `tenants`.
+                const res = await fetch('/api/tenant/update-logo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ logo_url: finalUrl }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error ?? 'Erreur serveur');
 
-                if (updateError) throw updateError;
-
-                console.log("[Logo] Success! New URL:", finalUrl);
                 alert("Logo mis à jour avec succès !");
                 window.location.reload();
             } catch (err: any) {

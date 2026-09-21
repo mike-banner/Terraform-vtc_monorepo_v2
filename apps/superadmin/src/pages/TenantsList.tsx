@@ -5,7 +5,7 @@ import { Power, PowerOff, Building } from 'lucide-react';
 interface Tenant {
   id: string;
   name: string;
-  contact_email: string;
+  email: string | null;
   status: string;
   created_at: string;
 }
@@ -42,15 +42,20 @@ export const TenantsList = () => {
 
     if (!window.confirm(confirmMsg)) return;
 
-    const { error } = await supabase
+    // L'écriture est autorisée par la policy `tenants_platform_admin_write`
+    // (super_admin uniquement) — sans elle l'UPDATE passait à 0 ligne.
+    const { data, error } = await supabase
       .from('tenants')
       .update({ status: newStatus })
-      .eq('id', tenantId);
+      .eq('id', tenantId)
+      .select('id');
 
-    if (!error) {
+    // `.select()` est indispensable : un UPDATE filtré par RLS renvoie 0 ligne
+    // SANS erreur — l'UI affichait alors un faux succès.
+    if (!error && data && data.length > 0) {
       setTenants(tenants.map(t => t.id === tenantId ? { ...t, status: newStatus } : t));
     } else {
-      alert("Erreur lors de la modification du statut.");
+      alert("Erreur lors de la modification du statut : " + (error?.message ?? 'droits insuffisants (super_admin requis)'));
     }
   };
 
@@ -100,7 +105,7 @@ export const TenantsList = () => {
                     {tenant.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                    {tenant.contact_email}
+                    {tenant.email ?? '—'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                     {new Date(tenant.created_at).toLocaleDateString('fr-FR')}

@@ -23,9 +23,9 @@ function decodeJwtPayload(accessToken: string): Record<string, any> | null {
 export const onRequest = defineMiddleware(async ({ cookies, request, redirect, locals }, next) => {
   const url = new URL(request.url);
   const path = url.pathname;
-  
-  console.log("---- MIDDLEWARE HIT:", path);
-  console.log("COOKIE HEADER:", request.headers.get('Cookie'));
+
+  // Ne jamais logger `request.headers.get('Cookie')` : les cookies `sb-*`
+  // contiennent les access/refresh tokens de session.
 
   // options par défaut appliquées par setAll — capturées pour pouvoir les répliquer
   // à l'identique lors du re-set explicite du cookie (seul maxAge doit changer).
@@ -65,7 +65,9 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
     error: authError
   } = await supabase.auth.getUser();
 
-  console.log("USER FETCHED:", !!user, "ERROR:", authError?.message);
+  if (authError) {
+    console.error("Auth error:", authError.message);
+  }
 
   // Mapping des types de routes
   const isLoginPage = path === '/login';
@@ -81,7 +83,6 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   // 1. CAS : Utilisateur NON connecté
   if (!user) {
     if (isSaaSRoute && !isAuthPage) {
-      console.log("REDIRECTING TO /login because !user && isSaaSRoute && !isAuthPage");
       return redirect('/login');
     }
     return next();
@@ -169,6 +170,23 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   };
 
   const isHomePage = path === '/';
+
+  // 2bis. Kill Switch plateforme : le superadmin peut suspendre une entreprise
+  // (`tenants.status`, policy `tenants_platform_admin_write`). Sans ce contrôle la
+  // suspension n'était qu'un drapeau en base, sans effet sur l'accès.
+  // Ne concerne jamais les rôles plateforme.
+  if (!profile?.platform_role && profile?.tenant_id && isSaaSRoute) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('status')
+      .eq('id', profile.tenant_id)
+      .maybeSingle();
+
+    if (tenant?.status === 'suspended') {
+      await supabase.auth.signOut();
+      return finish(await redirect('/login?reason=suspended'));
+    }
+  }
 
   // 3. LOGIQUE DE REDIRECTION (Pour connectés sur Login/Dashboard/Apps)
   if (isSaaSRoute || isAuthPage || isHomePage) {

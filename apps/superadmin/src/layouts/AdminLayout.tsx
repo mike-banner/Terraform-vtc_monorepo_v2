@@ -19,7 +19,9 @@ export const AdminLayout = () => {
         .eq('id', user.id)
         .single();
 
-      if (profile?.platform_role === 'super_admin' || user.email === 'super@admin.com' || user.email === 'mike.webfree@gmail.com') {
+      // Seule source d'autorité : platform_role en base (RLS sur profiles).
+      // Ne jamais ajouter d'allowlist d'emails en dur ici : c'est une backdoor.
+      if (profile?.platform_role === 'super_admin' || profile?.platform_role === 'platform_staff') {
         setIsSuperAdmin(true);
       } else {
         alert("Accès refusé : Vous n'êtes pas Super Admin.");

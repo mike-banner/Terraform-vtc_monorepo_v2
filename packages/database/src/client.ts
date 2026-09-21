@@ -1,7 +1,12 @@
-import { createClient as createSupabaseClient, SupabaseClientOptions } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClientOptions } from "@supabase/supabase-js";
 import { createServerClient as createSsrServerClient, createBrowserClient as createSsrBrowserClient } from "@supabase/ssr";
 import type { Database } from "./database.types";
 import ws from "ws";
+
+// Le constructeur de `ws` n'a pas exactement la signature attendue par
+// supabase-js (WebSocketLikeConstructor) : le cast est nécessaire, pas cosmétique.
+const wsTransport = ws as unknown as NonNullable<SupabaseClientOptions<"public">["realtime"]>["transport"];
 
 export function createClient(
   supabaseUrl: string,
@@ -11,7 +16,7 @@ export function createClient(
   return createSupabaseClient<Database>(supabaseUrl, supabaseKey, {
     ...options,
     realtime: {
-      transport: ws,
+      transport: wsTransport,
       ...options?.realtime,
     },
   });
@@ -25,7 +30,7 @@ export function createServerClient<T = any>(
   return createSsrServerClient<T>(supabaseUrl, supabaseKey, {
     ...options,
     realtime: {
-      transport: ws,
+      transport: wsTransport,
       ...options?.realtime,
     },
   });
