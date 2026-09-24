@@ -24,7 +24,7 @@ if (tenant.setup_completed) return Astro.redirect("/app/dashboard");
 if (Astro.request.method === "POST") {
     try {
         const body = await Astro.request.json();
-        const adminClient = createAdminClient();
+        const adminClient = createAdminClient(Astro.locals);
 
         const { legal, vehicle, pricing } = body;
 

@@ -3,7 +3,7 @@
 import MainLayout from '../../layouts/MainLayout.astro';
 import { createAdminClient } from '../../lib/supabase/server';
 
-const supabaseAdmin = createAdminClient();
+const supabaseAdmin = createAdminClient(Astro.locals);
 
 const { id } = Astro.params;
 

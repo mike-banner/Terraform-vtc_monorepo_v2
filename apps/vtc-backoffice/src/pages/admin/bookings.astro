@@ -8,12 +8,10 @@ const { profile } = Astro.locals;
 
 // 1. Sécurité : Vérification plateforme
 try {
-  await requirePlatformAdmin(profile);
+  await requirePlatformAdmin(profile, Astro.locals);
 } catch {
   return Astro.redirect("/login");
-}
-
-const supabaseAdmin = createAdminClient();
+}  const supabaseAdmin = createAdminClient(Astro.locals);
 
 // 2. Paramètres de pagination et filtres
 const PAGE_SIZE = 25;

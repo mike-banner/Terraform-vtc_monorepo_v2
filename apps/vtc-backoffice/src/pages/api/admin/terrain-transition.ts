@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const { profile } = locals as any;
     try {
-      await requirePlatformAdmin(profile);
+      await requirePlatformAdmin(profile, locals);
     } catch {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
@@ -53,7 +53,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return jsonResponse({ error: "Invalid payload" }, 400);
     }
 
-    const supabaseAdmin = createAdminClient();
+    const supabaseAdmin = createAdminClient(locals);
 
     const { data: booking, error: fetchError } = await supabaseAdmin
       .from("bookings")

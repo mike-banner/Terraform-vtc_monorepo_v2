@@ -3,12 +3,15 @@ import { createAdminClient } from "../supabase/server";
 
 const PLATFORM_ROLES = ["super_admin", "platform_staff"];
 
-export async function requirePlatformAdmin(profile: any) {
+export async function requirePlatformAdmin(
+  profile: any,
+  locals?: App.Locals | Record<string, unknown>,
+) {
   if (!profile?.id) {
     throw new Error("Unauthorized");
   }
 
-  const supabaseAdmin = createAdminClient();
+  const supabaseAdmin = createAdminClient(locals);
 
   const { data, error } = await supabaseAdmin
     .from("profiles")

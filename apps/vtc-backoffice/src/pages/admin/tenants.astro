@@ -8,12 +8,10 @@ const { profile } = Astro.locals;
 
 // Protection d'accès plateforme
 try {
-  await requirePlatformAdmin(profile);
+  await requirePlatformAdmin(profile, Astro.locals);
 } catch {
   return Astro.redirect("/login");
-}
-
-const supabaseAdmin = createAdminClient();
+}  const supabaseAdmin = createAdminClient(Astro.locals);
 
 // Récupération via la vue agrégée Ledger
 const { data: tenants, error } = await supabaseAdmin

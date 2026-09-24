@@ -9,12 +9,10 @@ const { profile } = Astro.locals;
 
 // Protection d'accès plateforme
 try {
-  await requirePlatformAdmin(profile);
+  await requirePlatformAdmin(profile, Astro.locals);
 } catch {
   return Astro.redirect("/login");
-}
-
-const supabaseAdmin = createAdminClient();
+}  const supabaseAdmin = createAdminClient(Astro.locals);
 
 const { data: errors, error: fetchError } = await supabaseAdmin
     .from("stripe_webhook_errors")

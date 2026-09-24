@@ -8,12 +8,10 @@ const { profile } = Astro.locals as any;
 
 // Protection d'accès plateforme
 try {
-  await requirePlatformAdmin(profile);
+  await requirePlatformAdmin(profile, Astro.locals);
 } catch {
   return Astro.redirect("/login");
-}
-
-const supabaseAdmin = createAdminClient();
+}  const supabaseAdmin = createAdminClient(Astro.locals);
 
 // Récupérer les demandes d'onboarding via la vue jointe (onboarding + auth.users)
 const { data: onboardings, error } = await supabaseAdmin

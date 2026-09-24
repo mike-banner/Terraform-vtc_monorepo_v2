@@ -2,8 +2,8 @@
 import type { APIRoute } from 'astro';
 import { createAdminClient } from '../../lib/supabase/server';
 
-export const POST: APIRoute = async ({ request }) => {
-  const supabaseAdmin = createAdminClient();
+export const POST: APIRoute = async ({ request, locals }) => {
+  const supabaseAdmin = createAdminClient(locals);
   try {
     const body = await request.json();
     const { bookingId } = body;

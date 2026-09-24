@@ -8,12 +8,10 @@ const { profile } = Astro.locals;
 
 // Protection
 try {
-  await requirePlatformAdmin(profile);
+  await requirePlatformAdmin(profile, Astro.locals);
 } catch {
   return Astro.redirect("/login");
-}
-
-const supabaseAdmin = createAdminClient();
+}  const supabaseAdmin = createAdminClient(Astro.locals);
 let message = "";
 let errorMsg = "";
 
