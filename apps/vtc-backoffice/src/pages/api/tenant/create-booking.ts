@@ -81,7 +81,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const tenantId = profile.tenant_id;
 
     // 2️⃣ Chercher customer existant
-    let { data: existingCustomer } = await supabase
+    const { data: existingCustomer } = await supabase
       .from("customers")
       .select("id")
       .eq("tenant_id", tenantId)

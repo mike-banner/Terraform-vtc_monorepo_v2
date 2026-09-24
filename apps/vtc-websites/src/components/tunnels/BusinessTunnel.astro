@@ -254,7 +254,7 @@ const { ...props } = Astro.props;
         // --- Préparation des notes pour le chauffeur ---
         const eventName = formData.get('eventName');
         const specialNotes = formData.get('specialNotes');
-        let driverInstructions = [];
+        const driverInstructions = [];
         if (eventName) driverInstructions.push(`Événement : ${eventName}`);
         if (specialNotes) driverInstructions.push(`Notes : ${specialNotes}`);
         

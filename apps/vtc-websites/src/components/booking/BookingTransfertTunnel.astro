@@ -464,7 +464,7 @@ import { calculateTripPrice } from "../../lib/pricing-engine";
   }
 
   // --- LOGIQUE PRIX ---
-  let priceTimeout: any = null;
+  const priceTimeout: any = null;
 
   function togglePreciseInputs() {
     if (!dom.pickup || !dom.pickupPrecise || !dom.destination || !dom.destinationPrecise) return;

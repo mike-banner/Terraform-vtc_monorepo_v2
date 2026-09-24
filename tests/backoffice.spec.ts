@@ -19,8 +19,8 @@ test.beforeAll(() => {
 });
 
 test.describe.serial('Backoffice E2E Flow', () => {
-  let testEmail = `e2e-test-${Date.now()}@vtc.com`;
-  let testPassword = 'Password123!';
+  const testEmail = `e2e-test-${Date.now()}@vtc.com`;
+  const testPassword = 'Password123!';
   let userId: string;
   let tenantId: string;
 

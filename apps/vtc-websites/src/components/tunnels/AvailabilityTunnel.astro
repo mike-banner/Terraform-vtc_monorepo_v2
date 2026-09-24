@@ -292,12 +292,12 @@ const { ...props } = Astro.props;
         manager.setLoading(true, 'Envoi de la demande...');
         
         // --- Préparation des notes pour le chauffeur ---
-        let finalNotes = formData.get('specialNotes')?.toString() || '';
+        const finalNotes = formData.get('specialNotes')?.toString() || '';
         const isTranslator = formData.get('optionTranslator');
         const isTourGuide = formData.get('optionTourGuide');
         const itinerary = formData.get('plannedItinerary');
         
-        let driverInstructions = [];
+        const driverInstructions = [];
         if (itinerary) driverInstructions.push(`Itinéraire : ${itinerary}`);
         if (isTranslator) driverInstructions.push(`Option : Traducteur/Interprète requise`);
         if (isTourGuide) driverInstructions.push(`Option : Guide Touristique requise`);

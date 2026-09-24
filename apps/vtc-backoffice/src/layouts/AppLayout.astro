@@ -65,7 +65,7 @@ const tenantName = tenant?.name || "VTC HUB";
         <script is:inline>
         (function () {
             function setAppHeight() {
-                var h = window.innerHeight + 'px';
+                const h = window.innerHeight + 'px';
                 document.documentElement.style.setProperty('--app-h', h);
                 /* Inline style takes priority over any stylesheet cascade issue */
                 document.documentElement.style.height = h;
@@ -76,7 +76,7 @@ const tenantName = tenant?.name || "VTC HUB";
             window.addEventListener('orientationchange', setAppHeight, { passive: true });
             /* Set body once it's available */
             document.addEventListener('DOMContentLoaded', function () {
-                var h = window.innerHeight + 'px';
+                const h = window.innerHeight + 'px';
                 document.body.style.height = h;
                 document.body.style.overflow = 'hidden';
             }, { once: true });
