@@ -1,5 +1,5 @@
 import { createBrowserClient } from "@vtc/database";
-import type { Database } from "./database.types";
+import type { Database } from "@vtc/database";
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY!;

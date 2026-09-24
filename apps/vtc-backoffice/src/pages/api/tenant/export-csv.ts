@@ -1,6 +1,7 @@
 // src/pages/api/tenant/export-csv.ts
 import { createServerClient } from '@vtc/database';
 import { parseCookieHeader } from '@supabase/ssr';
+import type { CookieOptions } from '@supabase/ssr';
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
@@ -19,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
             name: c.name,
             value: c.value ?? '',
           })),
-        setAll: (cookiesToSet) =>
+        setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) =>
           cookiesToSet.forEach(({ name, value, options }) =>
             cookies.set(name, value, options)
           ),

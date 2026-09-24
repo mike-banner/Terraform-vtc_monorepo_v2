@@ -36,7 +36,7 @@ Une facture est un **document fiscal obligatoire** dès que la prestation est r�
 - Accessible via `bookings.invoice_url` (URL hébergée Stripe)
 - Référencée dans `bookings.invoice_number` avec le préfixe `FAC-`
 
-**⚠️ Bug connu — numérotation non séquentielle** : le format actuel `FAC-YYYYMMDD-{id_court}` n'est pas conforme. À corriger avec un compteur séquentiel par tenant + année en base de données (voir section 4).
+**Numérotation séquentielle** : le numéro est généré par la RPC `next_invoice_number(tenant_id, year)` — compteur par tenant et par année, format `FAC-YYYY-0001` (voir section 4). Conforme à l'art. L441-3 : sans rupture ni réutilisation.
 
 ---
 
@@ -120,11 +120,15 @@ Exemple avec `fiscal_year_start_month = 7` (juillet) :
 
 ---
 
-## 4. ⚠️ Numérotation Séquentielle (À implémenter)
+## 4. ✅ Numérotation Séquentielle (Implémentée)
 
-La numérotation actuelle `FAC-YYYYMMDD-{id_court}` n'est pas conforme à l'art. L441-3.
+La numérotation suit l'art. L441-3 : compteur séquentiel par tenant et par année, sans rupture ni réutilisation.
 
-**Migration à créer :**
+**Migrations :**
+- `supabase/migrations/20260629000004_invoice_sequences.sql` — table `invoice_sequences` + fonction `next_invoice_number`
+- `supabase/migrations/20260729221600_enable_rls_invoice_sequences.sql` — RLS activé, accès restreint au `service_role`
+
+**Schéma :**
 ```sql
 -- Compteur séquentiel par tenant et par année
 CREATE TABLE invoice_sequences (

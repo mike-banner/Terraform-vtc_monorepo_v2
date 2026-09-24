@@ -39,7 +39,7 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 ## Facturation (voir `docs/BILLING.md`)
 
 - Devis (`DEV-`) = aucune valeur fiscale, annulable librement. Facture (`FAC-`) émise = non annulable, toute correction passe par un avoir Stripe (`creditNotes`).
-- Numérotation facture actuelle (`FAC-YYYYMMDD-{id_court}`) non conforme art. L441-3 — ne pas reproduire ce format ailleurs ; corriger via compteur séquentiel par tenant/année si on retouche `generate-invoice`.
+- Numérotation facture : compteur séquentiel par tenant/année via RPC `next_invoice_number` (`FAC-YYYY-0001`, art. L441-3) — ne jamais générer de numéro `FAC-` autrement.
 - Annulation après paiement : jamais de suppression de facture Stripe — avoir + mouvement `refund` (`debit`) dans `financial_movements`.
 - E-invoicing (Factur-X) obligatoire pour TPE/micro-entrepreneurs à partir de 09/2027 — Stripe seul n'est pas une PDP agréée.
 - Prix grille = TTC, jamais HT+TVA ajoutée par-dessus. Forme juridique pilote `is_vat_exempt`/`vat_rate` via triggers (`trg_set_tenant_vat_on_insert`, `trg_sync_tenant_vat`).

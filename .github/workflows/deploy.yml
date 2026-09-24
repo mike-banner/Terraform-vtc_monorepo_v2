@@ -12,8 +12,6 @@ on:
 
 jobs:
   # Garde-fous avant tout déploiement : secrets versionnés + typecheck.
-  # (apps/vtc-backoffice n'est pas encore typecheck-clean : ~17 erreurs
-  # pré-existantes à corriger avant de l'ajouter ici.)
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -49,6 +47,9 @@ jobs:
 
       - name: Typecheck vtc-websites
         run: pnpm --filter @vtc/vtc-websites exec tsc --noEmit
+
+      - name: Typecheck vtc-backoffice
+        run: pnpm --filter @vtc/vtc-backoffice exec tsc --noEmit
 
       - name: Typecheck superadmin
         run: pnpm --filter superadmin exec tsc -b

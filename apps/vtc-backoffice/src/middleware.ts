@@ -100,13 +100,19 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
 
   const claims = session?.access_token ? decodeJwtPayload(session.access_token) : null;
 
-  let profile: { platform_role: any; tenant_role: any; tenant_id: any } | null = null;
+  let profile: App.Locals["profile"] = null;
 
   if (claims && (claims.tenant_role !== undefined || claims.platform_role !== undefined)) {
+    // Les claims du hook (10-01) ne portent que les rôles : id/first_name/last_name
+    // viennent de l'utilisateur authentifié (id) ou restent null (jamais utilisés
+    // dans ce chemin — setup.astro lit profile.first_name via `|| ''`).
     profile = {
+      id: user.id,
       platform_role: claims.platform_role ?? null,
       tenant_role: claims.tenant_role ?? null,
       tenant_id: claims.tenant_id ?? null,
+      first_name: claims.first_name ?? null,
+      last_name: claims.last_name ?? null,
     };
   } else {
     // ponytail: fallback pour les sessions émises avant l'activation du hook — une seule

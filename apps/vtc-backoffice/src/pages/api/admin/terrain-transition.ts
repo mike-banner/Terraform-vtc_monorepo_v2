@@ -1,5 +1,6 @@
 // /home/mike/projects/vtc/vtc_mvp/src/pages/api/admin/terrain-transition.ts
 import type { APIRoute } from "astro";
+import type { Database } from "@vtc/database";
 import { requirePlatformAdmin } from "../../../lib/guards/platform";
 import { createAdminClient } from "../../../lib/supabase/server";
 
@@ -92,7 +93,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const alreadyMarked = currentNotes.includes(`[terrain] ${TERRAIN_TAGS[action]}=`);
     const nextNotes = alreadyMarked ? currentNotes : `${currentNotes}${currentNotes ? "\n" : ""}${marker}`;
 
-    const updatePayload: Record<string, unknown> = {
+    const updatePayload: Database["public"]["Tables"]["bookings"]["Update"] = {
       mission_note: nextNotes,
     };
 

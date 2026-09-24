@@ -173,7 +173,7 @@
 
 **Restes à traiter :**
 - [ ] **Roter la clé `sb_secret_*`** exposée dans l'historique git (action manuelle, dashboard Supabase).
-- [ ] Restaurer le typecheck de `apps/vtc-backoffice` (~17 erreurs pré-existantes) puis l'ajouter au job `verify`.
-- [ ] Corriger l'import cassé `./database.types` dans `src/lib/supabase/client.ts` (type-only, sans impact runtime, mais prive le client navigateur de tout typage).
+- [x] Restaurer le typecheck de `apps/vtc-backoffice` (16 erreurs pré-existantes corrigées) puis l'ajouter au job `verify` (deploy.yml + script `pnpm --filter @vtc/vtc-backoffice typecheck`).
+- [x] Corriger l'import cassé `./database.types` dans `src/lib/supabase/client.ts` → `import type { Database } from "@vtc/database"`.
 - [ ] Ajouter des tests (aucun test unitaire/intégration : `tsc` + `build` uniquement).
 - [ ] `pricing_rules` reste en lecture publique (by design) ; CSP avec `'unsafe-inline'` requis par les scripts `is:inline` d'Astro.

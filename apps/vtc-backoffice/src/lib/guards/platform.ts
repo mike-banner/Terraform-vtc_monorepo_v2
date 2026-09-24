@@ -16,7 +16,7 @@ export async function requirePlatformAdmin(profile: any) {
     .eq("id", profile.id)
     .maybeSingle();
 
-  if (error || !data || !PLATFORM_ROLES.includes(data.platform_role)) {
+  if (error || !data?.platform_role || !PLATFORM_ROLES.includes(data.platform_role)) {
     throw new Error("Unauthorized");
   }
 

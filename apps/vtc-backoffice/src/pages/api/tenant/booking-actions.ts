@@ -2,6 +2,7 @@
 // Actions exclusives chauffeur pré-mission : annulation (avec motif) + modification horaires/adresses.
 // La Edge Function cancel-booking gère le remboursement Stripe côté admin/plateforme.
 import type { APIRoute } from "astro";
+import type { Database } from "@vtc/database";
 import { calculatePrice, findPricingRule } from "@/lib/pricing";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -125,7 +126,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       }
 
-      const updatePayload: Record<string, unknown> = {
+      const updatePayload: Database["public"]["Tables"]["bookings"]["Update"] = {
         pickup_time,
         pickup_address,
         total_amount: newTotal,
