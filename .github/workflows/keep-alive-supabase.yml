@@ -27,8 +27,12 @@ jobs:
             exit 1
           fi
           
+          # Sanitisation : retire espaces/newlines éventuels (copier-coller),
+          # sinon curl échoue en code 3 (URL malformée).
+          CLEAN_URL="$(printf '%s' "$SUPABASE_URL" | tr -d '[:space:]')"
+          ANON_KEY="$(printf '%s' "$SUPABASE_ANON_KEY" | tr -d '[:space:]')"
           # Nettoyage de l'URL (suppression du slash final éventuel)
-          CLEAN_URL="${SUPABASE_URL%/}"
+          CLEAN_URL="${CLEAN_URL%/}"
           
           # Désactiver temporairement 'set -e' si c'est activé par défaut par GitHub Actions,
           # pour pouvoir capturer le code d'erreur de curl
@@ -37,8 +41,8 @@ jobs:
           # /rest/v1/ exige désormais la clé secret_role. /storage/v1/status fonctionne avec la clé ANON et réveille la DB.
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -X GET "$CLEAN_URL/storage/v1/status" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+            -H "apikey: $ANON_KEY" \
+            -H "Authorization: Bearer $ANON_KEY")
           CURL_EXIT_CODE=$?
           
           set -e
