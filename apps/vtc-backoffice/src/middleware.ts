@@ -32,7 +32,12 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   // path: '/' fixé dès le départ : si setAll ne tourne pas dans cette requête (token pas
   // près d'expirer), un re-set sans path explicite créait un second cookie sur un path
   // différent du path='/' posé au login — collision de cookies homonymes détectée en prod.
-  let defaultCookieOptions: Record<string, any> = { path: '/' };
+  // secure: actif en https (prod), désactivé en http local — sinon le re-set de
+  // applySessionMaxAge perdrait l'attribut Secure posé par setAll.
+  let defaultCookieOptions: Record<string, any> = {
+    path: '/',
+    secure: url.protocol !== 'http:',
+  };
 
   // Initialisation Supabase (SSR)
   const supabase = createServerClient(
@@ -48,10 +53,10 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
         setAll: (cookiesToSet: any[]) =>
           cookiesToSet.forEach(({ name, value, options }) => {
             const safeOptions = { ...options };
+            // Secure : forcé selon le protocole — @supabase/ssr ne pose pas l'attribut
+            // Secure par défaut, les cookies de session partaient sans en prod.
             // En local (http), forcer secure à false pour éviter que le navigateur rejette le cookie
-            if (url.protocol === 'http:') {
-              safeOptions.secure = false;
-            }
+            safeOptions.secure = url.protocol !== 'http:';
             defaultCookieOptions = safeOptions as any;
             cookies.set(name, value, safeOptions as any);
           }),

@@ -113,7 +113,7 @@
 
 ---
 
-## Épisode 7 — Middleware & Session : Surface d'Attaque Résiduelle
+## ✅ Épisode 7 — Middleware & Session : Surface d'Attaque Résiduelle — *2026-09-24*
 
 **Fichier :** `src/middleware.ts`
 
@@ -123,10 +123,12 @@
 - Les redirections dans le middleware (`/signup?edit=true`) pourraient être exploitées pour des redirections ouvertes si le paramètre `edit` est utilisé pour construire une URL.
 
 **Actions :**
-- [ ] Confirmer que le paramètre `?edit=true` ne construit pas une URL de redirect dynamique (vérification lecture du code).
-- [ ] S'assurer que `getUser()` est utilisé (vérifie le JWT en remote) et non `getSession()` (local uniquement, plus falsifiable).
-- [ ] Vérifier que le cookie de session est configuré `HttpOnly; Secure; SameSite=Strict` dans les options Supabase Auth.
-- [ ] S'assurer que la déconnexion révoque le JWT côté Supabase (pas juste un clear de cookie local).
+- [x] `?edit=true` vérifié par lecture du code : uniquement une comparaison booléenne (`searchParams.get('edit') === 'true'`) pour choisir la cible — toutes les redirections du middleware sont des chemins hardcodés (`/waiting-approval`, `/signup`, `/app/dashboard`, `/`, `/login`). Aucun open redirect.
+- [x] `getUser()` (remote, vérifie le JWT) est bien l'unique gate d'authentification (middleware L66). `getSession()` (L99) sert uniquement à décoder les claims de rôles **après** validation — même storage cookie dans la même requête, le token décodé est celui que `getUser()` vient de prouver.
+- [x] Cookies : `Secure` **manquait en prod** — `@supabase/ssr` ne pose pas l'attribut par défaut (`DEFAULT_COOKIE_OPTIONS` : `sameSite: lax`, `httpOnly: false`, pas de `secure`) → forcé selon le protocole dans `setAll` + dans `defaultCookieOptions` du re-set `applySessionMaxAge`.
+  - `HttpOnly` : **non applicable** — le browser client (`createBrowserClient`) lit les cookies via `document.cookie` ; l'activer casserait tout client auth côté navigateur (signOut, getUser de settings). Mitigation : CSP dans `public/_headers` (Épisode 6).
+  - `SameSite=Lax` conservé (défaut Supabase) : `Strict` casserait les accès par liens externes (emails facture → `/app/...`). `Lax` bloque déjà tout envoi de cookie en POST cross-site (CSRF).
+- [x] Déconnexion : les 8 call sites appellent `await supabase.auth.signOut()` — scope `global` par défaut → révocation **serveur** de tous les refresh tokens (GoTrue `POST /logout?scope=global`), pas juste un clear local. Résidu connu : l'access token volé reste valide jusqu'à expiration (défaut 1h) — inherent aux JWT, noté.
 
 ---
 
