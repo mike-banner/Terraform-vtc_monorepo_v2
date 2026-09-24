@@ -40,7 +40,7 @@ jobs:
             echo "::error file=apps/vtc-backoffice/.dev.vars::Ce fichier contient des secrets et ne doit pas être versionné."
             exit 1
           fi
-          if git grep -n -I -E 'sb_secret_[A-Za-z0-9_-]{10,}|SUPABASE_SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[A-Za-z0-9._-]{20,}' -- . ':!*.md' ':!*.example'; then
+          if git grep -n -I -E 'sb_secret_[A-Za-z0-9_-]{10,}|SUPABASE_SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[A-Za-z0-9_-]{20,}' -- . ':!*.md' ':!*.example'; then
             echo "::error::Clé secrète détectée dans un fichier versionné."
             exit 1
           fi
