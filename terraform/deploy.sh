@@ -28,6 +28,13 @@ for VAR in \
   SUPABASE_ACCESS_TOKEN \
   TF_VAR_supabase_access_token \
   TF_VAR_cloudflare_api_token \
+  TF_VAR_cloudflare_account_id \
+  TF_VAR_supabase_url \
+  TF_VAR_supabase_anon_key \
+  TF_VAR_supabase_service_role_key \
+  TF_VAR_stripe_secret_key \
+  TF_VAR_stripe_webhook_secret \
+  TF_VAR_resend_api_key \
   TF_VAR_supabase_db_password; do
   if [ -z "${!VAR:-}" ]; then
     MISSING_VARS+=("$VAR")
@@ -91,10 +98,18 @@ echo ""
 echo "🗄️  Déploiement des migrations (supabase db push)..."
 supabase db push
 
-# --- 9. Edge function --------------------------------------------------------
+# --- 9. Edge functions --------------------------------------------------------
 echo ""
-echo "⚡ Déploiement de la edge function stripe-webhook..."
-supabase functions deploy stripe-webhook --project-ref "$PROJECT_REF"
+echo "⚡ Déploiement de TOUTES les Edge Functions..."
+# _shared est un dossier de helpers (templates email), pas une fonction.
+# Le nom vient du dossier : stripe_webhook (underscore) — l'ancien nom
+# "stripe-webhook" (tiret) n'existait pas et faisait échouer cette étape.
+for FN_DIR in "$(dirname "$0")"/../supabase/functions/*/; do
+  FN_NAME="$(basename "$FN_DIR")"
+  [ "$FN_NAME" = "_shared" ] && continue
+  echo "   → $FN_NAME"
+  supabase functions deploy "$FN_NAME" --project-ref "$PROJECT_REF"
+done
 
 # --- 10. Message final -------------------------------------------------------
 echo ""

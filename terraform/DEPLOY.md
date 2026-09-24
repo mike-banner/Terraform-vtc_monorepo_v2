@@ -23,6 +23,7 @@ Exportez ces variables dans votre shell (ou dans votre pipeline CI) avant de lan
 | `TF_VAR_supabase_access_token` | Identique à `SUPABASE_ACCESS_TOKEN` (requis par le provider Terraform) |
 | `TF_VAR_cloudflare_api_token` | Dashboard Cloudflare → My Profile → API Tokens (droits Edit sur Pages) |
 | `TF_VAR_supabase_db_password` | Mot de passe de la base de données Supabase (à générer) |
+| `TF_VAR_supabase_service_role_key` | Dashboard Supabase → Settings → API → `service_role` (commence par `sb_secret_`) — injectée dans les apps Cloudflare Pages |
 | `TF_VAR_supabase_organization_id` | Dashboard Supabase → Organization Settings → Organization Slug |
 | `TF_VAR_cloudflare_account_id` | Dashboard Cloudflare → visible dans l'URL (format `account/<id>`) |
 | `TF_VAR_environment` | Nom d'environnement (ex : `production`, `staging`) |
@@ -36,6 +37,7 @@ export SUPABASE_ACCESS_TOKEN="sbp_..."
 export TF_VAR_supabase_access_token="$SUPABASE_ACCESS_TOKEN"
 export TF_VAR_cloudflare_api_token="..."
 export TF_VAR_supabase_db_password="..."
+export TF_VAR_supabase_service_role_key="sb_secret_..."
 export TF_VAR_supabase_organization_id="..."
 export TF_VAR_cloudflare_account_id="..."
 export TF_VAR_environment="production"
@@ -59,7 +61,7 @@ cd terraform
 5. `terraform output -raw supabase_project_ref` — récupère le project ref
 6. `supabase link --project-ref <ref>` — liaison du CLI au projet
 7. `supabase db push` — application des migrations (intégration Phase 3)
-8. `supabase functions deploy stripe-webhook` — déploiement de la edge function (intégration Phase 4)
+8. `supabase functions deploy <fn>` — déploiement de **toutes** les Edge Functions (`stripe_webhook`, `send-email`, `generate-devis`, `generate-invoice`, `delete-tenant-account` — boucle dans `deploy.sh`, dossier `_shared` exclu)
 9. Affichage de l'URL live (`https://<sous-domaine>.pages.dev`)
 
 Le `site_url` est câblé **automatiquement** au sous-domaine Cloudflare Pages lors de cet apply unique — aucune intervention manuelle requise pour le cas par défaut.
@@ -111,6 +113,17 @@ supabase secrets set --project-ref <PROJECT_REF> \
 | `STRIPE_WEBHOOK_SECRET` | Dashboard Stripe → Developers → Webhooks → (endpoint) → Signing secret |
 
 > `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` sont injectés automatiquement par Supabase dans toutes les edge functions — pas besoin de les définir manuellement.
+
+### Rotation de `SUPABASE_SERVICE_ROLE_KEY` (runbook)
+
+La clé lit 4 endroits — les 4 à mettre à jour dans l'ordre :
+
+1. **Secret GitHub** `SUPABASE_SERVICE_ROLE_KEY` (repo → Settings → Secrets) → alimente `TF_VAR_supabase_service_role_key` du workflow Terraform CI
+2. **`.env` locaux** : `.env` (racine), `apps/vtc-backoffice/.env`, `apps/vtc-backoffice/.dev.vars`, `apps/superadmin/.env`
+3. **`terraform apply`** (relancer, pousse la nouvelle valeur dans les 3 projets Cloudflare Pages)
+4. Les Edge Functions Supabase : rien à faire (injection automatique par la plateforme)
+
+> Le dashboard Cloudflare n'est **plus** à toucher : depuis le patch Terraform, `SUPABASE_SERVICE_ROLE_KEY` fait partie de `common_env_vars` et un `terraform apply` suivant la rotation suffit (ensuite redeploy les apps via le workflow deploy).
 
 Pour enregistrer l'endpoint webhook sur Stripe, pointez sur :
 ```

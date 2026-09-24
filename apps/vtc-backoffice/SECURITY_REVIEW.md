@@ -70,10 +70,10 @@
 - Si une route qui utilise l'admin client n'a pas de guard applicatif strict, les politiques RLS de Supabase sont contournées.
 
 **Actions :**
-- [ ] Inventorier tous les fichiers qui appellent `createAdminClient()` — lister chacun et vérifier que le guard est en amont.
+- [x] Inventorier tous les fichiers qui appellent `createAdminClient()` (2026-09-24) : 16 call sites — 7 pages `/admin/*` (guard `requirePlatformAdmin` en amont ✅), `setup.astro` (profil requis ✅), `rate/[id]` (session Stripe non devinable, lectures seulement ✅), `guards/platform.ts` (dans le guard ✅), `api/admin/*` (guard ✅), `api/tenant/*` + `submit-rating` (session/auth en amont ✅). Tous passent désormais `locals` pour lire `runtime.env`.
 - [ ] `create-booking.ts` : le montant `manual_total` est accepté sans validation (peut être 0, négatif, ou string). Ajouter validation `parseFloat > 0`.
 - [ ] Remplacer l'admin client par le client authentifié utilisateur quand le RLS suffit.
-- [ ] S'assurer que `SUPABASE_SERVICE_ROLE_KEY` n'est **jamais** dans le bundle client (Vite ne doit pas l'exposer via `import.meta.env.PUBLIC_*`).
+- [x] `SUPABASE_SERVICE_ROLE_KEY` absente du bundle client — vérifié sur `dist/` après build : 0 occurrence dans les assets servis au navigateur (le worker SSR n'est jamais servi comme module client) ; la variable n'a pas de préfixe `PUBLIC_`/`VITE_`, Vite ne l'expose pas.
 
 ---
 
@@ -175,7 +175,8 @@
 
 **Restes à traiter :**
 - [x] **Roter la clé `sb_secret_*`** (2026-09-24) : rotation effectuée et **vérifiée par requête** — ancienne clé → HTTP 401 (révoquée), nouvelle → HTTP 200. Valeur propagée dans les 4 fichiers locaux (`.env` racine, `apps/vtc-backoffice/.env`, `.dev.vars`, `apps/superadmin/.env`). La copie restant dans l'historique git est morte : purge d'histoire non nécessaire.
-- [ ] Cloudflare Pages : mettre à jour `SUPABASE_SERVICE_ROLE_KEY` dans Environment variables (`vtc-backoffice-*`, `vtc-superadmin-*`) puis redeploy — à confirmer.
+- [x] `SUPABASE_SERVICE_ROLE_KEY` injectée dans les 3 projets Cloudflare Pages **via Terraform** (`common_env_vars`, variable `sensitive` ajoutée à `terraform/variables.tf` + `TF_VAR_supabase_service_role_key` depuis le secret GitHub `SUPABASE_SERVICE_ROLE_KEY`) — le dashboard n'est plus la source : la rotation se fait par secret GitHub → `terraform apply` → redeploy (runbook dans `terraform/DEPLOY.md`).
+- [x] **Incident 500 en prod** (constaté le 2026-09-24 : `/rate/` et `/api/submit-rating` → 500 sur `production` **et** `dev`) : `createAdminClient()` sans `locals` tombait sur `import.meta.env.SUPABASE_SERVICE_ROLE_KEY`, jamais inlinée au build CI (ni dummy ni réelle dans le worker buildé) → `supabaseKey is required`. → `locals`/`Astro.locals` passé à **tous** les call sites (16 : 7 pages admin, `setup`, `rate/[id]`, `guards/platform`, `submit-rating`, `terrain-transition`, etc.) pour lire `runtime.env`.
 - [x] Restaurer le typecheck de `apps/vtc-backoffice` (16 erreurs pré-existantes corrigées) puis l'ajouter au job `verify` (deploy.yml + script `pnpm --filter @vtc/vtc-backoffice typecheck`).
 - [x] Corriger l'import cassé `./database.types` dans `src/lib/supabase/client.ts` → `import type { Database } from "@vtc/database"`.
 - [ ] Ajouter des tests (aucun test unitaire/intégration : `tsc` + `build` uniquement).
