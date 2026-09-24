@@ -174,7 +174,8 @@
 11. 🟡 **CI sans garde-fou** → job `verify` (secrets versionnés + typecheck) requis avant déploiement.
 
 **Restes à traiter :**
-- [ ] **Roter la clé `sb_secret_*`** exposée dans l'historique git (action manuelle, dashboard Supabase).
+- [x] **Roter la clé `sb_secret_*`** (2026-09-24) : rotation effectuée et **vérifiée par requête** — ancienne clé → HTTP 401 (révoquée), nouvelle → HTTP 200. Valeur propagée dans les 4 fichiers locaux (`.env` racine, `apps/vtc-backoffice/.env`, `.dev.vars`, `apps/superadmin/.env`). La copie restant dans l'historique git est morte : purge d'histoire non nécessaire.
+- [ ] Cloudflare Pages : mettre à jour `SUPABASE_SERVICE_ROLE_KEY` dans Environment variables (`vtc-backoffice-*`, `vtc-superadmin-*`) puis redeploy — à confirmer.
 - [x] Restaurer le typecheck de `apps/vtc-backoffice` (16 erreurs pré-existantes corrigées) puis l'ajouter au job `verify` (deploy.yml + script `pnpm --filter @vtc/vtc-backoffice typecheck`).
 - [x] Corriger l'import cassé `./database.types` dans `src/lib/supabase/client.ts` → `import type { Database } from "@vtc/database"`.
 - [ ] Ajouter des tests (aucun test unitaire/intégration : `tsc` + `build` uniquement).
