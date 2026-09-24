@@ -6,6 +6,7 @@ import InlineError from '../ui/InlineError.astro';
 import ContactStep from './steps/ContactStep.astro';
 import VehicleGridStep from './steps/VehicleGridStep.astro';
 import { supabase } from '../../core/supabase';
+import DateTimePicker from './steps/DateTimePicker.astro';
 
 const { tenant } = Astro.locals;
 const tenantId = tenant?.id || "";
@@ -95,16 +96,14 @@ const { ...props } = Astro.props;
         <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Date et horaires</h2>
         <p class='text-zinc-600 mb-8'>Définissez la date et le lieu de départ</p>
 
-        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Date du service</label>
-            <input type='date' name='serviceDate' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
-          </div>
-          <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Heure de début</label>
-            <input type='time' name='startTime' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
-          </div>
-        </div>
+        <DateTimePicker
+          class='mb-6'
+          themeColor='orange'
+          dateName='serviceDate'
+          timeName='startTime'
+          dateLabel='Date du service'
+          timeLabel='Heure de début'
+        />
 
         <div>
           <label class='block text-sm font-medium text-zinc-700 mb-2'>Zone de prise en charge initiale</label>
