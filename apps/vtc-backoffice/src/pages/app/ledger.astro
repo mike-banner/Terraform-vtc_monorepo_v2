@@ -2,11 +2,20 @@
 // src/pages/app/ledger.astro
 import AppLayout from "../../layouts/AppLayout.astro";
 import { MonthDetail } from "../../components/fiscal/MonthDetail";
+import { requireTenantRole } from "../../lib/guards";
 
 const { profile, user, supabase } = Astro.locals as any;
 
 if (!profile || !user) {
     return Astro.redirect("/login");
+}
+
+// Protection Guard : la compta est masquée aux chauffeurs dans la nav (AppLayout),
+// le guard empêche l'accès par URL directe.
+try {
+    requireTenantRole(profile, ["owner", "manager"]);
+} catch (e) {
+    return Astro.redirect("/app/dashboard");
 }
 
 const now = new Date();
