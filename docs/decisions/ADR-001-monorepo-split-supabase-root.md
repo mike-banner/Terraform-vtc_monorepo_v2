@@ -10,7 +10,7 @@ Le projet existait en plusieurs dépôts séparés (`vtc_mvp` pour le backoffice
 
 ## Décision
 
-- Fusion dans un monorepo unique `vtc_repo_v2` (pnpm workspaces + Turborepo) avec trois apps indépendantes : `apps/backoffice`, `apps/drivers-front`, `apps/superadmin`.
+- Fusion dans un monorepo unique `Terraform-vtc_monorepo_v2` (pnpm workspaces + Turborepo) avec trois apps indépendantes : `apps/backoffice`, `apps/drivers-front`, `apps/superadmin`.
 - `supabase/` (migrations, Edge Functions, config) déplacé à la racine — source de schéma unique partagée par les trois apps.
 - `packages/database` partagé pour le client Supabase SSR et les types générés (`database.types.ts`), évitant la duplication de types entre apps.
 - Déploiement Cloudflare Pages distinct par app, piloté par Terraform (un projet Pages par app, cf. `terraform/pages.tf`).

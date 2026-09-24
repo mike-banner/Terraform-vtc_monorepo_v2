@@ -44,9 +44,9 @@
 
 ## 📂 Navigation dans la Documentation (`/docs`)
 
-- 📐 [docs/ARCHITECTURE.md](file:///home/mike/projects/vtc/vtc_repo_v2/docs/ARCHITECTURE.md) : Découpage technique du Monorepo & isolation Supabase RLS.
-- 🚗 [docs/MULTI_TENANCY_WEBSITES.md](file:///home/mike/projects/vtc/vtc_repo_v2/docs/MULTI_TENANCY_WEBSITES.md) : Fonctionnement détaillé des sites vitrines multi-tenants pour chauffeurs & groupements.
-- 💳 [docs/BILLING.md](file:///home/mike/projects/vtc/vtc_repo_v2/docs/BILLING.md) : Flux de facturation, webhooks Stripe Connect & exports comptables.
+- 📐 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) : Découpage technique du Monorepo & isolation Supabase RLS.
+- 🚗 [docs/MULTI_TENANCY_WEBSITES.md](docs/MULTI_TENANCY_WEBSITES.md) : Fonctionnement détaillé des sites vitrines multi-tenants pour chauffeurs & groupements.
+- 💳 [docs/BILLING.md](docs/BILLING.md) : Flux de facturation, webhooks Stripe Connect & exports comptables.
 
 ---
 
