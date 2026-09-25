@@ -24,6 +24,13 @@ export default [
   ...tseslint.configs.recommended,
   ...astro.configs.recommended,
   {
+    // Scripts de build/CI : Node, pas navigateur — `console` et `process` existent.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+  },
+  {
     rules: {
       // Le code existant utilise `any` massivement sur les retours Supabase.
       // À resserrer quand les types générés seront branchés partout.

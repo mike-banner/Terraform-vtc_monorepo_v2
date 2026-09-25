@@ -50,6 +50,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Toute page /app/* ou route /api/tenant/* doit être déclarée dans ROUTE_POLICY :
+      # le middleware refuse les chemins non déclarés, autant le voir ici qu'en prod.
+      - name: Check route policy coverage
+        run: node scripts/check-route-policy.mjs
+
       - name: Typecheck vtc-websites
         run: pnpm --filter @vtc/vtc-websites exec tsc --noEmit
 
