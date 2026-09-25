@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase/client";
 import QRCode from "qrcode";
 import { calculatePrice, findPricingRule, type PricingRule } from "@/lib/pricing";
+import { functionErrorMessage } from "../lib/function-error";
 
 
 type AnyBooking = Record<string, unknown> & {
@@ -402,7 +403,7 @@ const run = (): void => {
                 window.location.reload();
               }
             } catch (err: any) {
-              alert("Erreur lors de la génération de facture : " + err.message);
+              alert(await functionErrorMessage(err, "Erreur lors de la génération de facture."));
               invoiceBtn.innerText = "Facture PDF";
             } finally {
               invoiceBtn.disabled = false;

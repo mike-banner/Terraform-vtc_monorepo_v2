@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 import { generateInvoiceEmail } from "../_shared/email-templates/invoice.ts";
 import { sendEmailLog } from "../_shared/send-email-log.ts";
+import { checkInvoiceable } from "../_shared/invoiceable.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +20,13 @@ const supabase = createClient(
 // dashboard (Settings > Invoicing du compte connecté) et restaurer le flux
 // Stripe (création facture + invoiceItems + finalize + pay), qui reste le
 // seul moyen d'avoir une facture réellement encaissable/comptable côté Stripe.
+// Le code Stripe retiré est récupérable : `git show 16133a8^:supabase/functions/generate-invoice/index.ts`.
+//
+// Périmètre de facturation (2026-09-26) : seules les courses dont le montant ne
+// dépend pas d'une distance non vérifiée sont facturables — voir checkInvoiceable
+// dans ../_shared/invoiceable.ts. Les transferts à prix kilométrique attendent une
+// validation manuelle du montant, tant qu'aucune API de distance n'est câblée
+// (ORS ou OSRM le jour où le volume le justifie).
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -38,7 +46,8 @@ Deno.serve(async (req) => {
         "pickup_address, dropoff_address, pickup_time, booking_type, " +
         "total_amount, subtotal_amount, vat_amount, " +
         "status, mission_status, payment_mode, " +
-        "passenger_count, luggage_count, invoice_number"
+        "passenger_count, luggage_count, invoice_number, " +
+        "pricing_mode, distance_km"
       )
       .eq("id", booking_id)
       .single();
@@ -56,6 +65,23 @@ Deno.serve(async (req) => {
       return new Response(
         `Booking not eligible (status=${booking.status}, mission_status=${booking.mission_status})`,
         { status: 400 }
+      );
+    }
+
+    // Guard : les courses à prix calculé au kilomètre ne sont pas facturables tant
+    // que le montant n'a pas été validé à la main. Placé avant next_invoice_number :
+    // un refus ne doit jamais consommer un numéro de la séquence, qui doit rester
+    // continue pour être comptablement recevable.
+    const verdict = checkInvoiceable({
+      pricing_mode: booking.pricing_mode,
+      booking_type: booking.booking_type,
+      distance_km: booking.distance_km,
+    });
+
+    if (!verdict.invoiceable) {
+      return new Response(
+        JSON.stringify({ error: "price_not_validated", message: verdict.reason }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 

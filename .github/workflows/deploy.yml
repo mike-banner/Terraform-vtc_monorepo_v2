@@ -55,6 +55,16 @@ jobs:
       - name: Check route policy coverage
         run: node scripts/check-route-policy.mjs
 
+      # Règle de facturabilité (logique pure, chemin comptable) : un transfert au
+      # kilomètre ne doit jamais devenir facturable par accident.
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Test edge function rules
+        run: deno test --allow-net supabase/functions/_shared/
+
       - name: Typecheck vtc-websites
         run: pnpm --filter @vtc/vtc-websites exec tsc --noEmit
 

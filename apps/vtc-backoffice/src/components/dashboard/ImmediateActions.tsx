@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase/client';
 import { FileText, Navigation, Phone, Star } from 'lucide-react';
 import React, { useState } from 'react';
 import { RatingQRModal } from './RatingQRModal';
+import { functionErrorMessage } from '../../lib/function-error';
 
 interface ImmediateActionsProps {
   bookingId: string;
@@ -51,7 +52,7 @@ export const ImmediateActions: React.FC<ImmediateActionsProps> = ({
         window.location.reload();
       }
     } catch (err: any) {
-      alert("Erreur lors de la génération de la facture : " + err.message);
+      alert(await functionErrorMessage(err, "Erreur lors de la génération de la facture."));
     } finally {
       setIsGeneratingInvoice(false);
     }
