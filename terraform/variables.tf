@@ -27,6 +27,11 @@ variable "supabase_anon_key" {
   sensitive   = true
 }
 
+# Les trois variables suivantes ne sont plus injectées dans Cloudflare Pages
+# (voir le commentaire de `backoffice_env_vars` dans main.tf). Elles restent
+# déclarées parce que le workspace Terraform Cloud `vtc_prod` les définit encore :
+# les retirer d'ici produirait un avertissement « value for undeclared variable ».
+# À supprimer des deux côtés en même temps, le jour où on y touche.
 variable "stripe_secret_key" {
   type        = string
   description = "Clé secrète Stripe"
