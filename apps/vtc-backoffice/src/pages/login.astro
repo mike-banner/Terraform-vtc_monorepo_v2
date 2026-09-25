@@ -80,6 +80,8 @@ import "../styles/global.css";
           </button>
         </div>
 
+        <div id="message" role="alert" aria-live="polite" class="hidden"></div>
+
         <form id="login-form" action="/api/auth/login" method="POST" class="space-y-3">
           <div class="space-y-3">
             <div class="space-y-1 relative group">
@@ -150,8 +152,6 @@ import "../styles/global.css";
           </button>
         </form>
         
-        <div id="message" role="alert" aria-live="polite" class="mt-1 text-center text-xs font-medium min-h-[16px]"></div>
-
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
             <span class="w-full border-t border-border"></span>
@@ -194,6 +194,18 @@ import "../styles/global.css";
 
     const form = document.querySelector("#login-form") as HTMLFormElement;
     const messageEl = document.querySelector("#message") as HTMLDivElement;
+
+    const MESSAGE_VARIANTS = {
+      info: "text-center text-xs font-medium text-muted-foreground",
+      warning: "p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center text-xs font-medium text-amber-500",
+      error: "p-3 rounded-xl bg-destructive text-destructive-foreground text-center text-xs font-bold",
+    } as const;
+
+    function showMessage(text: string, variant: keyof typeof MESSAGE_VARIANTS = "info") {
+      if (!messageEl) return;
+      messageEl.textContent = text;
+      messageEl.className = `mb-4 ${MESSAGE_VARIANTS[variant]}`;
+    }
     const submitBtn = document.querySelector("#submit-btn") as HTMLButtonElement;
     const loader = document.querySelector(".loader-container") as HTMLDivElement;
     const btnText = document.querySelector(".btn-text") as HTMLSpanElement;
@@ -213,7 +225,7 @@ import "../styles/global.css";
             submitBtn.disabled = true;
             loader.classList.remove("hidden");
             btnText.style.opacity = "0";
-            if (messageEl) messageEl.textContent = "Connexion au compte test-demo...";
+            showMessage("Connexion au compte test-demo...");
             form.submit();
         }
     });
@@ -226,12 +238,10 @@ import "../styles/global.css";
     });
 
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('reason') === 'inactivity' && messageEl) {
-        messageEl.textContent = "Vous avez été déconnecté pour inactivité.";
-        messageEl.className = "mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center text-xs font-medium text-amber-500";
-    } else if (urlParams.get('reason') === 'suspended' && messageEl) {
-        messageEl.textContent = "Votre entreprise a été suspendue. Contactez le support.";
-        messageEl.className = "mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-center text-xs font-medium text-red-500";
+    if (urlParams.get('reason') === 'inactivity') {
+        showMessage("Vous avez été déconnecté pour inactivité.", "warning");
+    } else if (urlParams.get('reason') === 'suspended') {
+        showMessage("Votre entreprise a été suspendue. Contactez le support.", "error");
     }
 
     form?.addEventListener("submit", async (e) => {
@@ -246,7 +256,7 @@ import "../styles/global.css";
         submitBtn.disabled = true;
         loader.classList.remove("hidden");
         btnText.style.opacity = "0";
-        messageEl.textContent = "Connexion en cours...";
+        showMessage("Connexion en cours...");
         
         // Let the form submit naturally
         form.submit();
