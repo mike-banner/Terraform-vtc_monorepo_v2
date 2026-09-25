@@ -234,7 +234,7 @@ export const VehicleModal: React.FC<VehicleModalProps> = ({
                       await deleteVehicle(vehicle.id);
                       onSuccess();
                       onClose();
-                    } catch (err) {
+                    } catch {
                       setError('Erreur lors de la suppression');
                     } finally {
                       setLoading(false);

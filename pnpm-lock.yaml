@@ -114,9 +114,6 @@ importers:
       '@astrojs/react':
         specifier: ^5.0.0
         version: 5.0.7(@types/node@24.13.2)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(yaml@2.9.0)
-      '@park-ui/tailwind-plugin':
-        specifier: ^0.20.1
-        version: 0.20.1(tailwindcss@4.3.1)
       '@supabase/ssr':
         specifier: ^0.8.0
         version: 0.8.0(@supabase/supabase-js@2.108.2)
@@ -1180,11 +1177,6 @@ packages:
 
   '@oxc-project/types@0.133.0':
     resolution: {integrity: sha512-KzkdCd6Uxqnf6l3HOw1xfatAlUURA0g14cvBYFyJ5SaNOQbOUvBr9PKArcPcrNIeRsBdgcUzOGrhKveVpvOIGA==}
-
-  '@park-ui/tailwind-plugin@0.20.1':
-    resolution: {integrity: sha512-FPtx0ERqeIFPHuAUCIkGuIw9jzVIRtOK9cUgoWUztMABR/xKpY/foDcDi13qqpH3wOZSkpdyaIeiowqOAWs4LQ==}
-    peerDependencies:
-      tailwindcss: 3.x
 
   '@pkgr/core@0.3.6':
     resolution: {integrity: sha512-SEeaJLb3qBNF/OaXnaR1NmmBbFYk1zC0ZH/52fATcRPLFg/p791YrcyFFy44Bo9sLaGuSuLp5Q6axbb/O+v/RA==}
@@ -3625,9 +3617,6 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  ts-pattern@5.0.8:
-    resolution: {integrity: sha512-aafbuAQOTEeWmA7wtcL94w6I89EgLD7F+IlWkr596wYxeb0oveWDO5dQpv85YP0CGbxXT/qXBIeV6IYLcoZ2uA==}
-
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
     engines: {node: ^18 || >=20}
@@ -4994,11 +4983,6 @@ snapshots:
   '@oslojs/encoding@1.1.0': {}
 
   '@oxc-project/types@0.133.0': {}
-
-  '@park-ui/tailwind-plugin@0.20.1(tailwindcss@4.3.1)':
-    dependencies:
-      tailwindcss: 4.3.1
-      ts-pattern: 5.0.8
 
   '@pkgr/core@0.3.6': {}
 
@@ -8249,8 +8233,6 @@ snapshots:
   ts-api-utils@2.5.0(typescript@5.9.3):
     dependencies:
       typescript: 5.9.3
-
-  ts-pattern@5.0.8: {}
 
   tsconfck@3.1.6(typescript@6.0.3):
     optionalDependencies:

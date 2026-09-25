@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 test('check visibility', async ({ page }) => {
   await page.goto('http://localhost:4321/tunnels/transfert', { waitUntil: 'networkidle' });
   

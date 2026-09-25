@@ -2,7 +2,6 @@
 // src/components/tunnels/LongDistanceTunnel.astro
 import { Icon } from 'astro-icon/components';
 import TunnelLayout from './TunnelLayout.astro';
-import InlineError from '../ui/InlineError.astro';
 import ContactStep from './steps/ContactStep.astro';
 import VehicleGridStep from './steps/VehicleGridStep.astro';
 import { supabase } from '../../core/supabase';
@@ -185,7 +184,6 @@ const { ...props } = Astro.props;
 </TunnelLayout>
 
 <script>
-  import { supabase } from '../../core/supabase';
   import { TunnelManager } from '../../core/tunnel-core';
   
   function initTunnel() {
@@ -287,7 +285,7 @@ const { ...props } = Astro.props;
         }
         return true;
       },
-      onSubmit: async (formData) => {
+      onSubmit: async () => {
         manager.setLoading(true, 'Envoi de la demande...');
         try {
           alert("Tunnel V1 terminé avec succès ! (Plan X : Redirection Stripe en construction)");

@@ -251,7 +251,6 @@ import "../styles/global.css";
         // sessions Supabase concurrentes dont les refresh tokens s'invalidaient mutuellement.
         if (submitBtn.disabled) return;
 
-        const formData = new FormData(form);
         // We let the form submit natively, but we can show the spinner
         submitBtn.disabled = true;
         loader.classList.remove("hidden");

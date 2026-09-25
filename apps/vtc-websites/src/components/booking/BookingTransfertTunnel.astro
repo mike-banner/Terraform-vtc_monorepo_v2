@@ -20,7 +20,7 @@ const { data: zones } = await supabase
   .eq('tenant_id', tenantId)
   .order('name');
 
-const pricingRules = await getPricing(tenantId);
+await getPricing(tenantId);
 
 // L'inventaire est basé sur les véhicules physiques disponibles
 const hasInventory = vehicles.length > 0;
@@ -344,7 +344,7 @@ import { calculateTripPrice } from "../../lib/pricing-engine";
   // --- CAPACITÉ & VÉHICULE ---
   function getSelectedVehicleSpecs() {
     const select = document.getElementById('vehicle-select') as HTMLSelectElement;
-    let v: any = null;
+    let v: any;
 
     if (select) {
         v = vehiclesConfig.find((x: any) => x.id === select.value);
@@ -464,7 +464,6 @@ import { calculateTripPrice } from "../../lib/pricing-engine";
   }
 
   // --- LOGIQUE PRIX ---
-  const priceTimeout: any = null;
 
   function togglePreciseInputs() {
     if (!dom.pickup || !dom.pickupPrecise || !dom.destination || !dom.destinationPrecise) return;
@@ -526,7 +525,7 @@ import { calculateTripPrice } from "../../lib/pricing-engine";
         dom.priceDisplay.textContent = "Sur devis";
         dom.priceStatus.textContent = "Libre estimation";
       }
-    } catch (e) {
+    } catch {
       dom.priceLoader.classList.add('hidden');
       dom.priceDisplay.classList.remove('hidden');
       dom.priceDisplay.textContent = "Erreur";

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test('check console errors', async ({ page }) => {
   page.on('console', msg => console.log('BROWSER CONSOLE:', msg.type(), msg.text()));

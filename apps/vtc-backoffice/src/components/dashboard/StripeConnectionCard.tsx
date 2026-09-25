@@ -24,7 +24,7 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [initialAccountIdMissing, setInitialAccountIdMissing] = useState(false);
-  const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
+  const [, setStripeAccountId] = useState<string | null>(null);
   const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,19 +111,11 @@ export const StripeConnectionCard: React.FC<StripeConnectionCardProps> = ({
   const isDashboard = stripeStatus?.type === 'dashboard';
 
   // Configuration dynamique
-  let title = '';
-  let buttonLabel = '';
-
-  if (initialAccountIdMissing) {
-    title = 'Connexion Stripe requise';
-    buttonLabel = 'Connecter Stripe';
-  } else if (stripeStatus?.type === 'onboarding') {
-    title = 'Configuration incomplète';
-    buttonLabel = 'Finaliser Stripe';
-  } else {
-    title = 'Compte Stripe actif';
-    buttonLabel = 'Dashboard Stripe';
-  }
+  const buttonLabel = initialAccountIdMissing
+    ? 'Connecter Stripe'
+    : stripeStatus?.type === 'onboarding'
+      ? 'Finaliser Stripe'
+      : 'Dashboard Stripe';
 
   return (
     <div

@@ -48,7 +48,7 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
       setNewZoneName('');
       setShowZoneModal(false);
       fetchData();
-    } catch (err) {
+    } catch {
       alert('Erreur lors de la création de la zone');
     } finally {
       setSubmitting(false);

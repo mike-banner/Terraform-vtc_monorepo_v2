@@ -3,7 +3,6 @@
 import AppLayout from "../../layouts/AppLayout.astro";
 import Badge from "../../components/ui/Badge.astro";
 import Button from "../../components/ui/Button.astro";
-import Card from "../../components/ui/Card.astro";
 import { requireTenantRole } from "../../lib/guards";
 import { TransferManager } from "@/components/pricing/TransferManager";
 
@@ -12,7 +11,7 @@ const { profile, supabase } = Astro.locals;
 // Protection Guard : Owner + Manager
 try {
     requireTenantRole(profile, ["owner", "manager"]);
-} catch (e) {
+} catch {
     return Astro.redirect("/app/dashboard");
 }
 
@@ -22,13 +21,6 @@ const { data: rules, error } = await supabase
     .select("*")
     .eq("tenant_id", profile!.tenant_id)
     .order("service_category", { ascending: true });
-
-// 2️ Récupérer les infos onboarding pour l'initialisation éventuelle
-const { data: onboarding } = await supabase
-    .from("onboarding")
-    .select("*")
-    .eq("profile_id", profile!.id)
-    .maybeSingle();
 
 if (error) {
     console.error("Pricing fetch error:", error);

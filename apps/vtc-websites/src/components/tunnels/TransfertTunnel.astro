@@ -60,7 +60,6 @@ fixedRoutesData?.forEach((route: any) => {
 const destinations = Array.from(uniqueRoutesMap.values());
 
 const { serviceType = 'airport', ...props } = Astro.props;
-const isGeneralTransfer = serviceType === 'transfert';
 ---
 
 <TunnelLayout currentStep={1} totalSteps={4} serviceType={serviceType} {...props}>

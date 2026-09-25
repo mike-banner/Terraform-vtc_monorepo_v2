@@ -1,8 +1,5 @@
 ---
-import { MissionCockpit } from "@/components/dashboard/MissionCockpit";
-import { ImmediateActions } from "@/components/dashboard/ImmediateActions";
 import { StripeConnectionCard } from "@/components/dashboard/StripeConnectionCard";
-import { supabase } from "@/lib/supabase/client";
 import AppLayout from "../../layouts/AppLayout.astro";
 import Badge from "../../components/ui/Badge.astro";
 import Button from "../../components/ui/Button.astro";
@@ -14,24 +11,6 @@ if (!profile) return Astro.redirect("/login");
 
 // 📅 Calcul des dates pour les KPIs
 const now = new Date();
-const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-).toISOString();
-const startOfMonth = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1,
-).toISOString();
-
-// 1️⃣ Courses du mois (Métier)
-const { count: monthlyCount } = await supabaseAdmin
-    .from("bookings")
-    .select("*", { count: "exact", head: true })
-    .eq("current_tenant_id", profile.tenant_id!)
-    .gte("pickup_time", startOfMonth);
-
 // 1bis️⃣ Total Missions (All-time)
 const { count: totalCount } = await supabaseAdmin
     .from("bookings")
@@ -110,16 +89,6 @@ const { data: validatingBookings } = await supabaseAdmin
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
-// 5️⃣ Dernières courses (Historique court)
-const { data: pastBookings } = await supabaseAdmin
-    .from("bookings")
-    .select("*, customers!inner(*)")
-    .eq("current_tenant_id", profile.tenant_id!)
-    .lt("pickup_time", now.toISOString())
-    .neq("status", "cancelled")
-    .order("pickup_time", { ascending: false })
-    .limit(2);
-
 
 // 7️⃣ Récupérer les infos du tenant (Logo, SIRET, Setup Status)
 const { data: tenant } = await supabaseAdmin
@@ -133,53 +102,7 @@ if (tenant && !tenant.setup_completed) {
     return Astro.redirect("/app/setup");
 }
 
-const tenantName = tenant?.name || "VTC HUB";
-const logoUrl = tenant?.logo_url;
-const siret = tenant?.siret || "Non renseigné";
 
-// 8️⃣ Récupérer les infos du chauffeur complet (VTC License)
-const { data: driverFull } = await supabaseAdmin
-    .from("drivers")
-    .select("*, vehicles(*)")
-    .eq("user_id", profile.id)
-    .maybeSingle();
-
-const vtcLicense = (driverFull as any)?.license_number || "---";
-
-// 9️⃣ Récupérer le véhicule (Assigné au chauffeur OU Premier du tenant)
-let activeVehicle = Array.isArray((driverFull as any)?.vehicles)
-    ? (driverFull as any)?.vehicles[0]
-    : (driverFull as any)?.vehicles;
-
-if (!activeVehicle) {
-    const { data: tenantVehicle } = await supabaseAdmin
-        .from("vehicles")
-        .select("*")
-        .eq("tenant_id", profile.tenant_id!)
-        .limit(1)
-        .maybeSingle();
-    activeVehicle = tenantVehicle;
-}
-
-// 10️⃣ Données Comptables (Ledger)
-const currentYear = now.getFullYear();
-const currentMonth = now.getMonth() + 1;
-
-const { data: ledgerMonth } = await supabaseAdmin
-    .from("tenant_accounting_ledger")
-    .select("*")
-    .eq("tenant_id", profile.tenant_id!)
-    .eq("year", currentYear)
-    .eq("month", currentMonth)
-    .maybeSingle();
-
-const { data: fiscalYearData } = await supabaseAdmin
-    .rpc("get_fiscal_summary", {
-        t_id: profile.tenant_id!,
-        f_year: currentYear
-    });
-
-const fiscalYear = fiscalYearData as any;
 ---
 
 <AppLayout title="Accueil">
@@ -630,7 +553,7 @@ const fiscalYear = fiscalYearData as any;
                     showCockpitError(data.error || 'Une erreur est survenue');
                     updateTerrainUI(booking);
                 }
-            } catch (err) {
+            } catch {
                 showCockpitError('Erreur réseau — vérifie ta connexion');
                 updateTerrainUI(booking);
             }

@@ -18,7 +18,7 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
         
         const createFluentProxy = (): any => {
           return new Proxy(() => {}, {
-            apply(target, thisArg, argumentsList) {
+            apply() {
               return createFluentProxy();
             },
             get(target, key) {

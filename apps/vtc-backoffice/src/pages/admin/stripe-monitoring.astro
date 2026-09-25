@@ -14,7 +14,7 @@ try {
   return Astro.redirect("/login");
 }  const supabaseAdmin = createAdminClient(Astro.locals);
 
-const { data: errors, error: fetchError } = await supabaseAdmin
+const { data: errors } = await supabaseAdmin
     .from("stripe_webhook_errors")
     .select("*")
     .order("received_at", { ascending: false });
