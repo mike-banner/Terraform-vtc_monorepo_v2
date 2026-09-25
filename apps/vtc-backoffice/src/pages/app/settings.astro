@@ -9,7 +9,7 @@ const { profile, supabase } = Astro.locals;
 // Protection Guard : Owner uniquement
 try {
     requireTenantRole(profile, ["owner"]);
-} catch (e) {
+} catch {
     return Astro.redirect("/app/dashboard");
 }
 
@@ -21,7 +21,6 @@ const { data: tenant } = await supabase
   .single();
 
 const tenantName = tenant?.name || "Inconnu";
-const confirmationPhrase = `SUPPRESSION COMPTE ${tenantName}`;
 ---
 
 <AppLayout title="Entreprise">

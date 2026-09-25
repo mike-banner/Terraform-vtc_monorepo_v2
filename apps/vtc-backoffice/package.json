@@ -15,7 +15,6 @@
     "@astrojs/cloudflare": "^12.6.12",
     "@astrojs/node": "^9.5.3",
     "@astrojs/react": "^5.0.0",
-    "@park-ui/tailwind-plugin": "^0.20.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
     "@types/qrcode": "^1.5.6",

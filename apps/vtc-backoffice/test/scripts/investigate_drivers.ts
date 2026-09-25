@@ -6,7 +6,7 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 async function investigate() {
-  const { data: owner, error: oe } = await supabase
+  await supabase
     .from('profiles')
     .select('tenant_id')
     .eq('id', 'd175569d-7ef1-4fa9-85e0-dabd22d7e727'.split('-').slice(0, 5).join('-')) // Wait, I don't have the ID.
@@ -23,7 +23,7 @@ async function investigate() {
   console.log('Investigating Tenant:', tenants[0].name, '(', tenantId, ')');
 
   // 1. List all profiles for this tenant
-  const { data: allProfiles, error: pe } = await supabase
+  const { data: allProfiles } = await supabase
     .from('profiles')
     .select('id, first_name, last_name, tenant_role')
     .eq('tenant_id', tenantId);
@@ -32,7 +32,7 @@ async function investigate() {
   console.table(allProfiles);
 
   // 2. List all drivers for this tenant
-  const { data: drivers, error: de } = await supabase
+  const { data: drivers } = await supabase
     .from('drivers')
     .select('id, user_id, rank, first_name, last_name')
     .eq('tenant_id', tenantId);

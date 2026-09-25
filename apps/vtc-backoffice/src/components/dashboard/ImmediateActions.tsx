@@ -20,7 +20,6 @@ export const ImmediateActions: React.FC<ImmediateActionsProps> = ({
   customerPhone,
   pickupAddress,
   tenantName,
-  pickupTime,
   invoiceUrl,
   missionStatus,
   rating,

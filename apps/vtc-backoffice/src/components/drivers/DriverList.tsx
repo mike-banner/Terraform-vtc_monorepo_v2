@@ -66,7 +66,7 @@ export const DriverList: React.FC<DriverListProps> = ({ tenantId, userId, hidePr
       await deleteDriver(confirmDelete.id);
       fetchDrivers();
       setConfirmDelete(null);
-    } catch (err) {
+    } catch {
       alert('Erreur lors de la suppression');
       setLoading(false);
     }

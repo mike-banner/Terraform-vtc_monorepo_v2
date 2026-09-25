@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import path from 'path';
 import ws from 'ws';
 
 dotenv.config({ path: '.env' });
@@ -223,7 +222,7 @@ test.describe.serial('Backoffice E2E Flow', () => {
     // Récupérer l'ID de la course dans le HTML
     const tr = page.locator('tr:has-text("John Doe E2E")').first();
     const dataBooking = await tr.getAttribute('data-booking');
-    const booking = JSON.parse(decodeURIComponent(dataBooking!));
+    JSON.parse(decodeURIComponent(dataBooking!));
     
     // NB: On simule le scan du QR code mais on ne navigue pas sur la page /rate 
     // car le SSR d'Astro peut échouer sur des clés de test sans contexte complet.
@@ -255,7 +254,7 @@ test.describe.serial('Backoffice E2E Flow', () => {
 
   test.skip('Tentative accès non autorisé (RLS)', async () => {
     // Tenter de lire les courses sans JWT via l'API publique
-    const { data, error } = await createClient(process.env.PUBLIC_SUPABASE_URL!, process.env.PUBLIC_SUPABASE_ANON_KEY!)
+    const { data } = await createClient(process.env.PUBLIC_SUPABASE_URL!, process.env.PUBLIC_SUPABASE_ANON_KEY!)
       .from('bookings').select('*');
     
     // Le RLS doit renvoyer un tableau vide ou une erreur si pas connecté

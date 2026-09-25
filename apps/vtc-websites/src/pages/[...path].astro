@@ -23,7 +23,7 @@ if (path === "home") {
 // - Catch-all tunnels (si le chemin commence par tunnels/)
 // - Index dans un sous-dossier
 
-let targetFile = "";
+let targetFile;
 let targetPath = path === "" ? "index" : path;
 
 // Normalisation (suppression des slashs de fin et passage en minuscules)

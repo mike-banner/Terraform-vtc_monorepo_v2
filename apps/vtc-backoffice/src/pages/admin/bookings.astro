@@ -334,7 +334,7 @@ const getStatusBadge = (s: string) => {
 
                     <div class="flex gap-1">
                         {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                            let pageNum = page;
+                            let pageNum;
                             if (page < 3) pageNum = i + 1;
                             else if (page > totalPages - 2) pageNum = totalPages - 4 + i;
                             else pageNum = page - 2 + i;
@@ -475,7 +475,7 @@ const getStatusBadge = (s: string) => {
                     return;
                 }
                 if (json?.booking) applyUpdateToRow(json.booking);
-            } catch (e) {
+            } catch {
                 if (errorEl) { errorEl.textContent = 'Erreur réseau'; errorEl.classList.remove('hidden'); }
             }
         };

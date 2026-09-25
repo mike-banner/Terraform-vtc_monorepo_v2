@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 test('check console', async ({ page }) => {
   const logs = [];
   page.on('console', msg => logs.push(`[${msg.type()}] ${msg.text()}`));

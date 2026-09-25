@@ -430,11 +430,9 @@ const run = (): void => {
 
     // iOS Safari: click events are unreliable on non-interactive elements inside
     // -webkit-overflow-scrolling containers. Use touchend + scroll detection.
-    let touchStartY = 0;
     let touchMoved = false;
 
-    row.addEventListener("touchstart", (e) => {
-      touchStartY = e.touches[0].clientY;
+    row.addEventListener("touchstart", () => {
       touchMoved = false;
     }, { passive: true });
 

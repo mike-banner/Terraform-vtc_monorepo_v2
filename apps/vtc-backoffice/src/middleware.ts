@@ -105,7 +105,7 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
 
   const claims = session?.access_token ? decodeJwtPayload(session.access_token) : null;
 
-  let profile: App.Locals["profile"] = null;
+  let profile: App.Locals["profile"];
 
   if (claims && (claims.tenant_role !== undefined || claims.platform_role !== undefined)) {
     // Les claims du hook (10-01) ne portent que les rôles : id/first_name/last_name

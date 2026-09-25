@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 test('check why step 2 fails', async ({ page }) => {
   page.on('dialog', dialog => {
     console.log("ALERT MESSAGE:", dialog.message());

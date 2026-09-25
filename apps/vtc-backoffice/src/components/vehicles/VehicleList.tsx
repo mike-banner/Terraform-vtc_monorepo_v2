@@ -51,7 +51,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ tenantId }) => {
       await deleteVehicle(id);
       await fetchVehicles();
       setConfirmDeleteId(null);
-    } catch (err) {
+    } catch {
       showToast('Erreur lors de la suppression', 'error');
     } finally {
       setIsDeleting(false);

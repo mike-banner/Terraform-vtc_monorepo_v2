@@ -385,7 +385,6 @@ const counts = {
 
         const mTitle = document.getElementById('modal-title')!;
         const mText = document.getElementById('modal-text')!;
-        const mIcon = document.getElementById('modal-icon')!;
 
         if (action === 'approve') {
             mTitle.textContent = "Approuver Dossier";
@@ -426,7 +425,7 @@ const counts = {
                 const res = await response.json();
                 alert("Erreur : " + res.error);
             }
-        } catch (err) {
+        } catch {
             alert("Erreur réseau");
         } finally {
             mConfirm.disabled = false;

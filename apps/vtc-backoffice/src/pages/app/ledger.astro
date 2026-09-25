@@ -14,7 +14,7 @@ if (!profile || !user) {
 // le guard empêche l'accès par URL directe.
 try {
     requireTenantRole(profile, ["owner", "manager"]);
-} catch (e) {
+} catch {
     return Astro.redirect("/app/dashboard");
 }
 
