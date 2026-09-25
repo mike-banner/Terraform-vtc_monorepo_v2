@@ -1,0 +1,42 @@
+name: 'DB Lint'
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  # Permet de relancer le contrôle à la main après un correctif de migration.
+  workflow_dispatch:
+
+jobs:
+  schema-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Reconstruit une base locale à partir de supabase/migrations/ uniquement.
+      # Aucun secret requis, et aucun contact avec le projet distant.
+      - name: Start local stack
+        run: supabase start --exclude realtime,storage-api,imgproxy,studio,edge-runtime
+
+      # Échoue si une migration ne s'applique pas proprement sur une base vierge.
+      - name: Reset database from migrations
+        run: supabase db reset --no-seed
+
+      - name: Schema security lint
+        run: |
+          psql "$(supabase status -o env | grep '^DB_URL=' | cut -d= -f2- | tr -d '"')" \
+            -v ON_ERROR_STOP=1 \
+            -f supabase/lint/security_checks.sql
+
+      - name: Stop local stack
+        if: always()
+        run: supabase stop

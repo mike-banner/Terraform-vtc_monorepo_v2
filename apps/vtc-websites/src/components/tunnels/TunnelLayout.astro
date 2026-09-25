@@ -148,10 +148,10 @@ const config = {
 
 <script is:inline>
   function initFlatpickr() {
-    const dateInput = document.getElementById('flatpickr-date');
-    const timeInput = document.getElementById('flatpickr-time');
+    const dateInputs = document.querySelectorAll('.js-fp-date');
+    const timeInputs = document.querySelectorAll('.js-fp-time');
 
-    if (dateInput) {
+    dateInputs.forEach((dateInput) => {
       flatpickr(dateInput, {
         locale: 'fr',
         dateFormat: 'Y-m-d',
@@ -160,9 +160,9 @@ const config = {
         minDate: 'today',
         disableMobile: true // Force le superbe calendrier Flatpickr au lieu du sélecteur OS natif buggé
       });
-    }
+    });
 
-    if (timeInput) {
+    timeInputs.forEach((timeInput) => {
       flatpickr(timeInput, {
         locale: 'fr',
         enableTime: true,
@@ -171,7 +171,7 @@ const config = {
         time_24hr: true,
         disableMobile: true
       });
-    }
+    });
   }
 
   // Initialisation à chaque chargement de page

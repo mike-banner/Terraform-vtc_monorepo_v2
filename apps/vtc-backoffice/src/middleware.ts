@@ -134,9 +134,14 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
 
   // D-01/D-02 : chauffeur lié à une course en cours (mission_status = 'in_progress')
   // -> session prolongée. Requête scopée sur bookings, jamais sur profiles (pas de
-  // régression de latence). Ne s'applique qu'au tenant_role 'driver'.
+  // régression de latence).
+  // L'owner est inclus : en exploitation solo (le cas nominal aujourd'hui), c'est
+  // approve_onboarding_tx qui crée le driver titulaire avec le user_id de l'owner.
+  // Restreindre au tenant_role 'driver' laissait donc le chauffeur solo se faire
+  // déconnecter en pleine course. La requête drivers ne renvoie rien pour un owner
+  // qui ne conduit pas, le cas se referme tout seul.
   let hasActiveCourse = false;
-  if (profile?.tenant_role === 'driver' && profile?.tenant_id) {
+  if ((profile?.tenant_role === 'driver' || profile?.tenant_role === 'owner') && profile?.tenant_id) {
     const { data: driver } = await supabase
       .from('drivers')
       .select('id')

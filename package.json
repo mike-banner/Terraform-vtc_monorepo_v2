@@ -6,14 +6,19 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "format": "turbo run format"
+    "format": "turbo run format",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
     "@supabase/supabase-js": "^2.108.2",
     "@types/ws": "^8.5.10",
     "dotenv": "^17.4.2",
+    "eslint": "^9",
+    "eslint-plugin-astro": "^1",
     "turbo": "^2.0.0",
+    "typescript-eslint": "^8",
     "ws": "^8.21.0"
   }
 }

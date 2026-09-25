@@ -200,7 +200,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 	const formatInput = (input: HTMLInputElement, spacing: number) => {
 		input?.addEventListener("input", (e: any) => {
 			let cursorPosition = e.target.selectionStart;
-			let value = e.target.value.replace(/[^0-9]/g, "");
+			const value = e.target.value.replace(/[^0-9]/g, "");
 			let formatted = "";
 
 			for (let i = 0; i < value.length; i++) {

@@ -1,0 +1,68 @@
+---
+// apps/vtc-websites/src/components/tunnels/steps/DateTimePicker.astro
+// Paire Date + Heure unifiée pour les 4 tunnels.
+
+interface Props {
+  dateName: string;
+  timeName: string;
+  dateLabel: string;
+  timeLabel: string;
+  themeColor?: 'accent' | 'green' | 'purple' | 'amber' | 'orange';
+  // ponytail: 'flatpickr' porte aussi le gabarit compact — seul le tunnel
+  // Transfert l'utilise. Séparer variant et taille le jour où un second
+  // tunnel passe en flatpickr sans vouloir le gabarit compact.
+  variant?: 'native' | 'flatpickr';
+  class?: string;
+}
+
+const {
+  dateName,
+  timeName,
+  dateLabel,
+  timeLabel,
+  themeColor = 'accent',
+  variant = 'native',
+  class: wrapperClass = '',
+} = Astro.props;
+
+const ringClass = {
+  accent: 'focus:ring-accent',
+  green: 'focus:ring-green-500',
+  purple: 'focus:ring-purple-500',
+  amber: 'focus:ring-amber-500',
+  orange: 'focus:ring-orange-500',
+}[themeColor];
+
+const isFp = variant === 'flatpickr';
+
+const gridClass = isFp ? 'grid grid-cols-2 gap-4 max-w-md' : 'grid grid-cols-1 md:grid-cols-2 gap-6';
+const labelClass = isFp
+  ? 'block text-xs font-semibold text-zinc-700 mb-1.5'
+  : 'block text-sm font-medium text-zinc-700 mb-2';
+const inputClass = isFp
+  ? `w-full px-3 py-2.5 text-sm border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent bg-white text-zinc-900 cursor-pointer`
+  : `w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent`;
+---
+
+<div class={`${gridClass} ${wrapperClass}`}>
+  <div>
+    <label class={labelClass}>{dateLabel}</label>
+    <input
+      type={isFp ? 'text' : 'date'}
+      name={dateName}
+      class={`${inputClass}${isFp ? ' js-fp-date' : ''}`}
+      placeholder={isFp ? 'Choisir la date' : undefined}
+      required
+    />
+  </div>
+  <div>
+    <label class={labelClass}>{timeLabel}</label>
+    <input
+      type={isFp ? 'text' : 'time'}
+      name={timeName}
+      class={`${inputClass}${isFp ? ' js-fp-time' : ''}`}
+      placeholder={isFp ? "Choisir l'heure" : undefined}
+      required
+    />
+  </div>
+</div>

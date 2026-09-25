@@ -45,6 +45,11 @@ jobs:
             exit 1
           fi
 
+      # Lint correctness (pas de style) : bloque sur les erreurs, laisse passer la
+      # dette signalée en warning. Voir eslint.config.mjs.
+      - name: Lint
+        run: pnpm lint
+
       - name: Typecheck vtc-websites
         run: pnpm --filter @vtc/vtc-websites exec tsc --noEmit
 
