@@ -40,3 +40,20 @@ jobs:
       - name: Stop local stack
         if: always()
         run: supabase stop
+
+  # Contrôle distinct : le lint ci-dessus valide le contenu des migrations, celui-ci
+  # vérifie qu'elles sont réellement appliquées sur le projet. Le dépôt a vécu des
+  # semaines avec 4 migrations jamais passées, dont le Kill Switch tenant.
+  migration-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check migration drift
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: kpnkhmtxzigxtfnkmzru
+        run: python3 scripts/check_migration_drift.py

@@ -22,17 +22,31 @@ provider "cloudflare" {
 }
 
 locals {
-  # Ces variables seront injectées à la compilation par Cloudflare Pages
-  common_env_vars = {
-    PUBLIC_SUPABASE_URL       = var.supabase_url
-    PUBLIC_SUPABASE_ANON_KEY  = var.supabase_anon_key
+  # Variables d'environnement Cloudflare Pages, lues au runtime par le SSR.
+  # (Les variables de build — VITE_*/PUBLIC_* — viennent des secrets GitHub,
+  # voir le step « Build applications » de .github/workflows/deploy.yml.)
+  #
+  # Moindre privilège : chaque projet ne reçoit que ce que son code lit
+  # réellement. Auparavant les trois recevaient la même liste, donc les sites
+  # vitrines publics avaient dans leur environnement la clé service_role, qui
+  # contourne toute la RLS.
+  base_env_vars = {
+    PUBLIC_SUPABASE_URL      = var.supabase_url
+    PUBLIC_SUPABASE_ANON_KEY = var.supabase_anon_key
+    NODE_VERSION             = "20"
+    PNPM_VERSION             = "9.0.0"
+  }
+
+  # Seule app à lire SUPABASE_SERVICE_ROLE_KEY (src/lib/supabase/server.ts).
+  # STRIPE_*/RESEND_API_KEY ne sont lus par aucune des trois apps — ils servent
+  # aux Edge Functions, qui ont leur propre configuration. Conservés ici par
+  # prudence le temps de le confirmer côté Stripe ; à retirer ensuite.
+  backoffice_env_vars = merge(local.base_env_vars, {
+    SUPABASE_SERVICE_ROLE_KEY = var.supabase_service_role_key
     STRIPE_SECRET_KEY         = var.stripe_secret_key
     STRIPE_WEBHOOK_SECRET     = var.stripe_webhook_secret
     RESEND_API_KEY            = var.resend_api_key
-    SUPABASE_SERVICE_ROLE_KEY = var.supabase_service_role_key
-    NODE_VERSION              = "20"
-    PNPM_VERSION              = "9.0.0"
-  }
+  })
 }
 
 # Trigger CI/CD pipelines after Hard Reset
