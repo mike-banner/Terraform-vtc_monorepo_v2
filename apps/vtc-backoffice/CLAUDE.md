@@ -1,6 +1,6 @@
 # Règles — backoffice
 
-Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, véhicules, onboarding. Astro SSR + React (îlots interactifs uniquement, `client:load`). Décisions d'architecture : `docs/decisions/ADR-001-monorepo-split-supabase-root.md` (monorepo-wide) et `docs/decisions/backoffice/ADR-*.md`.
+Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, véhicules, onboarding. Astro SSR + React (îlots interactifs uniquement, `client:load`). Décisions d'architecture : `docs/decisions/ADR-001-monorepo-split-supabase-root.md` (monorepo-wide) et `docs/decisions/vtc-backoffice/ADR-*.md`.
 
 > Conventions transverses (commits sans marque IA, gestion des secrets) : `AGENTS.md` à la racine.
 
@@ -27,13 +27,13 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 
 - DB : tables/colonnes `snake_case`, triggers `trg_[action]`.
 - Composants React : `PascalCase`. Routes API : `kebab-case`/`snake_case` sous `/api/`.
-- Après tout changement de schéma : `pnpm --filter @vtc/backoffice gen:types`.
+- Après tout changement de schéma : `pnpm --filter @vtc/vtc-backoffice gen:types`.
 
 ## Rôles & accès (`profiles`)
 
 - `platform_role` (super_admin/platform_staff) → `/admin/*` uniquement, jamais `/app/*`.
 - `tenant_role` pending → `/onboarding` jusqu'à validation via `approve_onboarding_tx()`.
-- `tenant_role = owner` + `tenant_id` → `/app/*`. `manager`/`driver` (sous-rôles tenant) : prévus, pas encore implémentés.
+- `tenant_role = owner` + `tenant_id` → `/app/*`. `driver` : reconnu par le middleware (session prolongée pendant une course). `manager` : pas encore implémenté.
 - Toute table métier filtrée par `current_tenant_id()` ; jamais de donnée cross-tenant via anon key.
 
 ## Facturation (voir `docs/BILLING.md`)
