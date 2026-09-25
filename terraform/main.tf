@@ -38,14 +38,15 @@ locals {
   }
 
   # Seule app à lire SUPABASE_SERVICE_ROLE_KEY (src/lib/supabase/server.ts).
-  # STRIPE_*/RESEND_API_KEY ne sont lus par aucune des trois apps — ils servent
-  # aux Edge Functions, qui ont leur propre configuration. Conservés ici par
-  # prudence le temps de le confirmer côté Stripe ; à retirer ensuite.
+  #
+  # STRIPE_*/RESEND_API_KEY ne sont volontairement plus injectés ici. Le paiement
+  # et l'e-mail ne s'exécutent pas sur Cloudflare : le backoffice se contente
+  # d'appeler des Edge Functions (`supabase.functions.invoke`), et ce sont elles
+  # qui lisent les clés via `Deno.env`, depuis les secrets du projet Supabase —
+  # vérifiés présents le 2026-09-25. Une copie ici n'était lue par personne et
+  # faisait croire qu'une rotation de clé côté Terraform suffisait.
   backoffice_env_vars = merge(local.base_env_vars, {
     SUPABASE_SERVICE_ROLE_KEY = var.supabase_service_role_key
-    STRIPE_SECRET_KEY         = var.stripe_secret_key
-    STRIPE_WEBHOOK_SECRET     = var.stripe_webhook_secret
-    RESEND_API_KEY            = var.resend_api_key
   })
 }
 
