@@ -8,11 +8,11 @@ resource "cloudflare_pages_project" "backoffice" {
 
   deployment_configs {
     production {
-      environment_variables = local.common_env_vars
+      environment_variables = local.backoffice_env_vars
       compatibility_flags   = ["nodejs_compat"]
     }
     preview {
-      environment_variables = local.common_env_vars
+      environment_variables = local.backoffice_env_vars
       compatibility_flags   = ["nodejs_compat"]
     }
   }
@@ -28,11 +28,11 @@ resource "cloudflare_pages_project" "drivers_front" {
 
   deployment_configs {
     production {
-      environment_variables = local.common_env_vars
+      environment_variables = local.base_env_vars
       compatibility_flags   = ["nodejs_compat"]
     }
     preview {
-      environment_variables = local.common_env_vars
+      environment_variables = local.base_env_vars
       compatibility_flags   = ["nodejs_compat"]
     }
   }
@@ -48,11 +48,11 @@ resource "cloudflare_pages_project" "superadmin" {
 
   deployment_configs {
     production {
-      environment_variables = local.common_env_vars
+      environment_variables = local.base_env_vars
       compatibility_flags   = ["nodejs_compat"]
     }
     preview {
-      environment_variables = local.common_env_vars
+      environment_variables = local.base_env_vars
       compatibility_flags   = ["nodejs_compat"]
     }
   }
