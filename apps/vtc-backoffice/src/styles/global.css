@@ -12,6 +12,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -132,6 +133,8 @@
   --accent: #1E293B;
   --accent-foreground: #E1C16E;
   --destructive: #F87171;
+  /* Pendant manquant des autres tokens : permet un fond destructive plein et lisible. */
+  --destructive-foreground: #020617;
   --card: #1E293B;
   --card-foreground: #F8FAFC;
   --popover: #1E293B;
