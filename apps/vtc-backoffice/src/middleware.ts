@@ -2,6 +2,7 @@
 import { createServerClient } from '@vtc/database';
 import { parseCookieHeader } from '@supabase/ssr';
 import { defineMiddleware } from 'astro:middleware';
+import { allowedRolesFor, isTenantScopedPath, type TenantRole } from './lib/guards';
 
 // D-01 : durée de vie prolongée du cookie de session pour le chauffeur sur une course en cours.
 const ACTIVE_COURSE_MAXAGE_SECONDS = 8 * 60 * 60; // 8h
@@ -201,6 +202,38 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
     if (tenant?.status === 'suspended') {
       await supabase.auth.signOut();
       return finish(await redirect('/login?reason=suspended'));
+    }
+  }
+
+  // 2ter. Politique d'accès par rôle tenant (voir ROUTE_POLICY dans lib/guards.ts).
+  // Appliquée ici et pas page par page : les routes `/api/tenant/*` étaient à
+  // découvert alors que les pages correspondantes étaient gardées — un `driver`
+  // pouvait appeler `update-settings` / `update-logo` malgré le guard de
+  // `settings.astro`. Deny-by-default : un chemin non déclaré est refusé.
+  // Les rôles plateforme et `pending` sont hors périmètre (traités en 3).
+  const tenantRole =
+    !profile?.platform_role && profile?.tenant_role && profile.tenant_role !== 'pending'
+      ? (profile.tenant_role as TenantRole)
+      : null;
+
+  if (tenantRole && isTenantScopedPath(path)) {
+    const allowed = allowedRolesFor(path);
+    const granted = allowed?.includes(tenantRole) ?? false;
+
+    if (!granted) {
+      const isApi = path.startsWith('/api/');
+      // Page refusée -> retour au tableau de bord, ouvert à tous les rôles tenant.
+      // Si c'est le tableau de bord lui-même qui est refusé, répondre en clair
+      // plutôt que de boucler sur une redirection.
+      if (isApi || path === '/app/dashboard') {
+        return finish(
+          new Response(
+            JSON.stringify({ error: 'Forbidden: insufficient tenant role' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } },
+          ),
+        );
+      }
+      return finish(await redirect('/app/dashboard?denied=1'));
     }
   }
 
