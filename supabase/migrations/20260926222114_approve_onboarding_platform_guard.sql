@@ -1,4 +1,4 @@
--- 20260927120000_approve_onboarding_platform_guard.sql
+-- 20260926222114_approve_onboarding_platform_guard.sql
 --
 -- Rend approve_onboarding_tx appelable depuis apps/superadmin.
 --
