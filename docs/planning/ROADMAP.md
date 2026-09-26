@@ -162,7 +162,7 @@ C'est la raison du choix d'un point d'application unique (middleware) plutôt qu
 - Les guards sont applicatifs : la RLS ne distingue pas les rôles au sein d'un tenant (voir Phase 10).
 
 ### Phase 11: Réparation onboarding et conformité TVA
-**Status:** Migration écrite le 2026-09-26, **non appliquée** (non validée sur base reconstruite)
+**Status:** Migration écrite et **validée en local** le 2026-09-26 — **non appliquée en production**
 **Goal:** Rendre l'approbation d'onboarding à nouveau fonctionnelle et les factures fiscalement conformes.
 
 Migration `20260926000000_restore_tenant_legal_fields_and_vat_sync.sql`. Deux régressions cumulées,
@@ -187,12 +187,20 @@ déjà créés par la version régressée.
 l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus tard le même jour, lui envoyait
 `legal_form` à NULL.
 
+**Validation locale du 2026-09-26** (`supabase db reset --no-seed` sur base reconstruite depuis
+`supabase/migrations/`, les 40+ migrations rejouées sans erreur) :
+- `supabase/lint/security_checks.sql` : *Schema security lint passed*.
+- **Régression reproduite** : en restaurant la définition de `20260531200000`, l'appel échoue sur
+  `ERROR: column o.vehicle_brand does not exist`, `PL/pgSQL function approve_onboarding_tx(uuid) line 54`.
+  Le diagnostic est donc prouvé, pas supposé.
+- **Correctif vérifié de bout en bout** : approbation d'un dossier SASU → tenant créé avec
+  `legal_form = sasu`, `company_type = societe`, `siret` renseigné, `is_vat_exempt = false`, `vat_rate = 10`,
+  `setup_completed = false` ; profil passé `owner` ; driver titulaire créé et lié au `user_id` de l'owner.
+
 **Reste à faire :**
-- **Appliquer et valider la migration.** Elle n'a pas pu être rejouée sur une base reconstruite en local :
-  le port 54322 était occupé par un autre projet Supabase (`bati-axe`). Vérification faite par relecture et
-  contrôle que chaque colonne référencée existe dans les types générés. `supabase db reset --no-seed` doit
-  être joué avant application en production.
-- **Tester une approbation d'onboarding de bout en bout** après application — c'est le chemin qui était cassé.
+- **Appliquer la migration en production** (`kpnkhmtxzigxtfnkmzru`) — elle n'y est pas. Le drift-check CI
+  la signalera tant qu'elle n'est pas passée.
+- **Rejouer une approbation d'onboarding réelle** après application.
 - Redondance assumée : deux fonctions font la même synchro TVA, `set_tenant_vat_on_insert` (INSERT) et
   `sync_tenant_vat_config` (UPDATE OF legal_form). À fusionner un jour, sans urgence.
 - **Dette fiscale connue :** le taux 10 % est dérivé de `legal_form`, jamais saisi. Un auto-entrepreneur qui

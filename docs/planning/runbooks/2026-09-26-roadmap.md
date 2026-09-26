@@ -161,6 +161,46 @@ C'est la raison du choix d'un point d'application unique (middleware) plutôt qu
   vérité qui peuvent divergent : à trancher (les retirer, ou les dériver de la table).
 - Les guards sont applicatifs : la RLS ne distingue pas les rôles au sein d'un tenant (voir Phase 10).
 
+### Phase 11: Réparation onboarding et conformité TVA
+**Status:** Migration écrite le 2026-09-26, **non appliquée** (non validée sur base reconstruite)
+**Goal:** Rendre l'approbation d'onboarding à nouveau fonctionnelle et les factures fiscalement conformes.
+
+Migration `20260926000000_restore_tenant_legal_fields_and_vat_sync.sql`. Deux régressions cumulées,
+toutes deux dues à `20260531200000` (correction du lien `drivers.user_id`) qui a redéfini
+`approve_onboarding_tx` en repartant d'une version périmée :
+
+- **BLOQUANT** — le bloc « Créer le véhicule » lit `o.vehicle_brand` / `o.vehicle_model` / `o.plate_number`,
+  colonnes supprimées de `onboarding` deux mois plus tôt par `20260328193200_onboarding_v4_clean.sql:13-15`.
+  PL/pgSQL ne compile le corps qu'à l'exécution : la fonction se crée sans erreur et échoue au premier appel.
+  **Plus aucun onboarding n'était approuvable depuis le 2026-05-31.** Le bloc est supprimé, pas réparé :
+  le véhicule est créé par `app/setup.astro:62-76`, avec des champs que l'onboarding ne collecte plus.
+- **FISCAL** — `20260401183000` propageait `siret` / `legal_form` / `company_type` / `setup_completed` ;
+  l'INSERT régressé se limitait à `(id, name, primary_domain, email, phone)`. Le tenant naissait avec
+  `legal_form` NULL, donc les deux triggers de synchro TVA restaient muets et les valeurs par défaut
+  s'appliquaient (`vat_rate = 0`, `is_vat_exempt = true`). Une SASU assujettie émettait des factures
+  **sans TVA, sans SIRET, et portant la mention « Art. 293 B CGI »** réservée à la franchise en base.
+
+Le backfill reprend `legal_form` et `siret` depuis le dossier d'onboarding de l'owner pour les tenants
+déjà créés par la version régressée.
+
+**Aucun trigger créé** : `trg_set_tenant_vat_on_insert` (`20260531000000_vat_on_insert.sql`) couvrait déjà
+l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus tard le même jour, lui envoyait
+`legal_form` à NULL.
+
+**Reste à faire :**
+- **Appliquer et valider la migration.** Elle n'a pas pu être rejouée sur une base reconstruite en local :
+  le port 54322 était occupé par un autre projet Supabase (`bati-axe`). Vérification faite par relecture et
+  contrôle que chaque colonne référencée existe dans les types générés. `supabase db reset --no-seed` doit
+  être joué avant application en production.
+- **Tester une approbation d'onboarding de bout en bout** après application — c'est le chemin qui était cassé.
+- Redondance assumée : deux fonctions font la même synchro TVA, `set_tenant_vat_on_insert` (INSERT) et
+  `sync_tenant_vat_config` (UPDATE OF legal_form). À fusionner un jour, sans urgence.
+- **Dette fiscale connue :** le taux 10 % est dérivé de `legal_form`, jamais saisi. Un auto-entrepreneur qui
+  franchit le seuil de franchise en base reste auto-entrepreneur mais devient assujetti — le trigger le force
+  pourtant en exonéré dès qu'on touche `legal_form`, et rien dans l'UI ne permet de le déclarer assujetti.
+  Décision utilisateur du 2026-09-26 : **laissé en l'état** tant qu'on démarre en solo. À rouvrir au premier
+  tenant concerné, en dissociant l'assujettissement de la forme juridique.
+
 ### Phase 999: Backlog / Future (V4)
 - **Intégration ORS (distance + estimation de péage)** — décidée le 2026-09-26, non planifiée.
   Tâches : client ORS côté serveur (jamais côté client, cf. règle « aucun calcul financier côté client ») ;
