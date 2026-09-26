@@ -1,6 +1,6 @@
 # Règles — vtc-websites (drivers-front)
 
-Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de réservation. **Vitrine passive : aucune logique critique ou financière ne vit ici**, tout est délégué au backoffice. Décision d'architecture : `docs/decisions/drivers-front/0002-resolution-domaine-multi-tenant.md`.
+Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de réservation. **Vitrine passive : aucune logique critique ou financière ne vit ici**, tout est délégué au backoffice. Décision d'architecture : `docs/decisions/vtc-websites/0002-resolution-domaine-multi-tenant.md`.
 
 > Conventions transverses (commits sans marque IA, gestion des secrets) : `AGENTS.md` à la racine.
 
@@ -15,14 +15,13 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 | Table | Accès front | Canal |
 |---|---|---|
 | `tenants` | Champs publics uniquement (`id`, `name`, `logo_url`, `primary_domain`, `phone`, `email`) | RPC `get_public_tenant` — **pas de lecture directe** |
-| `vehicles`, `pricing_rules`, `local_pages` | Lecture publique | SDK direct |
+| `vehicles`, `pricing_rules` | Lecture publique | SDK direct |
 | `bookings` | Aucune lecture directe. Résultat d'une réservation payée : RPC `get_public_booking_result(session_id)` | RPC / Edge Function backoffice |
 | `customers`, `stripe_events` | Interdit total | — |
-| `transactions` | Interdit total | — |
 
 ## Interdits
 
-- Aucune écriture/UPDATE directe sur `bookings`, `transactions`, `users`, `pricing_rules` depuis le client.
+- Aucune écriture/UPDATE directe sur `bookings`, `pricing_rules` depuis le client.
 - Aucun calcul financier côté client — le montant final envoyé à Stripe est calculé par l'Edge Function backoffice à partir des règles en base.
 - Le front ne change jamais le statut d'un booking (réservé aux webhooks Stripe / actions admin).
 
@@ -33,8 +32,8 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 
 ## Tunnels de réservation
 
-- Transfert A→B : implémenté (`BookingTransfertTunnel.astro`).
-- Mise à disposition (forfait horaire), longue distance, business/event (devis libre) : à faire au moment d'écrire ceci — vérifier l'état réel avant d'assumer.
+- Types prévus : transfert A→B, mise à disposition (forfait horaire), longue distance, business/event (devis libre).
+- Tunnels implémentés : ceux présents dans `src/components/booking/`.
 
 ## SEO (invariants)
 
