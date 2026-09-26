@@ -1,7 +1,12 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { LogOut, Building2, Users, LayoutDashboard } from 'lucide-react';
+import { LogOut, Building2, ClipboardCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+const navClass = ({ isActive }: { isActive: boolean }) =>
+  `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+    isActive ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'
+  }`;
 
 export const AdminLayout = () => {
   const navigate = useNavigate();
@@ -49,19 +54,16 @@ export const AdminLayout = () => {
           VTC MASTER
         </div>
         
+        {/* ponytail: Analytics et Utilisateurs retirés tant que les écrans n'existent pas (Phase 4.5) */}
         <nav className="flex-1 py-6 px-3 space-y-1">
-          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-slate-800 text-white">
+          <NavLink to="/" end className={navClass}>
             <Building2 className="mr-3 h-5 w-5" />
             Tenants (Entreprises)
-          </a>
-          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            <LayoutDashboard className="mr-3 h-5 w-5" />
-            Analytics
-          </a>
-          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            <Users className="mr-3 h-5 w-5" />
-            Utilisateurs
-          </a>
+          </NavLink>
+          <NavLink to="/onboardings" className={navClass}>
+            <ClipboardCheck className="mr-3 h-5 w-5" />
+            Onboardings
+          </NavLink>
         </nav>
 
         <div className="p-4 border-t border-slate-800">

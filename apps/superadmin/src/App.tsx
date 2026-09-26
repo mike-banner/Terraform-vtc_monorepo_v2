@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
 import { Login } from './pages/Login';
 import { TenantsList } from './pages/TenantsList';
+import { OnboardingsList } from './pages/OnboardingsList';
 import { AdminLayout } from './layouts/AdminLayout';
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
           element={session ? <AdminLayout /> : <Navigate to="/login" />}
         >
           <Route index element={<TenantsList />} />
+          <Route path="onboardings" element={<OnboardingsList />} />
         </Route>
       </Routes>
     </Router>
