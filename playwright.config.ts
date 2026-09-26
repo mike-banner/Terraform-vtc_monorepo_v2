@@ -26,9 +26,19 @@ export default defineConfig({
     {
       name: 'drivers-front',
       testMatch: /.*\.spec\.ts/,
+      testIgnore: /onboarding-approval\.spec\.ts/,
       use: { 
         ...devices['Desktop Chrome'],
         baseURL: 'http://localhost:4321'
+      },
+    },
+    {
+      // Lancer `pnpm dev --filter superadmin` avant.
+      name: 'superadmin',
+      testMatch: /onboarding-approval\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:4323'
       },
     },
   ],
