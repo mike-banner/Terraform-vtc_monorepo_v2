@@ -98,9 +98,26 @@ Le message métier du corps de réponse était perdu. Helper `src/lib/function-e
 
 **Reste à faire :**
 - Restaurer le flux Stripe Invoicing dans `generate-invoice` (bypass actuel documenté par le commentaire `ponytail:` en tête du fichier — PDF local, `paid_out_of_band` cassé par un réglage d'auto-encaissement du compte connecté de démo). **Bloquant avant prod réelle.** Code retiré récupérable : `git show 16133a8^:supabase/functions/generate-invoice/index.ts`. Préalable non-code : élucider le réglage Settings > Invoicing du compte connecté de démo.
-- Câbler une API de distance pour rendre les transferts kilométriques facturables sans validation manuelle.
-  **Choix non tranché** — ORS (OpenRouteService) ou OSRM, tous deux gratuits ; Google Maps Distance Matrix
-  n'est pas nécessaire. À décider quand le volume de longue distance le justifiera.
+- **Câbler ORS (OpenRouteService) pour la distance et l'estimation de péage.** Choix tranché le 2026-09-26 :
+  ORS plutôt qu'OSRM, parce qu'il expose `avoid_features: ["tollways"]` et `extra_info=tollways` sans
+  recompiler les données, là où OSRM demande de modifier le profil `car.lua`. Google Maps Distance Matrix
+  n'est pas nécessaire. À faire quand le volume de longue distance le justifiera.
+
+  **Estimation du péage — formule retenue :** `km_à_péage × toll_rate_per_km`, et **non**
+  `coût_moyen × nombre_de_passages`. Raison : `extra_info=tollways` renvoie des *segments* à péage, pas des
+  barrières, et le réseau français concédé est majoritairement en système fermé (ticket à l'entrée, paiement
+  à la sortie selon la distance parcourue). Compter les passages se tromperait d'un ordre de grandeur —
+  un Paris-Marseille fait peu de passages pour ~60 €, un tronçon urbain à barrière pleine voie fait un
+  passage pour ~2 €.
+
+  `toll_rate_per_km` doit être un **réglage tenant**, pas une constante : ordre de grandeur 0,09–0,11 €/km
+  pour un véhicule léger (classe 1), à calibrer sur les tickets réels. Ni ORS ni OSRM ne donnent de montant
+  de péage — seules des sources dédiées le font (TollGuru, HERE Routing, Google Routes API), toutes payantes
+  au-delà d'un quota, et écartées pour cette raison.
+
+  Le péage estimé reste une **ligne distincte** du prix de la course, jamais fondu dans `total_amount` :
+  une estimation ne doit pas contaminer un montant facturé. L'alternative sans aucune API — péages inclus
+  dans `price_per_km`, ou refacturés en débours au réel sur justificatif — reste valable et moins coûteuse.
 - `generate-invoice/index.ts` compte 80 erreurs `deno check` (77 avant cette modification) : le `select()`
   construit par concaténation empêche `supabase-js` d'inférer le type, donc tout `booking.*` remonte en
   `GenericStringError`. Dette préexistante, raison pour laquelle `supabase/functions/**` est exclu d'ESLint.
@@ -145,6 +162,12 @@ C'est la raison du choix d'un point d'application unique (middleware) plutôt qu
 - Les guards sont applicatifs : la RLS ne distingue pas les rôles au sein d'un tenant (voir Phase 10).
 
 ### Phase 999: Backlog / Future (V4)
+- **Intégration ORS (distance + estimation de péage)** — décidée le 2026-09-26, non planifiée.
+  Tâches : client ORS côté serveur (jamais côté client, cf. règle « aucun calcul financier côté client ») ;
+  récupération `distance_km` et longueur des segments `tollways` ; réglage tenant `toll_rate_per_km` ;
+  affichage du péage estimé en ligne séparée ; bascule des transferts kilométriques de
+  `price_not_validated` vers facturable une fois la distance vérifiée par ORS.
+  Détail de la formule et du raisonnement : voir Phase 8, « Reste à faire ».
 - **Multi-chauffeurs en exploitation réelle** (sorti de la Phase 9 le 2026-09-24) : écran de gestion des membres
   du tenant, invitation par e-mail, attribution du rôle `manager`, assignation d'une course entre plusieurs
   chauffeurs, permissions fines owner vs manager. Le socle base de données existe déjà.
