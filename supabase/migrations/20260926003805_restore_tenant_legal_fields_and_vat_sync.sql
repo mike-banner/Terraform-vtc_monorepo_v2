@@ -1,4 +1,4 @@
--- 20260926000000_restore_tenant_legal_fields_and_vat_sync.sql
+-- 20260926003805_restore_tenant_legal_fields_and_vat_sync.sql
 --
 -- Répare approve_onboarding_tx, cassée depuis le 2026-05-31, et restaure la propagation
 -- des champs légaux du dossier d'onboarding vers le tenant.
