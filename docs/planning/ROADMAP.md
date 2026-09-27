@@ -302,7 +302,7 @@ par une action ou une décision de l'utilisateur.
 | Point | Origine | Destination | Pourquoi pas maintenant |
 |---|---|---|---|
 | Restaurer Stripe Invoicing dans `generate-invoice` | Phase 8 | **Pré-requis de lancement**, hors V2 | Bloqué sur un réglage *Settings > Invoicing* du compte Stripe connecté de démo (côté utilisateur). **Bloquant avant une vraie prod.** |
-| Protection anti-mots de passe compromis | Phase 10 | **Action utilisateur** | Réglage Auth de production (`password_hibp_enabled`, actuellement `false`) : l'activation via l'API Management a été refusée par la politique de permissions de la session. Dashboard > Authentication > Providers > Email, ou PATCH `/v1/projects/{ref}/config/auth`. |
+| Protection anti-mots de passe compromis | Phase 10 | **Risque assumé** (décision utilisateur du 2026-09-27) | **Réservée aux offres Supabase Pro et au-delà**, le projet est en offre Free. Décision : laisser en l'état tant que la plateforme est en démonstration — politique actuelle 6 caractères, sans exigence de composition, et le WARN `auth_leaked_password_protection` du linter reste attendu. **À rouvrir avant la mise en production réelle**, avec Stripe Invoicing : passage en Pro, ou à défaut politique durcie (disponible en Free). |
 | `EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail) | Secrets | Décision utilisateur | Il faut un expéditeur sur un domaine vérifié chez Resend. 2 envois sur 4 en échec en juillet. |
 | ~~Vue analytique superadmin (volume, CA brut/net)~~ | Phase 4.5 | **Fait le 2026-09-27** | Voir Phase 4.5 : écran `/analytics`, fonction `platform_tenant_analytics`. |
 | ~~Export comptable normé (FEC)~~ | Phase 8 | **Fait le 2026-09-27** | Voir Phase 8. Reste une validation du plan de comptes par l'expert-comptable (action utilisateur). |
@@ -449,7 +449,7 @@ temps réel. Livrable page par page.
 
 
 ### Phase 10: Durcissement RLS et alignement prod
-**Status:** Complete (appliqué en production le 2026-09-25) — reste un réglage de console : protection anti-mots de passe compromis (voir Reports)
+**Status:** Complete (appliqué en production le 2026-09-25) — la protection anti-mots de passe compromis exige l'offre Supabase Pro (constat du 2026-09-27, voir Reports)
 **Goal:** Refermer l'écart entre les migrations locales et la base `vtc-demo-production`, et rendre la RLS
 cohérente avec les rôles tenant.
 **Résultat après application :** les 3 ERROR du linter sont fermées. Restent, assumés :
