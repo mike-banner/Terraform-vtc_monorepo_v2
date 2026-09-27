@@ -31,7 +31,7 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 
 ## Rôles & accès (`profiles`)
 
-- `platform_role` (super_admin/platform_staff) → `/admin/*` uniquement, jamais `/app/*`.
+- `platform_role` (super_admin/platform_staff) → aucune page du backoffice (accueil seul, ADR-009) ; l'administration plateforme vit dans `apps/superadmin`.
 - `tenant_role` pending → `/onboarding` jusqu'à validation via `approve_onboarding_tx()`.
 - `tenant_role = owner` + `tenant_id` → `/app/*`. `driver` : reconnu par le middleware (session prolongée pendant une course). `manager` : pas encore implémenté.
 - Toute table métier filtrée par `current_tenant_id()` ; jamais de donnée cross-tenant via anon key.

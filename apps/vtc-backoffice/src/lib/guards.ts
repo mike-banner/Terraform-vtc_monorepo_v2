@@ -3,14 +3,6 @@
 export type TenantRole = "owner" | "manager" | "driver";
 
 /**
- * Vérifie si le profil est un administrateur plateforme
- */
-const PLATFORM_ROLES = ["super_admin", "platform_staff"];
-
-export function isPlatform(profile: any) {
-  return PLATFORM_ROLES.includes(profile?.platform_role);
-}
-/**
  * Vérifie si le profil appartient à un tenant
  */
 export function isTenant(profile: any) {
