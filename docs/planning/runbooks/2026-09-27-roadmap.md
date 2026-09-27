@@ -90,7 +90,13 @@ Le volet design de la Phase 7 est donc clos par substitution, pas par exécution
   appelée depuis `ImmediateActions.tsx` et `scripts/bookings.ts`. Numérotation via migration `20260629000004_invoice_sequences.sql`,
   stockage bucket `invoices` (`20260629000001`). Bonus non planifié : `generate-devis`.
 - [x] Rapports mensuels — `apps/vtc-backoffice/src/pages/app/ledger.astro` (12 mois, CA brut / net / TVA).
-- [~] Export comptable — `api/tenant/export-csv.ts` fournit un CSV brut ; **aucun format normé** (FEC, Sage, Quadratus).
+- [x] Export comptable — CSV brut (`api/tenant/export-csv.ts`) et, **depuis le 2026-09-27, export FEC**
+  (`api/tenant/export-fec.ts`, bouton « Export FEC » de `app/ledger.astro`) : journal des ventes au format de
+  l'art. A47 A-1 du LPF, par exercice, 18 colonnes, tabulation, ISO-8859-15, fichier `SIRENFECAAAAMMJJ.txt`.
+  Une écriture équilibrée par mouvement : D 512000 / 530000 (TTC) – C 706000 (HT) – C 445710 (TVA) ;
+  remboursement inversé ; commissions en 622600. Logique pure dans `src/lib/fec.ts`, 7 tests `deno` en CI
+  (`supabase/functions/_shared/fec.test.ts`). Vérifié de bout en bout sur base locale (owner 200, driver 403).
+  **À faire valider par l'expert-comptable** : plan de comptes et vente au comptant sans compte 411.
 
 **Découpe fixe / calculé (2026-09-26) :** `generate-invoice` ne facture plus que les courses dont le montant
 ne dépend pas d'une distance non vérifiée. Règle dans `supabase/functions/_shared/invoiceable.ts`
@@ -142,7 +148,6 @@ Le message métier du corps de réponse était perdu. Helper `src/lib/function-e
   ces fonctions (non redéployées ce jour).
   - Nouvelle étape CI `Typecheck edge functions` (`deploy.yml`) : chaque fonction vérifiée avec son propre
     `deno.json`, comme le fait `config.toml`. Les 14 fonctions passent.
-- Export comptable à un format normé si l'expert-comptable l'exige.
 
 ### Phase 9: Multi-Driver et Permissions Avancées
 **Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (livrée hors process de planification — aucun 09-PLAN.md n'a existé)
@@ -297,7 +302,7 @@ ci-dessous, avec sa destination.
 | Protection anti-mots de passe compromis | Phase 10 | Action utilisateur (dashboard Auth Supabase) | Réglage de console, pas de code. |
 | `EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail) | Secrets | Décision utilisateur | Il faut un expéditeur sur un domaine vérifié chez Resend. 2 envois sur 4 en échec en juillet. |
 | ~~Vue analytique superadmin (volume, CA brut/net)~~ | Phase 4.5 | **Fait le 2026-09-27** | Voir Phase 4.5 : écran `/analytics`, fonction `platform_tenant_analytics`. |
-| Export comptable normé (FEC, Sage…) | Phase 8 | Backlog, conditionnel | Seulement si l'expert-comptable l'exige. |
+| ~~Export comptable normé (FEC)~~ | Phase 8 | **Fait le 2026-09-27** | Voir Phase 8. Reste une validation du plan de comptes par l'expert-comptable (action utilisateur). |
 | ~~80 erreurs `deno check` dans `generate-invoice`~~ | Phase 8 | **Fait le 2026-09-27** | Les 14 Edge Functions passent `deno check`, vérifié en CI. |
 | ~~Guards `requireTenantRole` redondants avec `ROUTE_POLICY`~~ | Phase 9 | **Fait le 2026-09-27** | Voir Phase 9 : guards et fonctions retirés, trou API `pending` et boucle driver/setup fermés. |
 | Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
