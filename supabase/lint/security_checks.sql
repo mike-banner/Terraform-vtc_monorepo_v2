@@ -20,6 +20,9 @@ DECLARE
 
   -- Fonctions SECURITY DEFINER autorisées sans search_path figé.
   allowed_mutable_search_path text[] := ARRAY[]::text[];
+
+  -- Policies d'écriture autorisées sans condition pour anon/public (format table.policy).
+  allowed_open_write_policies text[] := ARRAY[]::text[];
 BEGIN
   -- 1. Vue SECURITY DEFINER : la RLS des tables sources ne s'applique pas.
   FOR r IN
@@ -65,6 +68,20 @@ BEGIN
       AND NOT (p.proname = ANY (allowed_mutable_search_path))
   LOOP
     violations := violations || format('function %I(%s) is SECURITY DEFINER without a fixed search_path', r.proname, r.args);
+  END LOOP;
+
+  -- 4. Policy d'écriture sans condition ouverte à anon ou public : la clé anon est
+  --    publique, n'importe qui peut écrire. Cas réel : platform_settings (Phase 12).
+  FOR r IN
+    SELECT pol.tablename, pol.policyname
+    FROM pg_policies pol
+    WHERE pol.schemaname = 'public'
+      AND pol.cmd IN ('INSERT', 'UPDATE', 'DELETE', 'ALL')
+      AND (pol.roles && ARRAY['public', 'anon']::name[])
+      AND (trim(COALESCE(pol.qual, '')) = 'true' OR trim(COALESCE(pol.with_check, '')) = 'true')
+      AND NOT ((pol.tablename || '.' || pol.policyname) = ANY (allowed_open_write_policies))
+  LOOP
+    violations := violations || format('policy %I on %I allows unconditional writes to anon/public', r.policyname, r.tablename);
   END LOOP;
 
   IF array_length(violations, 1) > 0 THEN
