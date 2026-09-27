@@ -21,7 +21,7 @@ Extraction de la logique base de données et réparation du crash middleware.
 - Vérification des paramètres (Logo, Tarifs) et calculs des prix.
 
 ### Phase 4.5: Création de l'Application Master Admin Séparée
-**Status:** Mostly Complete (corrigé le 2026-09-25 — était marquée Complete à tort)
+**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (corrigé le 2026-09-25 — était marquée Complete à tort)
 **Goal:** Contrôler efficacement les entreprises (Tenants) via une interface isolée
 **Requirements**:
 - [x] Création d'une application isolée `apps/superadmin` (Port 4323) sur le modèle SaaS standard — React/Vite, `vite.config.ts:9`.
@@ -78,7 +78,7 @@ au profit de la DA « steel blue » (`#0B0F15` / `#151F2B`) livrée entre les co
 Le volet design de la Phase 7 est donc clos par substitution, pas par exécution du plan d'origine.
 
 ### Phase 8: Facturation et Comptabilité (ERP Professionnel)
-**Status:** Mostly Complete (livrée hors process de planification — aucun 08-PLAN.md n'a existé)
+**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (livrée hors process de planification — aucun 08-PLAN.md n'a existé)
 **Goal:** Ajout des fonctionnalités d'édition
 **Requirements**:
 - [x] Génération des factures PDF automatiques — edge function `supabase/functions/generate-invoice` (pdf-lib),
@@ -133,7 +133,7 @@ Le message métier du corps de réponse était perdu. Helper `src/lib/function-e
 - Export comptable à un format normé si l'expert-comptable l'exige.
 
 ### Phase 9: Multi-Driver et Permissions Avancées
-**Status:** Mostly Complete (livrée hors process de planification — aucun 09-PLAN.md n'a existé)
+**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (livrée hors process de planification — aucun 09-PLAN.md n'a existé)
 **Goal:** Gérer les flottes de chauffeurs
 **Requirements**:
 - [x] Gestion multi-chauffeurs pour un seul tenant — table `drivers`, UI `components/drivers/DriverList.tsx` + `DriverModal.tsx` montées dans `app/profile.astro`.
@@ -230,34 +230,182 @@ l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus t
   Décision utilisateur du 2026-09-26 : **laissé en l'état** tant qu'on démarre en solo. À rouvrir au premier
   tenant concerné, en dissociant l'assujettissement de la forme juridique.
 
-### Phase 12: Backoffice en PWA
-**Status:** Not started (ajoutée le 2026-09-27, non planifiée — aucun 12-PLAN.md)
-**Goal:** Rendre le backoffice installable sur le téléphone du chauffeur, qui l'utilise en course.
-**Requirements** (à préciser en discuss-phase) :
-- [ ] Manifest (nom, icônes, `display: standalone`, couleurs issues des tokens) — application installable.
-- [ ] Service worker : cache des assets statiques et écran hors ligne explicite.
-- [ ] Périmètre hors ligne à trancher : lecture seule des courses du jour, ou rien. **Aucune écriture
-  financière en file d'attente hors ligne** (cf. règle « aucun calcul financier côté client » et ledger
-  immuable) — un changement de statut rejoué plus tard doit rester idempotent côté serveur.
-- [ ] Notifications push (nouvelle course, annulation) — optionnel, à décider.
+## Clôture du milestone V1 (2026-09-27)
 
-**Point d'attention — ordre vis-à-vis de la migration React (Phase 999) :** le backoffice est aujourd'hui en
-SSR (`output: "server"`, adapter Cloudflare). Une PWA sur des pages rendues serveur ne peut mettre en cache
-que le HTML déjà visité ; une SPA s'y prête beaucoup mieux (coquille en cache, données via API). Faire la PWA
-**avant** la migration React revient à refaire le service worker ensuite. Le manifest et l'installabilité, eux,
-sont indépendants du framework et peuvent être livrés tout de suite.
+Phases 1 à 12 closes. Ce qui n'a pas été livré n'est pas oublié : chaque point est reporté explicitement
+ci-dessous, avec sa destination.
+
+### Phase 12: Correctifs sécurité critiques (clé anon)
+**Status:** Complete — appliquée en production le 2026-09-27 (migration `20260927023037`)
+**Goal:** Fermer les écritures que la clé publique `anon` (présente dans le bundle de chaque site tenant) permet.
+**Constats du 2026-09-27** (policies lues en prod, exploitation vérifiée sur base locale dans une transaction annulée) :
+- `platform_settings` : policy `platform_settings_update_admin` en `UPDATE USING (true)` pour `public`, et
+  `anon` a le droit UPDATE → **n'importe qui peut réécrire les taux de commission plateforme.** Vérifié.
+- `bookings` : `insert_bookings_public` (`anon`, `WITH CHECK original_tenant_id IS NOT NULL`) → **n'importe qui
+  peut insérer une course `status = paid` chez n'importe quel tenant ; `trg_auto_financial_movement`
+  (SECURITY DEFINER) écrit alors une recette dans `financial_movements`, ledger immuable.** Vérifié : une ligne
+  `payment credit 9999.00` créée par `anon`.
+- `customers` : `insert_customers_public` → n'importe qui peut créer des clients chez n'importe quel tenant.
+- `platform_settings_read_admin` en `SELECT USING (true)` : taux de commission lisibles par tous (à qualifier).
+**Requirements:**
+- [x] `platform_settings` : SELECT et UPDATE réservés à `super_admin` (aucun code applicatif ne lit la table).
+- [x] Supprimer `insert_bookings_public` et `insert_customers_public` ; droits INSERT/UPDATE/DELETE/TRUNCATE
+  révoqués à `anon` sur `platform_settings`, `bookings`, `customers`. Aucun flux légitime ne les utilise :
+  les réservations payantes sont créées par les Edge Functions (`create_checkout_session`, `stripe_webhook`)
+  en `service_role`.
+- [x] `auto_create_financial_movement` refuse (42501) un encaissement produit par un client `anon` ou
+  `authenticated` : seul `service_role` alimente le ledger. Toutes les transitions légitimes passent déjà par
+  `createAdminClient()` ou les Edge Functions.
+- [x] Grand livre de production vérifié : aucune trace d'exploitation. 3 mouvements « stripe_payment » sans
+  `stripe_payment_intent_id`, tous du 2026-07-29 sur les tenants de démo (Elite Lyon, VTC Elite Demo, créé ce
+  jour-là) : données de démonstration, laissées en place (ledger immuable). `platform_settings` inchangée
+  depuis le 2026-03-04.
+- [x] Formulaire de devis du site public supprimé (`core/booking.ts`, `api/quote.ts`) : appelé par aucune page
+  et cassé (colonne `client_name` inexistante). À recréer via une Edge Function si le besoin revient.
+- [x] Lint `supabase/lint/security_checks.sql`, règle 4 : une policy d'écriture sans condition (`true`) ouverte à
+  `anon`/`public` fait échouer la CI. Limite : une condition triviale mais non littérale (ex. l'ancien
+  `original_tenant_id IS NOT NULL`) n'est pas détectée — c'est le rôle des tests par rôle de la Phase 13.
+- [x] Vérifié en production par l'API REST publique avec la clé `anon` : PATCH `platform_settings` → 401,
+  POST `bookings` / `customers` → `42501 permission denied`.
+- [x] Au passage : page `/test-booking` (catalogue de composants publié sur chaque site tenant) supprimée.
+
+### Reports du milestone V1
+
+| Point | Origine | Destination | Pourquoi pas maintenant |
+|---|---|---|---|
+| Restaurer Stripe Invoicing dans `generate-invoice` | Phase 8 | **Pré-requis de lancement**, hors V2 | Bloqué sur un réglage *Settings > Invoicing* du compte Stripe connecté de démo (côté utilisateur). **Bloquant avant une vraie prod.** |
+| Protection anti-mots de passe compromis | Phase 10 | Action utilisateur (dashboard Auth Supabase) | Réglage de console, pas de code. |
+| `EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail) | Secrets | Décision utilisateur | Il faut un expéditeur sur un domaine vérifié chez Resend. 2 envois sur 4 en échec en juillet. |
+| Vue analytique superadmin (volume, CA brut/net) | Phase 4.5 | Backlog | Écran à concevoir ; les anciennes pages admin sont récupérables (`59e7fe1^`). |
+| Export comptable normé (FEC, Sage…) | Phase 8 | Backlog, conditionnel | Seulement si l'expert-comptable l'exige. |
+| 80 erreurs `deno check` dans `generate-invoice` | Phase 8 | V2, Phase 14 | Les Edge Functions sont retravaillées dans cette phase. |
+| Guards `requireTenantRole` redondants avec `ROUTE_POLICY` | Phase 9 | V2, Phase 13 | La RLS par rôle rend `ROUTE_POLICY` purement UX ; les guards disparaissent avec. |
+| Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
+| Deux fonctions de synchro TVA redondantes ; assujettissement dérivé de `legal_form` | Phase 11 | Backlog | Sans urgence en solo ; à rouvrir au premier auto-entrepreneur assujetti. |
+| Tests E2E Playwright écrivant en production | Phase 11 | V2, Phase 16 | Une base de test dédiée est prévue avec la réécriture des tests. |
+| `RatingQRModal.tsx` appelle `useState` après un `return` conditionnel (règle des hooks violée) | Constat 2026-09-27 | V2, Phase 16 | Composant réécrit dans la phase. |
+| `PUBLIC_SITE_URL`, `PUBLIC_SITE`, `PUBLIC_TENANT_ID` absents de Terraform | Secrets | **Clos, sans objet** | `PUBLIC_SITE` ne sert qu'en dev ; `PUBLIC_TENANT_ID` est un repli après résolution par domaine ; `PUBLIC_SITE_URL` retombe sur l'origine du backoffice, qui héberge `/rate/[id]`. |
+
+## Milestone V2 — Backoffice React + PWA temps réel (planifié le 2026-09-27)
+
+Décision d'architecture : `docs/decisions/vtc-backoffice/ADR-011-backoffice-react-spa-pwa-temps-reel.md`
+(statut Proposé). Point d'entrée : **Phase 13**. Ordre imposé : **la sécurité descend en base avant que le client ne change** — tant que les
+rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la RLS laisse passer.
+
+| Phase | Objet | Charge | Dépend de |
+|---|---|---|---|
+| 13 | Rôles tenant dans la RLS | 5–7 j | clôture V1 |
+| 14 | Routes serveur → RPC / Edge Functions | 4–5 j | 13 |
+| 15 | Socle données temps réel | 3–4 j | 13 |
+| 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
+| 17 | Bascule SPA + PWA | 4–5 j | 16 |
+| 18 | Web Push (arrière-plan) | 3–4 j | 15, 17 |
+| **Total** | | **≈ 28–37 j (6–8 semaines)** | |
+
+Chaque phase est livrable seule et mise en production avant la suivante. Aucune phase n'est lancée sans
+`NN-PLAN.md` détaillé (`/gsd-plan-phase NN`).
+
+### Phase 13: Rôles tenant dans la RLS
+**Status:** Not started
+**Goal:** Que les droits de `ROUTE_POLICY` soient vrais en base, quel que soit le client qui appelle.
+**Constats du 2026-09-27** (policies de prod) :
+- `pricing_rules` (`pricing_isolation`, `pricing_tenant_isolation`), `vehicles` (`vehicles_isolation`,
+  `vehicles_tenant_isolation`), `drivers` (`drivers_isolation`, `drivers_tenant_isolation`) : `FOR ALL` pour
+  **tout membre du tenant** → un driver peut modifier tarifs, véhicules et chauffeurs, alors que `ROUTE_POLICY`
+  les réserve à owner/manager.
+- `drivers_insert_owner_only` est **sans effet** : les policies étant permissives (OR), `drivers_isolation`
+  (sans `WITH CHECK`, donc `USING` réutilisé) autorise déjà l'INSERT à tout membre.
+- `bookings` : UPDATE ouvert à tout membre sur toutes les courses du tenant ; un driver peut modifier les courses
+  d'un autre, et `total_amount` tant que la course est `pending` (`protect_booking_immutable_fields`).
+  Règle du projet : aucun calcul financier côté client.
+- Policies en doublon (4 SELECT sur `bookings`, 2 `FOR ALL` sur `drivers`, `vehicles`, `pricing_rules`, 3 SELECT
+  plateforme sur `financial_movements`) : la plus permissive gagne toujours, ce qui rend la relecture trompeuse.
+**Requirements:**
+- [ ] Fonction `current_tenant_role()` (STABLE, `SECURITY DEFINER`, `search_path` figé) sur le modèle de
+  `current_tenant_id()`.
+- [ ] Matrice rôle × table × opération écrite **avant** les migrations, dérivée de `ROUTE_POLICY` ; la faire
+  valider (notamment : le manager écrit-il les tarifs ? le driver voit-il les courses non assignées ?).
+- [ ] Réécrire les policies par table et par commande (plus de `FOR ALL`), supprimer les doublons.
+- [ ] `bookings` : le client n'écrit plus de colonnes financières ni de statut en direct ; transitions via RPC
+  (Phase 14). Driver limité à ses courses (`driver_id`).
+- [ ] Suite de tests SQL jouée en CI (`db-lint.yml`) : pour chaque rôle, chaque opération autorisée passe et
+  chaque opération interdite échoue — sur le modèle de la validation locale de la Phase 11.
+- [ ] Une fois la RLS en place, `ROUTE_POLICY` ne sert plus qu'à la navigation (UX), plus à la sécurité.
+
+### Phase 14: Routes serveur → RPC / Edge Functions
+**Status:** Not started
+**Goal:** Plus aucune logique métier ni clé `service_role` dans le serveur Astro du backoffice.
+**Requirements:**
+- [ ] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
+  `api/auth/login`) et des 10 fichiers qui appellent `createAdminClient()` ; pour chacun : RPC (logique de
+  données, transaction) ou Edge Function (appel externe : Stripe, e-mail, stockage).
+- [ ] Transitions de course (`booking-actions`, `update-booking-status`, `terrain-transition`) en RPC uniques et
+  idempotentes, gardées par rôle, s'appuyant sur `trg_validate_booking_status_transition` ; règle H-15 d'ADR-002
+  conservée côté serveur.
+- [ ] `create-booking` : prix calculé côté serveur uniquement (règle du projet).
+- [ ] `api/submit-rating` et `rate/[id]` (page publique client) : déplacer vers `vtc-websites`.
+- [ ] `api/auth/login` : remplacé par `signInWithPassword` côté client (Phase 17).
+- [ ] Retirer `SUPABASE_SERVICE_ROLE_KEY` de `backoffice_env_vars` (Terraform) en fin de phase.
+
+### Phase 15: Socle données temps réel
+**Status:** Not started
+**Goal:** Que tout écran du backoffice reflète en quelques secondes un changement fait ailleurs
+(webhook Stripe, client, autre chauffeur), sans rechargement.
+**Requirements:**
+- [ ] Colonne `bookings.updated_at` + trigger (absente aujourd'hui) : sert à ordonner les événements et à
+  détecter les écritures concurrentes.
+- [ ] Trigger `realtime.broadcast_changes` sur `bookings` (INSERT, changements de `status`, `mission_status`,
+  `driver_id`) vers le topic privé `tenant:<tenant_id>:bookings`. Payload minimal
+  `{id, status, mission_status, driver_id, updated_at}`.
+- [ ] RLS sur `realtime.messages` : seul un membre du tenant s'abonne à son topic ; un driver ne reçoit que les
+  événements utiles à son périmètre (à trancher avec la matrice de la Phase 13).
+- [ ] Package partagé (backoffice + superadmin) : `QueryClient` TanStack Query, hook `useTenantBookingsRealtime`
+  qui invalide/patche le cache ; événement plus ancien que le cache (`updated_at`) ignoré.
+- [ ] Resynchronisation complète sur `visibilitychange` (retour au premier plan), `online`, et réabonnement
+  (`SUBSCRIBED` après coupure) ; sondage de secours à 60 s, premier plan uniquement.
+- [ ] Indicateur visible de l'état de synchronisation (connecté / reconnexion / hors ligne).
+- [ ] Événements couverts : nouvelle course payée (`stripe_webhook`), annulation client (`cancel-booking`),
+  paiement expiré, échec de remboursement, acceptation, assignation, étapes terrain.
+- [ ] Corriger ADR-002 (« implémenté » alors qu'aucun canal n'existe) par un ADR qui le remplace.
+
+### Phase 16: Pages en React (îlots dans Astro)
+**Status:** Not started
+**Goal:** Supprimer les scripts DOM impératifs ; chaque page devient un composant React branché sur le socle
+temps réel. Livrable page par page.
+**Requirements:**
+- [ ] `bookings` en premier (977 + 1 100 lignes de script, et la page la plus concernée par l'asynchrone).
+- [ ] Puis `dashboard`, `setup`, `pricing`, `ledger`, `settings`, `profile`, `vehicles`, et le layout `AppLayout`.
+- [ ] Puis `signup`, `login`, `waiting-approval`, `onboarding`.
+- [ ] Tokens de couleur sémantiques partagés avec superadmin ; réutiliser les 11 composants React existants.
+- [ ] Tests E2E par page migrée (Playwright), sur une base de test — **pas la production** (voir constat Phase 11).
+
+### Phase 17: Bascule SPA + PWA
+**Status:** Not started
+**Goal:** Backoffice statique (Vite + React Router), installable, à jour sans action du chauffeur.
+**Requirements:**
+- [ ] Enveloppe Vite + React Router ; Astro retiré du backoffice ; déploiement Cloudflare Pages en SPA.
+- [ ] Session : `supabase-js` côté client ; CSP stricte (le jeton vit dans le navigateur).
+- [ ] Manifest (nom, icônes, `display: standalone`, couleurs des tokens) ; écran d'aide à l'installation iOS.
+- [ ] Service worker (`vite-plugin-pwa`, Workbox) : coquille en cache, données en *network-first*,
+  **jamais** de réponse d'écriture en cache.
+- [ ] Mise à jour en mode `prompt` : bandeau « nouvelle version », appliquée hors action en cours.
+- [ ] Hors ligne en lecture seule : courses du jour consultables, actions désactivées avec message explicite.
+- [ ] Terraform et CI mis à jour ; `backoffice.spec.ts` réécrit.
+- [ ] Quick win possible dès maintenant, indépendant de tout le reste : manifest seul (app installable), ½ j.
+
+### Phase 18: Web Push (arrière-plan)
+**Status:** Not started
+**Goal:** Prévenir le chauffeur d'un événement qui exige une action quand l'app n'est pas ouverte.
+**Requirements:**
+- [ ] Table `push_subscriptions` (RLS : l'utilisateur gère les siennes) ; clés VAPID en secret Supabase.
+- [ ] Edge Function `send-push` ; déclenchée côté serveur (trigger → `pg_net` ou webhook de base) sur : nouvelle
+  course, annulation client, échec de paiement ou de remboursement, assignation.
+- [ ] Clic sur la notification : ouvre la course concernée ; l'app se resynchronise à l'ouverture (Phase 15).
+- [ ] Préférences de notification par utilisateur ; nettoyage des abonnements expirés (réponse 404/410).
+- [ ] iOS : push seulement pour la PWA installée (≥ 16.4), après consentement — parcours documenté dans l'app.
 
 ### Phase 999: Backlog / Future (V4)
-- **Migration du backoffice en React pur (SPA)** — idée notée le 2026-09-27, non planifiée. Astro n'apporte
-  rien au backoffice : aucune page de contenu, tout est applicatif et derrière authentification ; le SEO et le
-  rendu statique ne servent qu'à `vtc-websites`. `apps/superadmin` (React/Vite) sert de modèle.
-  **Ce que la migration doit reloger**, car c'est aujourd'hui du code serveur Astro :
-  - le middleware (`src/middleware.ts`) : session, `ROUTE_POLICY` deny-by-default, Kill Switch, redirections
-    d'onboarding — côté SPA, le contrôle d'accès ne vaut que s'il est aussi en base (RLS) ou dans l'API ;
-  - les routes `src/pages/api/**` (`api/tenant/*` : création et actions de course, export CSV, réglages, logo ;
-    `api/auth/login`) — vers des Edge Functions Supabase, ou des RPC protégées par RLS ;
-  - les appels `createAdminClient()` (clé `service_role`), qui ne peuvent en aucun cas passer côté client.
-  À coupler avec la Phase 12 (PWA) : voir son point d'attention sur l'ordre.
+- ~~Migration du backoffice en React pur~~ — planifiée le 2026-09-27 : Milestone V2, Phases 12 à 18.
 - **Intégration ORS (distance + estimation de péage)** — décidée le 2026-09-26, non planifiée.
   Tâches : client ORS côté serveur (jamais côté client, cf. règle « aucun calcul financier côté client ») ;
   récupération `distance_km` et longueur des segments `tollways` ; réglage tenant `toll_rate_per_km` ;
@@ -328,5 +476,5 @@ Trois hébergements, trois magasins distincts :
 
 À savoir : `EMAIL_FROM` n'est pas dans les secrets Supabase, `send-email` retombe sur son fallback en dur.
 
-**Ouvert :** `PUBLIC_SITE_URL`, `PUBLIC_SITE` et `PUBLIC_TENANT_ID` sont lus par le code mais absents de
-Terraform *et* du build CI — probablement absents en production. À vérifier puis déclarer.
+**Clos le 2026-09-27 :** `PUBLIC_SITE_URL`, `PUBLIC_SITE` et `PUBLIC_TENANT_ID` sont sans objet en production
+(voir « Reports du milestone V1 »).
