@@ -28,7 +28,13 @@ Extraction de la logique base de données et réparation du crash middleware.
 - [x] Isolation physique "Air-Gap" pour garantir la sécurité des données Master.
 - [x] Validation de conformité (Kbis/VTC) et "Kill Switch" par tenant — `src/pages/TenantsList.tsx`,
   migration `20260922000000_tenant_status_kill_switch.sql`.
-- [ ] Vue globale analytique (Volume, CA Brut/Net) avec stack UI optimisée (CRM) — **non livrée.**
+- [x] Vue globale analytique (Volume, CA Brut/Net) — **livrée le 2026-09-27** : écran `src/pages/Analytics.tsx`,
+  route `/analytics`, lien dans la sidebar. Par tenant et au total, sur le mois en cours / 30 jours / 12 mois :
+  courses (terminées, annulées), encaissé, remboursé, CA brut TTC, CA net HT, TVA collectée. Agrégats calculés
+  en base par `platform_tenant_analytics(p_from, p_to)` (migration `20260927031429`, `SECURITY INVOKER`, réservée
+  aux rôles plateforme, ligne de total par `GROUPING SETS`) — aucun calcul financier côté client.
+  Testée : cas chiffrés sur base locale (paiement + remboursement), et `tests/superadmin-analytics.spec.ts`
+  (agrégats comparés à un calcul indépendant sur le ledger de prod, écran, refus hors rôle plateforme).
 
 - [x] Approbation / rejet des dossiers d'onboarding — `src/pages/OnboardingsList.tsx`, route `/onboardings`
   (2026-09-27). L'écran équivalent du backoffice (`/admin/onboardings`) était inaccessible depuis la séparation :
@@ -40,10 +46,9 @@ Extraction de la logique base de données et réparation du crash middleware.
 couleurs passées sur des tokens sémantiques (`src/index.css`), lint à zéro. La section `/admin/*` du backoffice,
 morte, est supprimée (pages, `/api/admin/*`, `components/admin/*`, `AdminLayout.astro`).
 
-**Reste à faire :**
-- Vue analytique (Volume, CA Brut/Net) — non livrée. Les anciennes pages admin du backoffice (dashboard,
-  réservations, grand livre, tenants, Stripe) n'ont pas d'équivalent superadmin ; récupérables dans l'historique
-  git (`59e7fe1^`) si on les porte.
+**Reste à faire :** rien. Pour mémoire, les anciennes pages admin du backoffice (réservations, grand livre,
+monitoring Stripe) n'ont pas d'équivalent superadmin ; récupérables dans l'historique git (`59e7fe1^`) si le
+besoin apparaît.
 
 ### Phase 5: Refonte Design Complète UI/UX (Backoffice Uniquement)
 **Status:** Complete
@@ -291,13 +296,13 @@ ci-dessous, avec sa destination.
 | Restaurer Stripe Invoicing dans `generate-invoice` | Phase 8 | **Pré-requis de lancement**, hors V2 | Bloqué sur un réglage *Settings > Invoicing* du compte Stripe connecté de démo (côté utilisateur). **Bloquant avant une vraie prod.** |
 | Protection anti-mots de passe compromis | Phase 10 | Action utilisateur (dashboard Auth Supabase) | Réglage de console, pas de code. |
 | `EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail) | Secrets | Décision utilisateur | Il faut un expéditeur sur un domaine vérifié chez Resend. 2 envois sur 4 en échec en juillet. |
-| Vue analytique superadmin (volume, CA brut/net) | Phase 4.5 | Backlog | Écran à concevoir ; les anciennes pages admin sont récupérables (`59e7fe1^`). |
+| ~~Vue analytique superadmin (volume, CA brut/net)~~ | Phase 4.5 | **Fait le 2026-09-27** | Voir Phase 4.5 : écran `/analytics`, fonction `platform_tenant_analytics`. |
 | Export comptable normé (FEC, Sage…) | Phase 8 | Backlog, conditionnel | Seulement si l'expert-comptable l'exige. |
 | ~~80 erreurs `deno check` dans `generate-invoice`~~ | Phase 8 | **Fait le 2026-09-27** | Les 14 Edge Functions passent `deno check`, vérifié en CI. |
 | ~~Guards `requireTenantRole` redondants avec `ROUTE_POLICY`~~ | Phase 9 | **Fait le 2026-09-27** | Voir Phase 9 : guards et fonctions retirés, trou API `pending` et boucle driver/setup fermés. |
 | Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
 | ~~Deux fonctions de synchro TVA redondantes~~ ; assujettissement dérivé de `legal_form` | Phase 11 | Fusion **faite le 2026-09-27** ; assujettissement : backlog | Assujettissement : décision utilisateur du 2026-09-26, à rouvrir au premier auto-entrepreneur assujetti. |
-| Tests E2E Playwright écrivant en production | Phase 11 | V2, Phase 16 | Une base de test dédiée est prévue avec la réécriture des tests. |
+| ~~Tests E2E Playwright écrivant en production~~ | Phase 11 | **Fait le 2026-09-27** | `tests/e2e-env.ts` : cible locale par défaut (`.env.e2e`, modèle `.env.e2e.example`), toute autre cible refusée sans `E2E_ALLOW_PRODUCTION=1`. Limite : l'API admin Auth de la stack locale refuse les jetons HS256 avec la CLI Supabase 2.75 — mettre la CLI à jour (2.118) pour jouer les tests en local. |
 | ~~`RatingQRModal.tsx` appelle `useState` après un `return` conditionnel~~ | Constat 2026-09-27 | **Fait le 2026-09-27** | URL calculée au rendu, plus d'état ni d'effet. |
 | `PUBLIC_SITE_URL`, `PUBLIC_SITE`, `PUBLIC_TENANT_ID` absents de Terraform | Secrets | **Clos, sans objet** | `PUBLIC_SITE` ne sert qu'en dev ; `PUBLIC_TENANT_ID` est un repli après résolution par domaine ; `PUBLIC_SITE_URL` retombe sur l'origine du backoffice, qui héberge `/rate/[id]`. |
 

@@ -42,6 +42,7 @@ export const ROUTE_POLICY: Record<string, TenantRole[]> = {
   "/api/tenant/update-booking-status": ALL_TENANT_ROLES,
   "/api/tenant/create-booking": ["owner", "manager"],
   "/api/tenant/export-csv": ["owner", "manager"],
+  "/api/tenant/export-fec": ["owner", "manager"],
   "/api/tenant/update-settings": ["owner"],
   "/api/tenant/update-logo": ["owner"],
 };
