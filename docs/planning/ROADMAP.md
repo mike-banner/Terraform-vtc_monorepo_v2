@@ -30,11 +30,20 @@ Extraction de la logique base de données et réparation du crash middleware.
   migration `20260922000000_tenant_status_kill_switch.sql`.
 - [ ] Vue globale analytique (Volume, CA Brut/Net) avec stack UI optimisée (CRM) — **non livrée.**
 
+- [x] Approbation / rejet des dossiers d'onboarding — `src/pages/OnboardingsList.tsx`, route `/onboardings`
+  (2026-09-27). L'écran équivalent du backoffice (`/admin/onboardings`) était inaccessible depuis la séparation :
+  le middleware renvoie les admins plateforme vers l'accueil (ADR-009). **Aucun onboarding n'était approuvable
+  par un humain.** `approve_onboarding_tx` vérifie désormais elle-même le `platform_role` de l'appelant
+  (migration `20260926222114`) et est ouverte à `authenticated`.
+
+**Fait le 2026-09-27 :** liens morts Analytics / Utilisateurs retirés de la sidebar (vraies routes via `NavLink`),
+couleurs passées sur des tokens sémantiques (`src/index.css`), lint à zéro. La section `/admin/*` du backoffice,
+morte, est supprimée (pages, `/api/admin/*`, `components/admin/*`, `AdminLayout.astro`).
+
 **Reste à faire :**
-- `apps/superadmin/src/App.tsx` ne déclare qu'une seule route (`TenantsList`). Les trois entrées de la sidebar
-  de `src/layouts/AdminLayout.tsx` — Tenants, Analytics, Utilisateurs — sont des `href="#"` morts : l'interface
-  annonce deux écrans qui n'existent pas. Soit on livre l'écran Analytics, soit on retire les liens morts.
-  Le second est immédiat et arrête de mentir à l'utilisateur.
+- Vue analytique (Volume, CA Brut/Net) — non livrée. Les anciennes pages admin du backoffice (dashboard,
+  réservations, grand livre, tenants, Stripe) n'ont pas d'équivalent superadmin ; récupérables dans l'historique
+  git (`59e7fe1^`) si on les porte.
 
 ### Phase 5: Refonte Design Complète UI/UX (Backoffice Uniquement)
 **Status:** Complete
@@ -156,13 +165,13 @@ C'est la raison du choix d'un point d'application unique (middleware) plutôt qu
 **Reste à faire :**
 - Aucun code n'attribue jamais `tenant_role = 'manager'` : le rôle est défini, gardé, mais inerte faute d'écran
   d'invitation/gestion des membres du tenant. **Assumé** tant qu'on est en solo.
-- Les guards `requireTenantRole` de `settings.astro`, `pricing.astro`, `ledger.astro` et `export-csv.ts` sont
+- Les guards `requireTenantRole` de `settings.astro`, `pricing.astro` et `ledger.astro` (celui d'`export-csv.ts` a déjà été retiré) sont
   désormais redondants avec `ROUTE_POLICY`. Conservés en défense en profondeur, mais ce sont deux sources de
   vérité qui peuvent divergent : à trancher (les retirer, ou les dériver de la table).
 - Les guards sont applicatifs : la RLS ne distingue pas les rôles au sein d'un tenant (voir Phase 10).
 
 ### Phase 11: Réparation onboarding et conformité TVA
-**Status:** Migration écrite et **validée en local** le 2026-09-26 — **non appliquée en production**
+**Status:** Complete — appliquée en production le 2026-09-26 (version `20260926003805`), approbation réelle rejouée le 2026-09-27
 **Goal:** Rendre l'approbation d'onboarding à nouveau fonctionnelle et les factures fiscalement conformes.
 
 Migration `20260926000000_restore_tenant_legal_fields_and_vat_sync.sql`. Deux régressions cumulées,
@@ -198,9 +207,21 @@ l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus t
   `setup_completed = false` ; profil passé `owner` ; driver titulaire créé et lié au `user_id` de l'owner.
 
 **Reste à faire :**
-- **Appliquer la migration en production** (`kpnkhmtxzigxtfnkmzru`) — elle n'y est pas. Le drift-check CI
-  la signalera tant qu'elle n'est pas passée.
-- **Rejouer une approbation d'onboarding réelle** après application.
+- ~~Appliquer la migration en production~~ — fait le 2026-09-26, version `20260926003805` (fichier renommé en
+  conséquence, drift nul). Reprise vérifiée : 0 tenant sans `legal_form`.
+- ~~Rejouer une approbation d'onboarding réelle~~ — fait le 2026-09-27 par `tests/onboarding-approval.spec.ts`
+  (projet Playwright `superadmin`) : clic sur « Approuver » dans superadmin, en production, puis vérification
+  `legal_form = sasu`, `company_type = societe`, SIRET, TVA 10 %, rôle `owner`, driver titulaire. Données
+  jetables supprimées en fin de test.
+
+**Constats du 2026-09-27 :**
+- `tests/backoffice.spec.ts` n'a jamais exercé l'approbation : il passait le dossier en `approved` puis insérait
+  lui-même tenant, profil et driver. Il appelle désormais `approve_onboarding_tx`. Son nettoyage échouait en
+  silence (FK `bookings -> tenants` sans cascade) : **13 tenants « VTC E2E Corp » et 12 courses de test**
+  s'étaient accumulés en production depuis le 2026-06-17. Supprimés, ainsi que 2 comptes de test orphelins.
+- `onboarding_insert_own` / `onboarding_update_own` laissaient un utilisateur fixer lui-même `status = approved`.
+  Fermé par `20260927015049` : création et mise à jour imposent `pending`, un dossier approuvé n'est plus
+  modifiable par son propriétaire.
 - Redondance assumée : deux fonctions font la même synchro TVA, `set_tenant_vat_on_insert` (INSERT) et
   `sync_tenant_vat_config` (UPDATE OF legal_form). À fusionner un jour, sans urgence.
 - **Dette fiscale connue :** le taux 10 % est dérivé de `legal_form`, jamais saisi. Un auto-entrepreneur qui
@@ -264,9 +285,10 @@ fonction, et révoquer un rôle nommé n'enlève pas un droit hérité de `PUBLI
   la meta description SEO de `services.astro` n'était jamais transmise à `BaseLayout`, et `app/dashboard.astro`
   exécutait 8 requêtes Supabase mortes à chaque chargement. `tailwind.config.mjs` (mort) et sa dépendance
   `@park-ui/tailwind-plugin` ont été supprimés.
-- **Non couvert** : la détection du drift entre `supabase/migrations/` et la base distante exige un secret CI
-  `SUPABASE_ACCESS_TOKEN` (+ ref projet), absent du dépôt. À ajouter pour que l'écart constaté en Phase 10
-  ne puisse plus passer inaperçu.
+- **Drift des migrations** (livré le 2026-09-25, commit `8c54251`) : job `migration-drift` de
+  `.github/workflows/db-lint.yml`, `scripts/check_migration_drift.py`, secret `SUPABASE_ACCESS_TOKEN`.
+  Piège : une migration appliquée par l'API est enregistrée sous l'horodatage d'application, pas celui du
+  fichier — renommer le fichier sur la version enregistrée, sinon le job signale un faux écart.
 
 ### Secrets — répartition (clarifiée le 2026-09-25)
 Trois hébergements, trois magasins distincts :
@@ -278,3 +300,6 @@ Trois hébergements, trois magasins distincts :
 - **GitHub Actions** ← secrets du dépôt. `SUPABASE_ACCESS_TOKEN` pour le drift-check.
 
 À savoir : `EMAIL_FROM` n'est pas dans les secrets Supabase, `send-email` retombe sur son fallback en dur.
+
+**Ouvert :** `PUBLIC_SITE_URL`, `PUBLIC_SITE` et `PUBLIC_TENANT_ID` sont lus par le code mais absents de
+Terraform *et* du build CI — probablement absents en production. À vérifier puis déclarer.
