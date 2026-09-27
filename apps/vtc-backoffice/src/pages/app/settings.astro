@@ -2,16 +2,8 @@
 // src/pages/app/settings.astro
 import Card from "../../components/ui/Card.astro";
 import AppLayout from "../../layouts/AppLayout.astro";
-import { requireTenantRole } from "../../lib/guards";
 
 const { profile, supabase } = Astro.locals;
-
-// Protection Guard : Owner uniquement
-try {
-    requireTenantRole(profile, ["owner"]);
-} catch {
-    return Astro.redirect("/app/dashboard");
-}
 
 // 1️⃣ Récupérer les infos du tenant
 const { data: tenant } = await supabase

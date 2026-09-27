@@ -3,7 +3,6 @@ import { createServerClient } from '@vtc/database';
 import { parseCookieHeader } from '@supabase/ssr';
 import type { CookieOptions } from '@supabase/ssr';
 import type { APIRoute } from 'astro';
-import { hasTenantRole } from '../../../lib/guards';
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
   const { user, profile } = locals as any;
@@ -11,10 +10,7 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  // Même périmètre que /app/ledger : l'export comptable n'est pas ouvert aux chauffeurs.
-  if (!hasTenantRole(profile, ['owner', 'manager'])) {
-    return new Response('Forbidden', { status: 403 });
-  }
+  // Rôle vérifié par le middleware (ROUTE_POLICY : owner + manager).
 
   const supabase = createServerClient(
     import.meta.env.PUBLIC_SUPABASE_URL,

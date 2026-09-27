@@ -97,8 +97,9 @@ const { data: tenant } = await supabaseAdmin
     .eq("id", profile.tenant_id!)
     .maybeSingle();
 
-// 🚀 Blocage si Setup non terminé
-if (tenant && !tenant.setup_completed) {
+// 🚀 Blocage si Setup non terminé. Seul l'owner peut le faire (ROUTE_POLICY) :
+// y renvoyer un autre rôle bouclait entre /app/setup (refusé) et le dashboard.
+if (tenant && !tenant.setup_completed && profile.tenant_role === "owner") {
     return Astro.redirect("/app/setup");
 }
 

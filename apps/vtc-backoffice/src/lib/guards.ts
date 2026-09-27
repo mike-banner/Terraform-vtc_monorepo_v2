@@ -10,22 +10,6 @@ export function isTenant(profile: any) {
 }
 
 /**
- * Vérifie les permissions au sein d'un tenant
- */
-export function requireTenantRole(profile: any, allowed: TenantRole[]) {
-  if (!profile?.tenant_role || !allowed.includes(profile.tenant_role)) {
-    throw new Error("Access denied: Insufficient permissions");
-  }
-}
-
-/**
- * Utilitaire booléen pour l'UI
- */
-export function hasTenantRole(profile: any, allowed: TenantRole[]): boolean {
-  return !!(profile?.tenant_role && allowed.includes(profile.tenant_role));
-}
-
-/**
  * Politique d'accès par route, appliquée dans `middleware.ts` pour `/app/*` et
  * `/api/tenant/*`. Un seul endroit décide : poser le guard page par page laissait
  * les routes API à découvert (un `driver` pouvait appeler `api/tenant/update-settings`

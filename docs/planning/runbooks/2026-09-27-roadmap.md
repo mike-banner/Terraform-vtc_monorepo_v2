@@ -21,7 +21,7 @@ Extraction de la logique base de données et réparation du crash middleware.
 - Vérification des paramètres (Logo, Tarifs) et calculs des prix.
 
 ### Phase 4.5: Création de l'Application Master Admin Séparée
-**Status:** Mostly Complete (corrigé le 2026-09-25 — était marquée Complete à tort)
+**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (corrigé le 2026-09-25 — était marquée Complete à tort)
 **Goal:** Contrôler efficacement les entreprises (Tenants) via une interface isolée
 **Requirements**:
 - [x] Création d'une application isolée `apps/superadmin` (Port 4323) sur le modèle SaaS standard — React/Vite, `vite.config.ts:9`.
@@ -78,7 +78,7 @@ au profit de la DA « steel blue » (`#0B0F15` / `#151F2B`) livrée entre les co
 Le volet design de la Phase 7 est donc clos par substitution, pas par exécution du plan d'origine.
 
 ### Phase 8: Facturation et Comptabilité (ERP Professionnel)
-**Status:** Mostly Complete (livrée hors process de planification — aucun 08-PLAN.md n'a existé)
+**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (livrée hors process de planification — aucun 08-PLAN.md n'a existé)
 **Goal:** Ajout des fonctionnalités d'édition
 **Requirements**:
 - [x] Génération des factures PDF automatiques — edge function `supabase/functions/generate-invoice` (pdf-lib),
@@ -133,7 +133,7 @@ Le message métier du corps de réponse était perdu. Helper `src/lib/function-e
 - Export comptable à un format normé si l'expert-comptable l'exige.
 
 ### Phase 9: Multi-Driver et Permissions Avancées
-**Status:** Mostly Complete (livrée hors process de planification — aucun 09-PLAN.md n'a existé)
+**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (livrée hors process de planification — aucun 09-PLAN.md n'a existé)
 **Goal:** Gérer les flottes de chauffeurs
 **Requirements**:
 - [x] Gestion multi-chauffeurs pour un seul tenant — table `drivers`, UI `components/drivers/DriverList.tsx` + `DriverModal.tsx` montées dans `app/profile.astro`.
@@ -230,28 +230,13 @@ l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus t
   Décision utilisateur du 2026-09-26 : **laissé en l'état** tant qu'on démarre en solo. À rouvrir au premier
   tenant concerné, en dissociant l'assujettissement de la forme juridique.
 
-## Milestone V2 — Backoffice React + PWA temps réel (planifié le 2026-09-27)
+## Clôture du milestone V1 (2026-09-27)
 
-Décision d'architecture : `docs/decisions/vtc-backoffice/ADR-011-backoffice-react-spa-pwa-temps-reel.md`
-(statut Proposé). Ordre imposé : **la sécurité descend en base avant que le client ne change** — tant que les
-rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la RLS laisse passer.
-
-| Phase | Objet | Charge | Dépend de |
-|---|---|---|---|
-| 12 | Correctifs sécurité critiques (anon) | 0,5–1 j | — |
-| 13 | Rôles tenant dans la RLS | 5–7 j | 12 |
-| 14 | Routes serveur → RPC / Edge Functions | 4–5 j | 13 |
-| 15 | Socle données temps réel | 3–4 j | 13 |
-| 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
-| 17 | Bascule SPA + PWA | 4–5 j | 16 |
-| 18 | Web Push (arrière-plan) | 3–4 j | 15, 17 |
-| **Total** | | **≈ 29–38 j (6–8 semaines)** | |
-
-Chaque phase est livrable seule et mise en production avant la suivante. Aucune phase n'est lancée sans
-`NN-PLAN.md` détaillé (`/gsd-plan-phase NN`).
+Phases 1 à 12 closes. Ce qui n'a pas été livré n'est pas oublié : chaque point est reporté explicitement
+ci-dessous, avec sa destination.
 
 ### Phase 12: Correctifs sécurité critiques (clé anon)
-**Status:** Not started — **URGENT, exploitable aujourd'hui en production**
+**Status:** Complete — appliquée en production le 2026-09-27 (migration `20260927023037`)
 **Goal:** Fermer les écritures que la clé publique `anon` (présente dans le bundle de chaque site tenant) permet.
 **Constats du 2026-09-27** (policies lues en prod, exploitation vérifiée sur base locale dans une transaction annulée) :
 - `platform_settings` : policy `platform_settings_update_admin` en `UPDATE USING (true)` pour `public`, et
@@ -263,19 +248,62 @@ Chaque phase est livrable seule et mise en production avant la suivante. Aucune 
 - `customers` : `insert_customers_public` → n'importe qui peut créer des clients chez n'importe quel tenant.
 - `platform_settings_read_admin` en `SELECT USING (true)` : taux de commission lisibles par tous (à qualifier).
 **Requirements:**
-- [ ] `platform_settings` : UPDATE réservé à `super_admin` ; SELECT à décider (plateforme seule, ou via RPC).
-- [ ] Supprimer `insert_bookings_public` et `insert_customers_public`. Aucun flux légitime ne les utilise :
+- [x] `platform_settings` : SELECT et UPDATE réservés à `super_admin` (aucun code applicatif ne lit la table).
+- [x] Supprimer `insert_bookings_public` et `insert_customers_public` ; droits INSERT/UPDATE/DELETE/TRUNCATE
+  révoqués à `anon` sur `platform_settings`, `bookings`, `customers`. Aucun flux légitime ne les utilise :
   les réservations payantes sont créées par les Edge Functions (`create_checkout_session`, `stripe_webhook`)
   en `service_role`.
-- [ ] `trg_auto_financial_movement` : ne créer un mouvement que si l'écriture vient de `service_role`
-  (défense en profondeur, même après fermeture de l'INSERT).
-- [ ] Vérifier le grand livre de production : aucun mouvement dont la course n'a pas de `stripe_payment_intent_id`
-  (paiement carte) ni de `mission_status = completed` (espèces).
-- [ ] Formulaire de devis du site public (`vtc-websites/src/core/booking.ts`) : **déjà cassé**, il insère une
-  colonne `client_name` qui n'existe pas. Le repasser par une Edge Function (`service_role`, validation serveur)
-  ou le retirer.
-- [ ] Ajouter ces cas au lint `supabase/lint/security_checks.sql` : aucune policy d'écriture `USING (true)` pour
-  `anon`/`public` hors allowlist.
+- [x] `auto_create_financial_movement` refuse (42501) un encaissement produit par un client `anon` ou
+  `authenticated` : seul `service_role` alimente le ledger. Toutes les transitions légitimes passent déjà par
+  `createAdminClient()` ou les Edge Functions.
+- [x] Grand livre de production vérifié : aucune trace d'exploitation. 3 mouvements « stripe_payment » sans
+  `stripe_payment_intent_id`, tous du 2026-07-29 sur les tenants de démo (Elite Lyon, VTC Elite Demo, créé ce
+  jour-là) : données de démonstration, laissées en place (ledger immuable). `platform_settings` inchangée
+  depuis le 2026-03-04.
+- [x] Formulaire de devis du site public supprimé (`core/booking.ts`, `api/quote.ts`) : appelé par aucune page
+  et cassé (colonne `client_name` inexistante). À recréer via une Edge Function si le besoin revient.
+- [x] Lint `supabase/lint/security_checks.sql`, règle 4 : une policy d'écriture sans condition (`true`) ouverte à
+  `anon`/`public` fait échouer la CI. Limite : une condition triviale mais non littérale (ex. l'ancien
+  `original_tenant_id IS NOT NULL`) n'est pas détectée — c'est le rôle des tests par rôle de la Phase 13.
+- [x] Vérifié en production par l'API REST publique avec la clé `anon` : PATCH `platform_settings` → 401,
+  POST `bookings` / `customers` → `42501 permission denied`.
+- [x] Au passage : page `/test-booking` (catalogue de composants publié sur chaque site tenant) supprimée.
+
+### Reports du milestone V1
+
+| Point | Origine | Destination | Pourquoi pas maintenant |
+|---|---|---|---|
+| Restaurer Stripe Invoicing dans `generate-invoice` | Phase 8 | **Pré-requis de lancement**, hors V2 | Bloqué sur un réglage *Settings > Invoicing* du compte Stripe connecté de démo (côté utilisateur). **Bloquant avant une vraie prod.** |
+| Protection anti-mots de passe compromis | Phase 10 | Action utilisateur (dashboard Auth Supabase) | Réglage de console, pas de code. |
+| `EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail) | Secrets | Décision utilisateur | Il faut un expéditeur sur un domaine vérifié chez Resend. 2 envois sur 4 en échec en juillet. |
+| Vue analytique superadmin (volume, CA brut/net) | Phase 4.5 | Backlog | Écran à concevoir ; les anciennes pages admin sont récupérables (`59e7fe1^`). |
+| Export comptable normé (FEC, Sage…) | Phase 8 | Backlog, conditionnel | Seulement si l'expert-comptable l'exige. |
+| 80 erreurs `deno check` dans `generate-invoice` | Phase 8 | V2, Phase 14 | Les Edge Functions sont retravaillées dans cette phase. |
+| Guards `requireTenantRole` redondants avec `ROUTE_POLICY` | Phase 9 | V2, Phase 13 | La RLS par rôle rend `ROUTE_POLICY` purement UX ; les guards disparaissent avec. |
+| Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
+| Deux fonctions de synchro TVA redondantes ; assujettissement dérivé de `legal_form` | Phase 11 | Backlog | Sans urgence en solo ; à rouvrir au premier auto-entrepreneur assujetti. |
+| Tests E2E Playwright écrivant en production | Phase 11 | V2, Phase 16 | Une base de test dédiée est prévue avec la réécriture des tests. |
+| `RatingQRModal.tsx` appelle `useState` après un `return` conditionnel (règle des hooks violée) | Constat 2026-09-27 | V2, Phase 16 | Composant réécrit dans la phase. |
+| `PUBLIC_SITE_URL`, `PUBLIC_SITE`, `PUBLIC_TENANT_ID` absents de Terraform | Secrets | **Clos, sans objet** | `PUBLIC_SITE` ne sert qu'en dev ; `PUBLIC_TENANT_ID` est un repli après résolution par domaine ; `PUBLIC_SITE_URL` retombe sur l'origine du backoffice, qui héberge `/rate/[id]`. |
+
+## Milestone V2 — Backoffice React + PWA temps réel (planifié le 2026-09-27)
+
+Décision d'architecture : `docs/decisions/vtc-backoffice/ADR-011-backoffice-react-spa-pwa-temps-reel.md`
+(statut Proposé). Point d'entrée : **Phase 13**. Ordre imposé : **la sécurité descend en base avant que le client ne change** — tant que les
+rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la RLS laisse passer.
+
+| Phase | Objet | Charge | Dépend de |
+|---|---|---|---|
+| 13 | Rôles tenant dans la RLS | 5–7 j | clôture V1 |
+| 14 | Routes serveur → RPC / Edge Functions | 4–5 j | 13 |
+| 15 | Socle données temps réel | 3–4 j | 13 |
+| 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
+| 17 | Bascule SPA + PWA | 4–5 j | 16 |
+| 18 | Web Push (arrière-plan) | 3–4 j | 15, 17 |
+| **Total** | | **≈ 28–37 j (6–8 semaines)** | |
+
+Chaque phase est livrable seule et mise en production avant la suivante. Aucune phase n'est lancée sans
+`NN-PLAN.md` détaillé (`/gsd-plan-phase NN`).
 
 ### Phase 13: Rôles tenant dans la RLS
 **Status:** Not started
@@ -448,5 +476,5 @@ Trois hébergements, trois magasins distincts :
 
 À savoir : `EMAIL_FROM` n'est pas dans les secrets Supabase, `send-email` retombe sur son fallback en dur.
 
-**Ouvert :** `PUBLIC_SITE_URL`, `PUBLIC_SITE` et `PUBLIC_TENANT_ID` sont lus par le code mais absents de
-Terraform *et* du build CI — probablement absents en production. À vérifier puis déclarer.
+**Clos le 2026-09-27 :** `PUBLIC_SITE_URL`, `PUBLIC_SITE` et `PUBLIC_TENANT_ID` sont sans objet en production
+(voir « Reports du milestone V1 »).

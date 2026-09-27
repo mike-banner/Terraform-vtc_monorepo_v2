@@ -215,6 +215,18 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
       ? (profile.tenant_role as TenantRole)
       : null;
 
+  // Les pages `/app/*` d'un utilisateur sans rôle tenant actif (pending, sans rôle,
+  // admin plateforme) sont redirigées en section 3. Les routes API ne le sont pas :
+  // sans ce refus, un compte `pending` atteignait `/api/tenant/*` directement.
+  if (!tenantRole && path.startsWith('/api/tenant')) {
+    return finish(
+      new Response(
+        JSON.stringify({ error: 'Forbidden: no active tenant role' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+  }
+
   if (tenantRole && isTenantScopedPath(path)) {
     const allowed = allowedRolesFor(path);
     const granted = allowed?.includes(tenantRole) ?? false;
