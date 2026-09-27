@@ -5,6 +5,7 @@ import { supabase } from './lib/supabase';
 import { Login } from './pages/Login';
 import { TenantsList } from './pages/TenantsList';
 import { OnboardingsList } from './pages/OnboardingsList';
+import { Analytics } from './pages/Analytics';
 import { AdminLayout } from './layouts/AdminLayout';
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
         >
           <Route index element={<TenantsList />} />
           <Route path="onboardings" element={<OnboardingsList />} />
+          <Route path="analytics" element={<Analytics />} />
         </Route>
       </Routes>
     </Router>

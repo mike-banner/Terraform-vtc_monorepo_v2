@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { LogOut, Building2, ClipboardCheck } from 'lucide-react';
+import { LogOut, Building2, ClipboardCheck, BarChart3 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -54,7 +54,6 @@ export const AdminLayout = () => {
           VTC MASTER
         </div>
         
-        {/* ponytail: Analytics et Utilisateurs retirés tant que les écrans n'existent pas (Phase 4.5) */}
         <nav className="flex-1 py-6 px-3 space-y-1">
           <NavLink to="/" end className={navClass}>
             <Building2 className="mr-3 h-5 w-5" />
@@ -63,6 +62,10 @@ export const AdminLayout = () => {
           <NavLink to="/onboardings" className={navClass}>
             <ClipboardCheck className="mr-3 h-5 w-5" />
             Onboardings
+          </NavLink>
+          <NavLink to="/analytics" className={navClass}>
+            <BarChart3 className="mr-3 h-5 w-5" />
+            Analytics
           </NavLink>
         </nav>
 
