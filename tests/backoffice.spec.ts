@@ -28,9 +28,12 @@ test.describe.serial('Backoffice E2E Flow', () => {
     if (userId) {
       console.log(`🧹 Nettoyage de l'utilisateur ${userId}`);
       
-      // Delete Tenant
+      // Les FK bookings -> tenants ne sont pas en cascade : sans ce DELETE préalable,
+      // celui du tenant échouait en silence et laissait un tenant orphelin en base.
       if (tenantId) {
-        await supabase.from('tenants').delete().eq('id', tenantId);
+        await supabase.from('bookings').delete().eq('current_tenant_id', tenantId);
+        const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
+        if (error) console.error('Nettoyage tenant en échec :', error.message);
       }
       
       // Delete Driver/Onboarding records implicitly deleted by Cascade if configured, 
@@ -90,42 +93,25 @@ test.describe.serial('Backoffice E2E Flow', () => {
 
     expect(userId).toBeDefined();
 
-    // Simuler l'action d'un Admin: Approbation de l'onboarding
-    const { error: obError } = await supabase.from('onboarding').update({ status: 'approved' }).eq('profile_id', userId);
-    expect(obError).toBeNull();
-    
-    // Créer un tenant manuellement pour le test (simule le trigger/API backend)
-    const { data: tenant, error: tError } = await supabase.from('tenants').insert({
-      name: 'VTC E2E Corp',
-      siret: `123${Date.now().toString().slice(-11)}`,
-      primary_domain: `e2e-domain-${Date.now()}`
-    }).select().single();
-    if (tError) console.error("TENANT ERROR:", tError);
-    expect(tError).toBeNull();
-    
-    tenantId = tenant.id;
+    // Approbation par la vraie fonction, pas par des INSERT à la main : c'est ce qui
+    // a laissé approve_onboarding_tx cassée de mai à septembre sans qu'un test le voie.
+    // Le chemin UI (superadmin) est couvert par onboarding-approval.spec.ts.
+    const { data: onboarding } = await supabase.from('onboarding').select('id').eq('profile_id', userId).single();
+    const { error: approveError } = await supabase.rpc('approve_onboarding_tx', { onboarding_uuid: onboarding.id });
+    expect(approveError).toBeNull();
 
-    // Mettre à jour le profil avec le tenant_id
-    const { error: pError } = await supabase.from('profiles').update({
-      tenant_id: tenant.id,
-      tenant_role: 'owner'
-    }).eq('id', userId);
-    expect(pError).toBeNull();
-    
-    // Injecter un chauffeur
-    const { data: driver, error: dError } = await supabase.from('drivers').insert({
-      tenant_id: tenant.id,
-      user_id: userId,
-      first_name: 'John',
-      last_name: 'Doe',
-      phone: '0612345678',
-      license_number: '123456789'
-    }).select().single();
+    const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', userId).single();
+    tenantId = profile.tenant_id;
+    expect(tenantId).toBeTruthy();
+
+    // Driver titulaire créé par l'approbation
+    const { data: driver, error: dError } = await supabase.from('drivers').select('id').eq('user_id', userId).single();
     expect(dError).toBeNull();
-    
+
+    // Le véhicule vient de app/setup.astro, pas de l'approbation : on l'injecte.
     // Injecter un véhicule
     const { error: vError } = await supabase.from('vehicles').insert({
-      tenant_id: tenant.id,
+      tenant_id: tenantId,
       driver_id: driver.id,
       brand: 'Tesla',
       model: 'Model S',

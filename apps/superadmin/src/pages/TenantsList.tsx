@@ -14,25 +14,30 @@ export const TenantsList = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchTenants = async () => {
-    setLoading(true);
+  // setState uniquement dans le callback : react-hooks/set-state-in-effect.
+  const fetchTenants = () =>
     // Since we are Super Admin, RLS should let us fetch all tenants
-    const { data, error } = await supabase
+    supabase
       .from('tenants')
       .select('*')
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setTenants(data as Tenant[]);
-    } else {
-      console.error(error);
-    }
-    setLoading(false);
-  };
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setTenants(data as Tenant[]);
+        } else {
+          console.error(error);
+        }
+        setLoading(false);
+      });
 
   useEffect(() => {
     fetchTenants();
   }, []);
+
+  const refresh = () => {
+    setLoading(true);
+    fetchTenants();
+  };
 
   const toggleTenantStatus = async (tenantId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
@@ -61,58 +66,58 @@ export const TenantsList = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center">
-          <Building className="mr-3 h-6 w-6 text-slate-500" />
+      <div className="flex justify-between items-center border-b border-border pb-4">
+        <h1 className="text-2xl font-bold text-primary flex items-center">
+          <Building className="mr-3 h-6 w-6 text-muted" />
           Liste des Entreprises
         </h1>
         <button 
-          onClick={fetchTenants}
-          className="text-sm text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-md shadow-sm"
+          onClick={refresh}
+          className="text-sm text-body hover:text-primary bg-surface border border-border px-3 py-1.5 rounded-md shadow-sm"
         >
           Rafraîchir
         </button>
       </div>
 
       {loading ? (
-        <div className="text-slate-500">Chargement des données...</div>
+        <div className="text-muted">Chargement des données...</div>
       ) : (
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+        <div className="bg-surface rounded-lg border border-border shadow-sm overflow-hidden">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-background">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Nom
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Date d'inscription
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                   Statut
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">
                   Actions (Kill Switch)
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
+            <tbody className="bg-surface divide-y divide-border">
               {tenants.map((tenant) => (
-                <tr key={tenant.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                <tr key={tenant.id} className="hover:bg-background transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
                     {tenant.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                     {tenant.email ?? '—'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                     {new Date(tenant.created_at).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                      ${tenant.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                      ${tenant.status === 'active' ? 'bg-success-soft text-success-strong' : 'bg-danger-soft text-danger-strong'}
                     `}>
                       {tenant.status || 'active'}
                     </span>
@@ -120,10 +125,10 @@ export const TenantsList = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => toggleTenantStatus(tenant.id, tenant.status || 'active')}
-                      className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2
+                      className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-on-primary focus:outline-none focus:ring-2 focus:ring-offset-2
                         ${(tenant.status || 'active') === 'active' 
-                          ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' 
-                          : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'}
+                          ? 'bg-danger hover:bg-danger-hover focus:ring-danger-ring' 
+                          : 'bg-success hover:bg-success-hover focus:ring-success-ring'}
                       `}
                     >
                       {(tenant.status || 'active') === 'active' ? (
@@ -142,7 +147,7 @@ export const TenantsList = () => {
               
               {tenants.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={5} className="px-6 py-12 text-center text-muted">
                     Aucune entreprise trouvée.
                   </td>
                 </tr>

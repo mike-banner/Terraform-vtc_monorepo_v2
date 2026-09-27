@@ -1,7 +1,12 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { LogOut, Building2, Users, LayoutDashboard } from 'lucide-react';
+import { LogOut, Building2, ClipboardCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+const navClass = ({ isActive }: { isActive: boolean }) =>
+  `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+    isActive ? 'bg-sidebar-hover text-on-primary' : 'hover:bg-sidebar-hover hover:text-on-primary'
+  }`;
 
 export const AdminLayout = () => {
   const navigate = useNavigate();
@@ -42,32 +47,29 @@ export const AdminLayout = () => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar - Style Twenty */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col">
-        <div className="h-16 flex items-center px-6 font-bold text-white text-lg tracking-wider border-b border-slate-800">
+      <aside className="w-64 bg-sidebar text-sidebar-text flex flex-col">
+        <div className="h-16 flex items-center px-6 font-bold text-on-primary text-lg tracking-wider border-b border-sidebar-hover">
           VTC MASTER
         </div>
         
+        {/* ponytail: Analytics et Utilisateurs retirés tant que les écrans n'existent pas (Phase 4.5) */}
         <nav className="flex-1 py-6 px-3 space-y-1">
-          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-slate-800 text-white">
+          <NavLink to="/" end className={navClass}>
             <Building2 className="mr-3 h-5 w-5" />
             Tenants (Entreprises)
-          </a>
-          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            <LayoutDashboard className="mr-3 h-5 w-5" />
-            Analytics
-          </a>
-          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-800 hover:text-white transition-colors">
-            <Users className="mr-3 h-5 w-5" />
-            Utilisateurs
-          </a>
+          </NavLink>
+          <NavLink to="/onboardings" className={navClass}>
+            <ClipboardCheck className="mr-3 h-5 w-5" />
+            Onboardings
+          </NavLink>
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-sidebar-hover">
           <button 
             onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-sidebar-muted hover:text-on-primary hover:bg-sidebar-hover rounded-md transition-colors"
           >
             <LogOut className="mr-3 h-5 w-5" />
             Déconnexion
