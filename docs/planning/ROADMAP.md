@@ -230,7 +230,34 @@ l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus t
   Décision utilisateur du 2026-09-26 : **laissé en l'état** tant qu'on démarre en solo. À rouvrir au premier
   tenant concerné, en dissociant l'assujettissement de la forme juridique.
 
+### Phase 12: Backoffice en PWA
+**Status:** Not started (ajoutée le 2026-09-27, non planifiée — aucun 12-PLAN.md)
+**Goal:** Rendre le backoffice installable sur le téléphone du chauffeur, qui l'utilise en course.
+**Requirements** (à préciser en discuss-phase) :
+- [ ] Manifest (nom, icônes, `display: standalone`, couleurs issues des tokens) — application installable.
+- [ ] Service worker : cache des assets statiques et écran hors ligne explicite.
+- [ ] Périmètre hors ligne à trancher : lecture seule des courses du jour, ou rien. **Aucune écriture
+  financière en file d'attente hors ligne** (cf. règle « aucun calcul financier côté client » et ledger
+  immuable) — un changement de statut rejoué plus tard doit rester idempotent côté serveur.
+- [ ] Notifications push (nouvelle course, annulation) — optionnel, à décider.
+
+**Point d'attention — ordre vis-à-vis de la migration React (Phase 999) :** le backoffice est aujourd'hui en
+SSR (`output: "server"`, adapter Cloudflare). Une PWA sur des pages rendues serveur ne peut mettre en cache
+que le HTML déjà visité ; une SPA s'y prête beaucoup mieux (coquille en cache, données via API). Faire la PWA
+**avant** la migration React revient à refaire le service worker ensuite. Le manifest et l'installabilité, eux,
+sont indépendants du framework et peuvent être livrés tout de suite.
+
 ### Phase 999: Backlog / Future (V4)
+- **Migration du backoffice en React pur (SPA)** — idée notée le 2026-09-27, non planifiée. Astro n'apporte
+  rien au backoffice : aucune page de contenu, tout est applicatif et derrière authentification ; le SEO et le
+  rendu statique ne servent qu'à `vtc-websites`. `apps/superadmin` (React/Vite) sert de modèle.
+  **Ce que la migration doit reloger**, car c'est aujourd'hui du code serveur Astro :
+  - le middleware (`src/middleware.ts`) : session, `ROUTE_POLICY` deny-by-default, Kill Switch, redirections
+    d'onboarding — côté SPA, le contrôle d'accès ne vaut que s'il est aussi en base (RLS) ou dans l'API ;
+  - les routes `src/pages/api/**` (`api/tenant/*` : création et actions de course, export CSV, réglages, logo ;
+    `api/auth/login`) — vers des Edge Functions Supabase, ou des RPC protégées par RLS ;
+  - les appels `createAdminClient()` (clé `service_role`), qui ne peuvent en aucun cas passer côté client.
+  À coupler avec la Phase 12 (PWA) : voir son point d'attention sur l'ordre.
 - **Intégration ORS (distance + estimation de péage)** — décidée le 2026-09-26, non planifiée.
   Tâches : client ORS côté serveur (jamais côté client, cf. règle « aucun calcul financier côté client ») ;
   récupération `distance_km` et longueur des segments `tollways` ; réglage tenant `toll_rate_per_km` ;
