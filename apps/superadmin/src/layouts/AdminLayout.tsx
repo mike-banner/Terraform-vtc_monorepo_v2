@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-    isActive ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'
+    isActive ? 'bg-sidebar-hover text-on-primary' : 'hover:bg-sidebar-hover hover:text-on-primary'
   }`;
 
 export const AdminLayout = () => {
@@ -47,10 +47,10 @@ export const AdminLayout = () => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar - Style Twenty */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col">
-        <div className="h-16 flex items-center px-6 font-bold text-white text-lg tracking-wider border-b border-slate-800">
+      <aside className="w-64 bg-sidebar text-sidebar-text flex flex-col">
+        <div className="h-16 flex items-center px-6 font-bold text-on-primary text-lg tracking-wider border-b border-sidebar-hover">
           VTC MASTER
         </div>
         
@@ -66,10 +66,10 @@ export const AdminLayout = () => {
           </NavLink>
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-sidebar-hover">
           <button 
             onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-sidebar-muted hover:text-on-primary hover:bg-sidebar-hover rounded-md transition-colors"
           >
             <LogOut className="mr-3 h-5 w-5" />
             Déconnexion

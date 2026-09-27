@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { Login } from './pages/Login';
 import { TenantsList } from './pages/TenantsList';
@@ -7,7 +8,7 @@ import { OnboardingsList } from './pages/OnboardingsList';
 import { AdminLayout } from './layouts/AdminLayout';
 
 function App() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
