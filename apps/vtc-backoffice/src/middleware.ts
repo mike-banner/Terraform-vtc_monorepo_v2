@@ -81,10 +81,9 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   const isAuthPage = isLoginPage || isSignupPage;
 
   const isAppRoute = path.startsWith('/app');
-  const isAdminRoute = path.startsWith('/admin');
   const isOnboardingRoute = path.startsWith('/onboarding');
   const isDashboardBase = path === '/dashboard';
-  const isSaaSRoute = isAppRoute || isAdminRoute || isOnboardingRoute || isDashboardBase;
+  const isSaaSRoute = isAppRoute || isOnboardingRoute || isDashboardBase;
 
   // 1. CAS : Utilisateur NON connecté
   if (!user) {
@@ -240,7 +239,8 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   // 3. LOGIQUE DE REDIRECTION (Pour connectés sur Login/Dashboard/Apps)
   if (isSaaSRoute || isAuthPage || isHomePage) {
     // --- PRIORITÉ : ADMIN Plateforme ---
-    // Le backoffice est réservé aux tenants. L'admin reste sur l'accueil uniquement.
+    // Le backoffice est réservé aux tenants : l'administration plateforme vit dans
+    // apps/superadmin. L'admin reste sur l'accueil uniquement.
     if (profile?.platform_role) {
       if (!isHomePage) return finish(await redirect('/'));
       return finish(await next());
@@ -283,7 +283,7 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
     }
 
     // --- CAS : Nouveau connecté sans rôle défini (Sécurité) ---
-    if (isSaaSRoute && !isOnboardingRoute && !isAdminRoute) {
+    if (isSaaSRoute && !isOnboardingRoute) {
       return finish(await redirect('/signup'));
     }
   }

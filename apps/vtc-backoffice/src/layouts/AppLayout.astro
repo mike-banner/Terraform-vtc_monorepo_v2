@@ -1,7 +1,7 @@
 ---
 // src/layouts/AppLayout.astro
 import "../styles/global.css";
-import { isTenant, isPlatform } from "../lib/guards";
+import { isTenant } from "../lib/guards";
 import InactivityTimeout from "../components/common/InactivityTimeout.astro";
 
 interface Props {
@@ -163,17 +163,6 @@ const tenantName = tenant?.name || "VTC HUB";
                             </a>
                         )
                     }
-                    {isPlatform(safeProfile) && (
-                        <a
-                            href="/admin/dashboard"
-                            class="flex items-center gap-3 px-4 py-4 rounded-2xl text-xs font-semibold uppercase tracking-wider transition-all duration-150 text-primary/70 hover:bg-primary/10 hover:text-primary border border-primary/15"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-                            </svg>
-                            Backoffice Admin
-                        </a>
-                    )}
                     <button
                         id="logout-btn"
                         class="w-full flex items-center px-4 py-4 rounded-2xl hover:bg-red-500/10 text-[10px] font-black uppercase tracking-widest text-red-500/80 hover:text-red-500 transition-all text-left group"
