@@ -165,9 +165,15 @@ C'est la raison du choix d'un point d'application unique (middleware) plutôt qu
 **Reste à faire :**
 - Aucun code n'attribue jamais `tenant_role = 'manager'` : le rôle est défini, gardé, mais inerte faute d'écran
   d'invitation/gestion des membres du tenant. **Assumé** tant qu'on est en solo.
-- Les guards `requireTenantRole` de `settings.astro`, `pricing.astro` et `ledger.astro` (celui d'`export-csv.ts` a déjà été retiré) sont
-  désormais redondants avec `ROUTE_POLICY`. Conservés en défense en profondeur, mais ce sont deux sources de
-  vérité qui peuvent divergent : à trancher (les retirer, ou les dériver de la table).
+- [x] **Guards redondants retirés le 2026-09-27** : `requireTenantRole` dans `ledger.astro`, `pricing.astro`,
+  `settings.astro` et `hasTenantRole` dans `api/tenant/export-csv.ts` (la ligne précédente de cette roadmap disait
+  ce dernier déjà retiré : c'était faux). Les deux fonctions, devenues mortes, sont supprimées de `lib/guards.ts`.
+  `ROUTE_POLICY` est désormais l'unique source de vérité applicative.
+  - Trou fermé au passage : un compte `pending` ou sans rôle atteignait `/api/tenant/*` (la section 3 du
+    middleware ne redirige que les pages). Le middleware répond maintenant 403.
+  - Boucle fermée au passage : un driver d'un tenant au setup inachevé tournait entre `/app/dashboard` (qui
+    renvoie au setup) et `/app/setup` (refusé au driver). Seul l'owner est renvoyé au setup.
+  - Vérifié sur base locale, backoffice en dev, matrice owner / driver / pending × 4 pages + 2 routes API.
 - Les guards sont applicatifs : la RLS ne distingue pas les rôles au sein d'un tenant (voir Phase 10).
 
 ### Phase 11: Réparation onboarding et conformité TVA

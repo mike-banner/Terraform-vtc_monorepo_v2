@@ -285,11 +285,11 @@ ci-dessous, avec sa destination.
 | Vue analytique superadmin (volume, CA brut/net) | Phase 4.5 | Backlog | Écran à concevoir ; les anciennes pages admin sont récupérables (`59e7fe1^`). |
 | Export comptable normé (FEC, Sage…) | Phase 8 | Backlog, conditionnel | Seulement si l'expert-comptable l'exige. |
 | 80 erreurs `deno check` dans `generate-invoice` | Phase 8 | V2, Phase 14 | Les Edge Functions sont retravaillées dans cette phase. |
-| Guards `requireTenantRole` redondants avec `ROUTE_POLICY` | Phase 9 | V2, Phase 13 | La RLS par rôle rend `ROUTE_POLICY` purement UX ; les guards disparaissent avec. |
+| ~~Guards `requireTenantRole` redondants avec `ROUTE_POLICY`~~ | Phase 9 | **Fait le 2026-09-27** | Voir Phase 9 : guards et fonctions retirés, trou API `pending` et boucle driver/setup fermés. |
 | Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
 | Deux fonctions de synchro TVA redondantes ; assujettissement dérivé de `legal_form` | Phase 11 | Backlog | Sans urgence en solo ; à rouvrir au premier auto-entrepreneur assujetti. |
 | Tests E2E Playwright écrivant en production | Phase 11 | V2, Phase 16 | Une base de test dédiée est prévue avec la réécriture des tests. |
-| `RatingQRModal.tsx` appelle `useState` après un `return` conditionnel (règle des hooks violée) | Constat 2026-09-27 | V2, Phase 16 | Composant réécrit dans la phase. |
+| ~~`RatingQRModal.tsx` appelle `useState` après un `return` conditionnel~~ | Constat 2026-09-27 | **Fait le 2026-09-27** | URL calculée au rendu, plus d'état ni d'effet. |
 | `PUBLIC_SITE_URL`, `PUBLIC_SITE`, `PUBLIC_TENANT_ID` absents de Terraform | Secrets | **Clos, sans objet** | `PUBLIC_SITE` ne sert qu'en dev ; `PUBLIC_TENANT_ID` est un repli après résolution par domaine ; `PUBLIC_SITE_URL` retombe sur l'origine du backoffice, qui héberge `/rate/[id]`. |
 
 ## Milestone V2 — Backoffice React + PWA temps réel (planifié le 2026-09-27)
