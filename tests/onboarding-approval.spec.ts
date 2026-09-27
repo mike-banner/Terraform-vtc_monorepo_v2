@@ -5,15 +5,13 @@
 // approve_onboarding_tx avec le JWT d'un admin plateforme. C'est ce chemin qui était
 // cassé du 2026-05-31 au 2026-09-26 sans qu'aucun test ne le voie.
 //
-// Cible : la base pointée par .env (production aujourd'hui). Tous les comptes créés sont
+// Cible : voir tests/e2e-env.ts (base locale par défaut). Tous les comptes créés sont
 // supprimés en afterAll, même en cas d'échec ; les suppressions partent en cascade de
 // auth.users (profil, dossier) et de tenants (driver).
 import { test, expect } from '@playwright/test';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
 import ws from 'ws';
-
-dotenv.config({ path: '.env' });
+import './e2e-env';
 
 const stamp = Date.now();
 const password = `E2e-${stamp}-Pw!`;

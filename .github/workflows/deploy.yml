@@ -65,6 +65,23 @@ jobs:
       - name: Test edge function rules
         run: deno test --allow-net supabase/functions/_shared/
 
+      # Chaque fonction a son propre deno.json (import_map dans config.toml) : la
+      # vérifier avec la config racine donnerait de fausses erreurs d'import.
+      - name: Typecheck edge functions
+        run: |
+          fail=0
+          for dir in supabase/functions/*/; do
+            name=$(basename "$dir")
+            [ "$name" = "_shared" ] && continue
+            [ -f "$dir/index.ts" ] || continue
+            if [ -f "$dir/deno.json" ]; then
+              (cd "$dir" && deno check --no-lock --node-modules-dir=auto index.ts) || { echo "::error::$name"; fail=1; }
+            else
+              deno check --no-lock --node-modules-dir=auto "$dir/index.ts" || { echo "::error::$name"; fail=1; }
+            fi
+          done
+          exit $fail
+
       - name: Typecheck vtc-websites
         run: pnpm --filter @vtc/vtc-websites exec tsc --noEmit
 

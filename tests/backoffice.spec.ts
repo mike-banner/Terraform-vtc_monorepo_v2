@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
 import ws from 'ws';
-
-dotenv.config({ path: '.env' });
+import './e2e-env';
 
 let supabase: any;
 

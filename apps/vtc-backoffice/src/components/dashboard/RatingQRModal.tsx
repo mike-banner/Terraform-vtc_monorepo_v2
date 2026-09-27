@@ -1,7 +1,7 @@
 // src/components/dashboard/RatingQRModal.tsx
 import { Star, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 interface RatingQRModalProps {
   bookingId: string | null;
@@ -18,13 +18,11 @@ export const RatingQRModal: React.FC<RatingQRModalProps> = ({
 }) => {
   if (!isOpen || !bookingId) return null;
 
-  // Use the current origin for the rating URL
-  const [ratingUrl, setRatingUrl] = useState('');
-
-  useEffect(() => {
-    const siteOrigin = (import.meta.env.PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, "") || window.location.origin;
-    setRatingUrl(`${siteOrigin}/rate/${bookingId}`);
-  }, [bookingId]);
+  // Calculé au rendu : un useState/useEffect placé après le return conditionnel
+  // violait la règle des hooks (nombre de hooks variable d'un rendu à l'autre).
+  // La modale ne s'ouvre que sur action utilisateur, donc côté navigateur.
+  const siteOrigin = (import.meta.env.PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, "") || window.location.origin;
+  const ratingUrl = `${siteOrigin}/rate/${bookingId}`;
 
   return (
     <div className='fixed inset-0 z-[150] flex items-center justify-center p-6 backdrop-blur-md bg-black/90 animate-in fade-in duration-300'>

@@ -2,20 +2,11 @@
 // src/pages/app/ledger.astro
 import AppLayout from "../../layouts/AppLayout.astro";
 import { MonthDetail } from "../../components/fiscal/MonthDetail";
-import { requireTenantRole } from "../../lib/guards";
 
 const { profile, user, supabase } = Astro.locals as any;
 
 if (!profile || !user) {
     return Astro.redirect("/login");
-}
-
-// Protection Guard : la compta est masquée aux chauffeurs dans la nav (AppLayout),
-// le guard empêche l'accès par URL directe.
-try {
-    requireTenantRole(profile, ["owner", "manager"]);
-} catch {
-    return Astro.redirect("/app/dashboard");
 }
 
 const now = new Date();
@@ -233,6 +224,17 @@ const fmt = (n: number) =>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                         Export CSV
+                    </a>
+                    <a
+                        href={`/api/tenant/export-fec?fiscal_year=${currentYear}`}
+                        download
+                        title="Fichier des Écritures Comptables (journal des ventes), à transmettre à l'expert-comptable"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Export FEC
                     </a>
                 </div>
             </div>

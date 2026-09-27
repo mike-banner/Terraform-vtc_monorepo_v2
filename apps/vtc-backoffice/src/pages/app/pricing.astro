@@ -3,17 +3,9 @@
 import AppLayout from "../../layouts/AppLayout.astro";
 import Badge from "../../components/ui/Badge.astro";
 import Button from "../../components/ui/Button.astro";
-import { requireTenantRole } from "../../lib/guards";
 import { TransferManager } from "@/components/pricing/TransferManager";
 
 const { profile, supabase } = Astro.locals;
-
-// Protection Guard : Owner + Manager
-try {
-    requireTenantRole(profile, ["owner", "manager"]);
-} catch {
-    return Astro.redirect("/app/dashboard");
-}
 
 // 1️ Récupérer les règles réelles du tenant
 const { data: rules, error } = await supabase

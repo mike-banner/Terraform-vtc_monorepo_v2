@@ -21,14 +21,20 @@ Extraction de la logique base de données et réparation du crash middleware.
 - Vérification des paramètres (Logo, Tarifs) et calculs des prix.
 
 ### Phase 4.5: Création de l'Application Master Admin Séparée
-**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (corrigé le 2026-09-25 — était marquée Complete à tort)
+**Status:** Complete (2026-09-27) — toutes les exigences livrées, dont l'écran Analytics
 **Goal:** Contrôler efficacement les entreprises (Tenants) via une interface isolée
 **Requirements**:
 - [x] Création d'une application isolée `apps/superadmin` (Port 4323) sur le modèle SaaS standard — React/Vite, `vite.config.ts:9`.
 - [x] Isolation physique "Air-Gap" pour garantir la sécurité des données Master.
 - [x] Validation de conformité (Kbis/VTC) et "Kill Switch" par tenant — `src/pages/TenantsList.tsx`,
   migration `20260922000000_tenant_status_kill_switch.sql`.
-- [ ] Vue globale analytique (Volume, CA Brut/Net) avec stack UI optimisée (CRM) — **non livrée.**
+- [x] Vue globale analytique (Volume, CA Brut/Net) — **livrée le 2026-09-27** : écran `src/pages/Analytics.tsx`,
+  route `/analytics`, lien dans la sidebar. Par tenant et au total, sur le mois en cours / 30 jours / 12 mois :
+  courses (terminées, annulées), encaissé, remboursé, CA brut TTC, CA net HT, TVA collectée. Agrégats calculés
+  en base par `platform_tenant_analytics(p_from, p_to)` (migration `20260927031429`, `SECURITY INVOKER`, réservée
+  aux rôles plateforme, ligne de total par `GROUPING SETS`) — aucun calcul financier côté client.
+  Testée : cas chiffrés sur base locale (paiement + remboursement), et `tests/superadmin-analytics.spec.ts`
+  (agrégats comparés à un calcul indépendant sur le ledger de prod, écran, refus hors rôle plateforme).
 
 - [x] Approbation / rejet des dossiers d'onboarding — `src/pages/OnboardingsList.tsx`, route `/onboardings`
   (2026-09-27). L'écran équivalent du backoffice (`/admin/onboardings`) était inaccessible depuis la séparation :
@@ -40,10 +46,9 @@ Extraction de la logique base de données et réparation du crash middleware.
 couleurs passées sur des tokens sémantiques (`src/index.css`), lint à zéro. La section `/admin/*` du backoffice,
 morte, est supprimée (pages, `/api/admin/*`, `components/admin/*`, `AdminLayout.astro`).
 
-**Reste à faire :**
-- Vue analytique (Volume, CA Brut/Net) — non livrée. Les anciennes pages admin du backoffice (dashboard,
-  réservations, grand livre, tenants, Stripe) n'ont pas d'équivalent superadmin ; récupérables dans l'historique
-  git (`59e7fe1^`) si on les porte.
+**Reste à faire :** rien. Pour mémoire, les anciennes pages admin du backoffice (réservations, grand livre,
+monitoring Stripe) n'ont pas d'équivalent superadmin ; récupérables dans l'historique git (`59e7fe1^`) si le
+besoin apparaît.
 
 ### Phase 5: Refonte Design Complète UI/UX (Backoffice Uniquement)
 **Status:** Complete
@@ -78,14 +83,20 @@ au profit de la DA « steel blue » (`#0B0F15` / `#151F2B`) livrée entre les co
 Le volet design de la Phase 7 est donc clos par substitution, pas par exécution du plan d'origine.
 
 ### Phase 8: Facturation et Comptabilité (ERP Professionnel)
-**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (livrée hors process de planification — aucun 08-PLAN.md n'a existé)
+**Status:** Complete (2026-09-27) — seul reste le retour à Stripe Invoicing, bloqué côté compte Stripe (voir Reports)
 **Goal:** Ajout des fonctionnalités d'édition
 **Requirements**:
 - [x] Génération des factures PDF automatiques — edge function `supabase/functions/generate-invoice` (pdf-lib),
   appelée depuis `ImmediateActions.tsx` et `scripts/bookings.ts`. Numérotation via migration `20260629000004_invoice_sequences.sql`,
   stockage bucket `invoices` (`20260629000001`). Bonus non planifié : `generate-devis`.
 - [x] Rapports mensuels — `apps/vtc-backoffice/src/pages/app/ledger.astro` (12 mois, CA brut / net / TVA).
-- [~] Export comptable — `api/tenant/export-csv.ts` fournit un CSV brut ; **aucun format normé** (FEC, Sage, Quadratus).
+- [x] Export comptable — CSV brut (`api/tenant/export-csv.ts`) et, **depuis le 2026-09-27, export FEC**
+  (`api/tenant/export-fec.ts`, bouton « Export FEC » de `app/ledger.astro`) : journal des ventes au format de
+  l'art. A47 A-1 du LPF, par exercice, 18 colonnes, tabulation, ISO-8859-15, fichier `SIRENFECAAAAMMJJ.txt`.
+  Une écriture équilibrée par mouvement : D 512000 / 530000 (TTC) – C 706000 (HT) – C 445710 (TVA) ;
+  remboursement inversé ; commissions en 622600. Logique pure dans `src/lib/fec.ts`, 7 tests `deno` en CI
+  (`supabase/functions/_shared/fec.test.ts`). Vérifié de bout en bout sur base locale (owner 200, driver 403).
+  **À faire valider par l'expert-comptable** : plan de comptes et vente au comptant sans compte 411.
 
 **Découpe fixe / calculé (2026-09-26) :** `generate-invoice` ne facture plus que les courses dont le montant
 ne dépend pas d'une distance non vérifiée. Règle dans `supabase/functions/_shared/invoiceable.ts`
@@ -127,18 +138,24 @@ Le message métier du corps de réponse était perdu. Helper `src/lib/function-e
   Le péage estimé reste une **ligne distincte** du prix de la course, jamais fondu dans `total_amount` :
   une estimation ne doit pas contaminer un montant facturé. L'alternative sans aucune API — péages inclus
   dans `price_per_km`, ou refacturés en débours au réel sur justificatif — reste valable et moins coûteuse.
-- `generate-invoice/index.ts` compte 80 erreurs `deno check` (77 avant cette modification) : le `select()`
-  construit par concaténation empêche `supabase-js` d'inférer le type, donc tout `booking.*` remonte en
-  `GenericStringError`. Dette préexistante, raison pour laquelle `supabase/functions/**` est exclu d'ESLint.
-- Export comptable à un format normé si l'expert-comptable l'exige.
+- [x] **Typage des Edge Functions assaini le 2026-09-27** : `generate-invoice` passe de 80 erreurs `deno check` à 0
+  (les `select()` concaténés empêchaient `supabase-js` d'inférer les champs ; passés en chaînes littérales),
+  `generate-devis` de 72 à 0 (même cause). Corrigés aussi : `accept-booking` (erreur non typée dans le `catch`),
+  `cancel-booking` et `create_refund` (import esm.sh de Stripe en `no-check`, donc sans types), et les trois
+  fonctions Stripe Connect (`create-account-link`, `create-connect-account`, `create-stripe-onboarding`), qui
+  importaient `npm:stripe` **sans version** : épinglées sur `npm:stripe@16`, le SDK de l'`apiVersion` `2024-06-20`
+  qu'elles déclarent. Aucun changement de logique ; l'épinglage ne prendra effet qu'au prochain déploiement de
+  ces fonctions (non redéployées ce jour).
+  - Nouvelle étape CI `Typecheck edge functions` (`deploy.yml`) : chaque fonction vérifiée avec son propre
+    `deno.json`, comme le fait `config.toml`. Les 14 fonctions passent.
 
 ### Phase 9: Multi-Driver et Permissions Avancées
-**Status:** Clos le 2026-09-27 avec reports (voir « Clôture du milestone V1 ») — était Mostly Complete (livrée hors process de planification — aucun 09-PLAN.md n'a existé)
+**Status:** Complete (2026-09-27) pour le périmètre chauffeur solo — multi-chauffeurs reporté par décision du 2026-09-24
 **Goal:** Gérer les flottes de chauffeurs
 **Requirements**:
 - [x] Gestion multi-chauffeurs pour un seul tenant — table `drivers`, UI `components/drivers/DriverList.tsx` + `DriverModal.tsx` montées dans `app/profile.astro`.
 - [x] Assignation précise des courses — `driver_id` posé par `api/tenant/create-booking.ts` et l'edge function `accept-booking`.
-- [~] Permissions fines par compte — enum `tenant_role` (owner / manager / driver / pending), helpers `src/lib/guards.ts`
+- [x] Permissions fines par compte — enum `tenant_role` (owner / manager / driver / pending), helpers `src/lib/guards.ts`
   (`requireTenantRole` / `hasTenantRole`), nav filtrée par rôle dans `AppLayout.astro`, guards sur `settings.astro` (owner),
   `pricing.astro` (owner+manager), `ledger.astro` et `api/tenant/export-csv.ts` (owner+manager, ajoutés le 2026-09-24).
   filtrage `.eq("driver_id", …)` sur `bookings.ts` / `search-bookings.ts` (périmètre des données).
@@ -165,9 +182,15 @@ C'est la raison du choix d'un point d'application unique (middleware) plutôt qu
 **Reste à faire :**
 - Aucun code n'attribue jamais `tenant_role = 'manager'` : le rôle est défini, gardé, mais inerte faute d'écran
   d'invitation/gestion des membres du tenant. **Assumé** tant qu'on est en solo.
-- Les guards `requireTenantRole` de `settings.astro`, `pricing.astro` et `ledger.astro` (celui d'`export-csv.ts` a déjà été retiré) sont
-  désormais redondants avec `ROUTE_POLICY`. Conservés en défense en profondeur, mais ce sont deux sources de
-  vérité qui peuvent divergent : à trancher (les retirer, ou les dériver de la table).
+- [x] **Guards redondants retirés le 2026-09-27** : `requireTenantRole` dans `ledger.astro`, `pricing.astro`,
+  `settings.astro` et `hasTenantRole` dans `api/tenant/export-csv.ts` (la ligne précédente de cette roadmap disait
+  ce dernier déjà retiré : c'était faux). Les deux fonctions, devenues mortes, sont supprimées de `lib/guards.ts`.
+  `ROUTE_POLICY` est désormais l'unique source de vérité applicative.
+  - Trou fermé au passage : un compte `pending` ou sans rôle atteignait `/api/tenant/*` (la section 3 du
+    middleware ne redirige que les pages). Le middleware répond maintenant 403.
+  - Boucle fermée au passage : un driver d'un tenant au setup inachevé tournait entre `/app/dashboard` (qui
+    renvoie au setup) et `/app/setup` (refusé au driver). Seul l'owner est renvoyé au setup.
+  - Vérifié sur base locale, backoffice en dev, matrice owner / driver / pending × 4 pages + 2 routes API.
 - Les guards sont applicatifs : la RLS ne distingue pas les rôles au sein d'un tenant (voir Phase 10).
 
 ### Phase 11: Réparation onboarding et conformité TVA
@@ -222,8 +245,10 @@ l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus t
 - `onboarding_insert_own` / `onboarding_update_own` laissaient un utilisateur fixer lui-même `status = approved`.
   Fermé par `20260927015049` : création et mise à jour imposent `pending`, un dossier approuvé n'est plus
   modifiable par son propriétaire.
-- Redondance assumée : deux fonctions font la même synchro TVA, `set_tenant_vat_on_insert` (INSERT) et
-  `sync_tenant_vat_config` (UPDATE OF legal_form). À fusionner un jour, sans urgence.
+- [x] **Doublon TVA fusionné le 2026-09-27** (migration `20260927030100`) : `set_tenant_vat_on_insert` et
+  `sync_tenant_vat_config` remplacées par une seule fonction `sync_tenant_vat()` et un seul trigger
+  `trg_sync_tenant_vat` (`BEFORE INSERT OR UPDATE OF legal_form`). Comportement identique prouvé sur base locale
+  (8 cas avant/après : création, bascule de forme, override manuel conservé, forme nulle), appliqué en prod.
 - **Dette fiscale connue :** le taux 10 % est dérivé de `legal_form`, jamais saisi. Un auto-entrepreneur qui
   franchit le seuil de franchise en base reste auto-entrepreneur mais devient assujetti — le trigger le force
   pourtant en exonéré dès qu'on touche `legal_form`, et rien dans l'UI ne permet de le déclarer assujetti.
@@ -232,8 +257,11 @@ l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus t
 
 ## Clôture du milestone V1 (2026-09-27)
 
-Phases 1 à 12 closes. Ce qui n'a pas été livré n'est pas oublié : chaque point est reporté explicitement
-ci-dessous, avec sa destination.
+Phases 1 à 12 closes. Clôture faite en deux temps le 2026-09-27 : un premier passage avait reporté 12 points,
+dont 7 étaient faisables sans l'utilisateur. Ils ont été **terminés le jour même** (guards, hooks, doublon TVA,
+typage des Edge Functions, écran Analytics, cible des tests E2E, export FEC), plus deux défauts trouvés en
+chemin (trou API pour les comptes `pending`, boucle driver/setup). Ne restent reportés que les points bloqués
+par une action ou une décision de l'utilisateur.
 
 ### Phase 12: Correctifs sécurité critiques (clé anon)
 **Status:** Complete — appliquée en production le 2026-09-27 (migration `20260927023037`)
@@ -274,16 +302,16 @@ ci-dessous, avec sa destination.
 | Point | Origine | Destination | Pourquoi pas maintenant |
 |---|---|---|---|
 | Restaurer Stripe Invoicing dans `generate-invoice` | Phase 8 | **Pré-requis de lancement**, hors V2 | Bloqué sur un réglage *Settings > Invoicing* du compte Stripe connecté de démo (côté utilisateur). **Bloquant avant une vraie prod.** |
-| Protection anti-mots de passe compromis | Phase 10 | Action utilisateur (dashboard Auth Supabase) | Réglage de console, pas de code. |
+| Protection anti-mots de passe compromis | Phase 10 | **Action utilisateur** | Réglage Auth de production (`password_hibp_enabled`, actuellement `false`) : l'activation via l'API Management a été refusée par la politique de permissions de la session. Dashboard > Authentication > Providers > Email, ou PATCH `/v1/projects/{ref}/config/auth`. |
 | `EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail) | Secrets | Décision utilisateur | Il faut un expéditeur sur un domaine vérifié chez Resend. 2 envois sur 4 en échec en juillet. |
-| Vue analytique superadmin (volume, CA brut/net) | Phase 4.5 | Backlog | Écran à concevoir ; les anciennes pages admin sont récupérables (`59e7fe1^`). |
-| Export comptable normé (FEC, Sage…) | Phase 8 | Backlog, conditionnel | Seulement si l'expert-comptable l'exige. |
-| 80 erreurs `deno check` dans `generate-invoice` | Phase 8 | V2, Phase 14 | Les Edge Functions sont retravaillées dans cette phase. |
-| Guards `requireTenantRole` redondants avec `ROUTE_POLICY` | Phase 9 | V2, Phase 13 | La RLS par rôle rend `ROUTE_POLICY` purement UX ; les guards disparaissent avec. |
+| ~~Vue analytique superadmin (volume, CA brut/net)~~ | Phase 4.5 | **Fait le 2026-09-27** | Voir Phase 4.5 : écran `/analytics`, fonction `platform_tenant_analytics`. |
+| ~~Export comptable normé (FEC)~~ | Phase 8 | **Fait le 2026-09-27** | Voir Phase 8. Reste une validation du plan de comptes par l'expert-comptable (action utilisateur). |
+| ~~80 erreurs `deno check` dans `generate-invoice`~~ | Phase 8 | **Fait le 2026-09-27** | Les 14 Edge Functions passent `deno check`, vérifié en CI. |
+| ~~Guards `requireTenantRole` redondants avec `ROUTE_POLICY`~~ | Phase 9 | **Fait le 2026-09-27** | Voir Phase 9 : guards et fonctions retirés, trou API `pending` et boucle driver/setup fermés. |
 | Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
-| Deux fonctions de synchro TVA redondantes ; assujettissement dérivé de `legal_form` | Phase 11 | Backlog | Sans urgence en solo ; à rouvrir au premier auto-entrepreneur assujetti. |
-| Tests E2E Playwright écrivant en production | Phase 11 | V2, Phase 16 | Une base de test dédiée est prévue avec la réécriture des tests. |
-| `RatingQRModal.tsx` appelle `useState` après un `return` conditionnel (règle des hooks violée) | Constat 2026-09-27 | V2, Phase 16 | Composant réécrit dans la phase. |
+| ~~Deux fonctions de synchro TVA redondantes~~ ; assujettissement dérivé de `legal_form` | Phase 11 | Fusion **faite le 2026-09-27** ; assujettissement : backlog | Assujettissement : décision utilisateur du 2026-09-26, à rouvrir au premier auto-entrepreneur assujetti. |
+| ~~Tests E2E Playwright écrivant en production~~ | Phase 11 | **Fait le 2026-09-27** | `tests/e2e-env.ts` : cible locale par défaut (`.env.e2e`, modèle `.env.e2e.example`), toute autre cible refusée sans `E2E_ALLOW_PRODUCTION=1`. Limite : l'API admin Auth de la stack locale refuse les jetons HS256 avec la CLI Supabase 2.75 — mettre la CLI à jour (2.118) pour jouer les tests en local. |
+| ~~`RatingQRModal.tsx` appelle `useState` après un `return` conditionnel~~ | Constat 2026-09-27 | **Fait le 2026-09-27** | URL calculée au rendu, plus d'état ni d'effet. |
 | `PUBLIC_SITE_URL`, `PUBLIC_SITE`, `PUBLIC_TENANT_ID` absents de Terraform | Secrets | **Clos, sans objet** | `PUBLIC_SITE` ne sert qu'en dev ; `PUBLIC_TENANT_ID` est un repli après résolution par domaine ; `PUBLIC_SITE_URL` retombe sur l'origine du backoffice, qui héberge `/rate/[id]`. |
 
 ## Milestone V2 — Backoffice React + PWA temps réel (planifié le 2026-09-27)
@@ -421,7 +449,7 @@ temps réel. Livrable page par page.
 
 
 ### Phase 10: Durcissement RLS et alignement prod
-**Status:** Complete (appliqué en production le 2026-09-25)
+**Status:** Complete (appliqué en production le 2026-09-25) — reste un réglage de console : protection anti-mots de passe compromis (voir Reports)
 **Goal:** Refermer l'écart entre les migrations locales et la base `vtc-demo-production`, et rendre la RLS
 cohérente avec les rôles tenant.
 **Résultat après application :** les 3 ERROR du linter sont fermées. Restent, assumés :
