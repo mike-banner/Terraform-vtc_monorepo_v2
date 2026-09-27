@@ -228,8 +228,10 @@ l'INSERT. Il n'a jamais rien fait parce que la régression, arrivée 20 h plus t
 - `onboarding_insert_own` / `onboarding_update_own` laissaient un utilisateur fixer lui-même `status = approved`.
   Fermé par `20260927015049` : création et mise à jour imposent `pending`, un dossier approuvé n'est plus
   modifiable par son propriétaire.
-- Redondance assumée : deux fonctions font la même synchro TVA, `set_tenant_vat_on_insert` (INSERT) et
-  `sync_tenant_vat_config` (UPDATE OF legal_form). À fusionner un jour, sans urgence.
+- [x] **Doublon TVA fusionné le 2026-09-27** (migration `20260927030100`) : `set_tenant_vat_on_insert` et
+  `sync_tenant_vat_config` remplacées par une seule fonction `sync_tenant_vat()` et un seul trigger
+  `trg_sync_tenant_vat` (`BEFORE INSERT OR UPDATE OF legal_form`). Comportement identique prouvé sur base locale
+  (8 cas avant/après : création, bascule de forme, override manuel conservé, forme nulle), appliqué en prod.
 - **Dette fiscale connue :** le taux 10 % est dérivé de `legal_form`, jamais saisi. Un auto-entrepreneur qui
   franchit le seuil de franchise en base reste auto-entrepreneur mais devient assujetti — le trigger le force
   pourtant en exonéré dès qu'on touche `legal_form`, et rien dans l'UI ne permet de le déclarer assujetti.
@@ -287,7 +289,7 @@ ci-dessous, avec sa destination.
 | 80 erreurs `deno check` dans `generate-invoice` | Phase 8 | V2, Phase 14 | Les Edge Functions sont retravaillées dans cette phase. |
 | ~~Guards `requireTenantRole` redondants avec `ROUTE_POLICY`~~ | Phase 9 | **Fait le 2026-09-27** | Voir Phase 9 : guards et fonctions retirés, trou API `pending` et boucle driver/setup fermés. |
 | Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
-| Deux fonctions de synchro TVA redondantes ; assujettissement dérivé de `legal_form` | Phase 11 | Backlog | Sans urgence en solo ; à rouvrir au premier auto-entrepreneur assujetti. |
+| ~~Deux fonctions de synchro TVA redondantes~~ ; assujettissement dérivé de `legal_form` | Phase 11 | Fusion **faite le 2026-09-27** ; assujettissement : backlog | Assujettissement : décision utilisateur du 2026-09-26, à rouvrir au premier auto-entrepreneur assujetti. |
 | Tests E2E Playwright écrivant en production | Phase 11 | V2, Phase 16 | Une base de test dédiée est prévue avec la réécriture des tests. |
 | ~~`RatingQRModal.tsx` appelle `useState` après un `return` conditionnel~~ | Constat 2026-09-27 | **Fait le 2026-09-27** | URL calculée au rendu, plus d'état ni d'effet. |
 | `PUBLIC_SITE_URL`, `PUBLIC_SITE`, `PUBLIC_TENANT_ID` absents de Terraform | Secrets | **Clos, sans objet** | `PUBLIC_SITE` ne sert qu'en dev ; `PUBLIC_TENANT_ID` est un repli après résolution par domaine ; `PUBLIC_SITE_URL` retombe sur l'origine du backoffice, qui héberge `/rate/[id]`. |
