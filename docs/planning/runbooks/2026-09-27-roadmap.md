@@ -127,9 +127,16 @@ Le message métier du corps de réponse était perdu. Helper `src/lib/function-e
   Le péage estimé reste une **ligne distincte** du prix de la course, jamais fondu dans `total_amount` :
   une estimation ne doit pas contaminer un montant facturé. L'alternative sans aucune API — péages inclus
   dans `price_per_km`, ou refacturés en débours au réel sur justificatif — reste valable et moins coûteuse.
-- `generate-invoice/index.ts` compte 80 erreurs `deno check` (77 avant cette modification) : le `select()`
-  construit par concaténation empêche `supabase-js` d'inférer le type, donc tout `booking.*` remonte en
-  `GenericStringError`. Dette préexistante, raison pour laquelle `supabase/functions/**` est exclu d'ESLint.
+- [x] **Typage des Edge Functions assaini le 2026-09-27** : `generate-invoice` passe de 80 erreurs `deno check` à 0
+  (les `select()` concaténés empêchaient `supabase-js` d'inférer les champs ; passés en chaînes littérales),
+  `generate-devis` de 72 à 0 (même cause). Corrigés aussi : `accept-booking` (erreur non typée dans le `catch`),
+  `cancel-booking` et `create_refund` (import esm.sh de Stripe en `no-check`, donc sans types), et les trois
+  fonctions Stripe Connect (`create-account-link`, `create-connect-account`, `create-stripe-onboarding`), qui
+  importaient `npm:stripe` **sans version** : épinglées sur `npm:stripe@16`, le SDK de l'`apiVersion` `2024-06-20`
+  qu'elles déclarent. Aucun changement de logique ; l'épinglage ne prendra effet qu'au prochain déploiement de
+  ces fonctions (non redéployées ce jour).
+  - Nouvelle étape CI `Typecheck edge functions` (`deploy.yml`) : chaque fonction vérifiée avec son propre
+    `deno.json`, comme le fait `config.toml`. Les 14 fonctions passent.
 - Export comptable à un format normé si l'expert-comptable l'exige.
 
 ### Phase 9: Multi-Driver et Permissions Avancées
@@ -286,7 +293,7 @@ ci-dessous, avec sa destination.
 | `EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail) | Secrets | Décision utilisateur | Il faut un expéditeur sur un domaine vérifié chez Resend. 2 envois sur 4 en échec en juillet. |
 | Vue analytique superadmin (volume, CA brut/net) | Phase 4.5 | Backlog | Écran à concevoir ; les anciennes pages admin sont récupérables (`59e7fe1^`). |
 | Export comptable normé (FEC, Sage…) | Phase 8 | Backlog, conditionnel | Seulement si l'expert-comptable l'exige. |
-| 80 erreurs `deno check` dans `generate-invoice` | Phase 8 | V2, Phase 14 | Les Edge Functions sont retravaillées dans cette phase. |
+| ~~80 erreurs `deno check` dans `generate-invoice`~~ | Phase 8 | **Fait le 2026-09-27** | Les 14 Edge Functions passent `deno check`, vérifié en CI. |
 | ~~Guards `requireTenantRole` redondants avec `ROUTE_POLICY`~~ | Phase 9 | **Fait le 2026-09-27** | Voir Phase 9 : guards et fonctions retirés, trou API `pending` et boucle driver/setup fermés. |
 | Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
 | ~~Deux fonctions de synchro TVA redondantes~~ ; assujettissement dérivé de `legal_form` | Phase 11 | Fusion **faite le 2026-09-27** ; assujettissement : backlog | Assujettissement : décision utilisateur du 2026-09-26, à rouvrir au premier auto-entrepreneur assujetti. |

@@ -26,16 +26,16 @@ export default defineConfig({
     {
       name: 'drivers-front',
       testMatch: /.*\.spec\.ts/,
-      testIgnore: /onboarding-approval\.spec\.ts/,
+      testIgnore: /(onboarding-approval|superadmin-analytics)\.spec\.ts/,
       use: { 
         ...devices['Desktop Chrome'],
         baseURL: 'http://localhost:4321'
       },
     },
     {
-      // Lancer `pnpm dev --filter superadmin` avant.
+      // Lancer `pnpm dev --filter superadmin` avant, contre la même base que .env.e2e.
       name: 'superadmin',
-      testMatch: /onboarding-approval\.spec\.ts/,
+      testMatch: /(onboarding-approval|superadmin-analytics)\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: 'http://localhost:4323'
