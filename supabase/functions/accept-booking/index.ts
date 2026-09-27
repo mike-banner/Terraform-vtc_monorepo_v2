@@ -38,6 +38,6 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), { status: 500 });
   }
 });

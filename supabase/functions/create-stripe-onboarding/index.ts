@@ -1,7 +1,7 @@
 // supabase/functions/create-stripe-onboarding/index.ts
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "npm:stripe";
+import Stripe from "npm:stripe@16";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

@@ -25,9 +25,7 @@ Deno.serve(async (req) => {
     }
 
     const { data: booking } = await supabase.from("bookings").select(
-      "id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, " +
-      "total_amount, subtotal_amount, vat_amount, payment_mode, booking_type, " +
-      "passenger_count, luggage_count, invoice_number"
+      "id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, total_amount, subtotal_amount, vat_amount, payment_mode, booking_type, passenger_count, luggage_count, invoice_number"
     ).eq("id", booking_id).single();
 
     if (!booking) {
@@ -51,12 +49,10 @@ Deno.serve(async (req) => {
 
     const [{ data: tenant }, { data: customer }] = await Promise.all([
       supabase.from("tenants").select(
-        "name, logo_url, email, phone, siret, vat_number, vat_rate, is_vat_exempt, " +
-        "legal_form, rcs_number, capital_social"
+        "name, logo_url, email, phone, siret, vat_number, vat_rate, is_vat_exempt, legal_form, rcs_number, capital_social"
       ).eq("id", booking.current_tenant_id).single(),
       supabase.from("customers").select(
-        "first_name, last_name, email, phone, company_name, vat_number, " +
-        "billing_address, city, postal_code, country"
+        "first_name, last_name, email, phone, company_name, vat_number, billing_address, city, postal_code, country"
       ).eq("id", booking.customer_id).maybeSingle(),
     ]);
 
