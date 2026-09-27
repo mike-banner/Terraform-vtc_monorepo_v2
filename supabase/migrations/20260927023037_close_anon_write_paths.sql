@@ -1,4 +1,4 @@
--- 20260927140000_close_anon_write_paths.sql
+-- 20260927023037_close_anon_write_paths.sql
 --
 -- Ferme les écritures que la clé publique `anon` permettait. Cette clé est embarquée
 -- dans le bundle de chaque site tenant : elle est connue de tous.
