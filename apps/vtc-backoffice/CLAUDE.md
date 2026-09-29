@@ -20,7 +20,8 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 - `createAdminClient` en dehors d'une route API serveur.
 - UPDATE/DELETE sur `financial_movements` (ledger immuable, audit trail). INSERT réservé au `service_role`.
 - Changer `mission_status` ailleurs que via `/api/missions/terrain-transition`.
-- INSERT sur `drivers` par un rôle autre que `tenant_role = 'owner'` (policy `drivers_insert_owner_only`).
+- INSERT sur `drivers` par un rôle autre que `owner`/`manager` (policy `drivers_insert`, Phase 13). Un
+  `driver` ne peut modifier que son propre `phone` sur sa fiche (trigger `drivers_self_update_guard`).
 - Élément UI à largeur fixe (`w-[1200px]`) sans variante mobile — le produit est mobile-first absolu (tester à 375px, pas de `lg:` pour la structure par défaut).
 
 ## Conventions
