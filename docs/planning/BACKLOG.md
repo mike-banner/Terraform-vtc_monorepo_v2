@@ -33,3 +33,14 @@ est today déduit uniquement de `legal_form`, sans tenir compte du régime réel
 (franchise en base vs option pour la TVA).
 
 **Déclencheur pour rouvrir :** le premier auto-entrepreneur assujetti à la TVA sur la plateforme.
+
+## Rectification du numéro de carte VTC (license_number) par un admin
+
+**Reporté depuis :** Phase 13 (2026-09-29), décision utilisateur — le driver ne peut pas modifier son propre
+`license_number` (traité comme donnée d'identité, réservé owner/manager par la RLS).
+**Idée à creuser plus tard :** un flux admin (superadmin ou owner) pour corriger/vérifier le numéro de carte
+VTC d'un chauffeur, éventuellement recoupé avec une API officielle de vérification des cartes VTC si une
+existe. Pas de solution ni d'API identifiée pour l'instant — à rechercher le moment venu.
+
+**Déclencheur pour rouvrir :** une erreur de saisie constatée sur un `license_number` en prod, ou un besoin
+de vérification réglementaire.

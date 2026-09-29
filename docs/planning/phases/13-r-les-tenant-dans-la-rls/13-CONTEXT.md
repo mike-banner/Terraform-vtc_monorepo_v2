@@ -51,8 +51,15 @@ de course formalisées en RPC (dispatch explicite, notifications) sont hors pér
 
 ### Table `drivers`
 - **D-07:** `owner` et `manager` peuvent créer/modifier/désactiver un chauffeur (voir D-01).
-- **D-08:** `driver` n'a pas de droit d'écriture sur `drivers` (ni sur sa propre fiche ni sur celle
-  des autres).
+- **D-08 (révisé le 2026-09-29):** `driver` peut modifier ses **propres coordonnées de contact**
+  (`phone` — les seules colonnes de contact éditables aujourd'hui dans `EditableDriverCard`), mais pas
+  son identité (`first_name`, `last_name`), son affectation, ni créer/désactiver une fiche `drivers`
+  (INSERT/DELETE restent owner/manager uniquement, comme les autres chauffeurs).
+  Raison de la révision : la version initiale de D-08 (aucune écriture) rendait le bouton "éditer" de
+  `/app/profile` silencieusement inopérant pour un driver (sauvegarde à 0 ligne, sans erreur visible) —
+  un faux succès. Périmètre à vérifier par le planner : lister précisément les colonnes que
+  `EditableDriverCard` envoie en écriture aujourd'hui, et n'autoriser que celles-là en `UPDATE` pour
+  `driver`, restreint à `user_id = auth.uid()`.
 
 ### Ledger (`financial_movements`)
 - **D-09:** Lecture réservée à `owner`/`manager`, cohérent avec `/app/ledger` déjà restreint dans

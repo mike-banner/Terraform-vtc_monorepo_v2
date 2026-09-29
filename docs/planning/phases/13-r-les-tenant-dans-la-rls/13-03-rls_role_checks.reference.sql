@@ -132,7 +132,17 @@ SELECT pg_temp.expect_denied('driver status sa course (R4)', $q$update public.bo
 SELECT pg_temp.expect_denied('driver insert booking (R4)', $q$insert into public.bookings (original_tenant_id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, total_amount, subtotal_amount, payment_mode, booking_type, booking_source, pricing_mode) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1000000-0000-4000-8000-00000000000a', 'A', 'B', now() + interval '3 days', 1, 1, 'card', 'transfer', 'manual_driver', 'direct')$q$);
 
 SELECT pg_temp.expect_count('driver drivers select', 'select count(*) from public.drivers', 2);
-SELECT pg_temp.expect_affected('driver update sa fiche drivers (D-08)', $q$update public.drivers set first_name = 'x' where id = 'd1000000-0000-4000-8000-000000000001'$q$, 0);
+-- D-08 révisé : le driver ne modifie que le phone de sa propre fiche.
+SELECT pg_temp.expect_affected('driver update phone sa fiche (D-08)', $q$update public.drivers set phone = '0699999999' where id = 'd1000000-0000-4000-8000-000000000001'$q$, 1);
+-- Payload réel d'EditableDriverCard : les 4 colonnes, seul phone change.
+SELECT pg_temp.expect_affected('driver sauvegarde EditableDriverCard (D-08)', $q$update public.drivers set first_name = 'Un', last_name = 'Chauffeur', phone = '0699999999', license_number = 'RLS000000001' where id = 'd1000000-0000-4000-8000-000000000001'$q$, 1);
+SELECT pg_temp.expect_denied('driver update first_name sa fiche (D-08)', $q$update public.drivers set first_name = 'x' where id = 'd1000000-0000-4000-8000-000000000001'$q$);
+SELECT pg_temp.expect_denied('driver update last_name sa fiche (D-08)', $q$update public.drivers set last_name = 'x' where id = 'd1000000-0000-4000-8000-000000000001'$q$);
+SELECT pg_temp.expect_denied('driver update license_number sa fiche (D-08)', $q$update public.drivers set license_number = 'RLS000000099' where id = 'd1000000-0000-4000-8000-000000000001'$q$);
+SELECT pg_temp.expect_denied('driver update user_id sa fiche (D-08)', $q$update public.drivers set user_id = '44444444-4444-4444-8444-444444444444' where id = 'd1000000-0000-4000-8000-000000000001'$q$);
+SELECT pg_temp.expect_affected('driver update phone fiche d''un autre (D-08)', $q$update public.drivers set phone = '0699999999' where id = 'd2000000-0000-4000-8000-000000000002'$q$, 0);
+SELECT pg_temp.expect_affected('driver update first_name fiche d''un autre (D-08)', $q$update public.drivers set first_name = 'x' where id = 'd2000000-0000-4000-8000-000000000002'$q$, 0);
+SELECT pg_temp.expect_affected('driver delete sa fiche (D-08)', $q$delete from public.drivers where id = 'd1000000-0000-4000-8000-000000000001'$q$, 0);
 SELECT pg_temp.expect_affected('driver delete drivers (D-08)', $q$delete from public.drivers where id = 'd2000000-0000-4000-8000-000000000002'$q$, 0);
 SELECT pg_temp.expect_denied('driver insert drivers (D-08)', $q$insert into public.drivers (tenant_id, first_name, last_name, phone, license_number) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'x', 'y', '0600000009', 'RLS000000009')$q$);
 
