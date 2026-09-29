@@ -194,7 +194,7 @@ ROLLBACK;
 | A3 | `pricing_rules` a des policies nommées comme le dit le ROADMAP (`pricing_isolation`, `pricing_tenant_isolation`) — non confirmé par grep direct dans cette recherche | Pitfall 3 | Risque de migration `DROP POLICY IF EXISTS` sur un nom qui n'existe pas (inoffensif, `IF EXISTS` protège) mais aussi de ne pas dropper la vraie policy si son nom diffère |
 | A4 | `cancellation_policies`/`zones`/`fixed_routes` n'ont aucune policy `_isolation` actuellement (déduit d'un grep qui ne les a pas fait remonter) | User Constraints, Claude's Discretion | Si elles ont en réalité une policy tenant existante sous un autre nom, le planner risque de créer un doublon plutôt que de constater l'absence de policy |
 
-## Open Questions
+## Open Questions (RESOLVED — voir 13-01-PLAN.md, décision Q1-security-definer et vérification du baseline en Task 1)
 
 1. **SECURITY DEFINER ou non pour `current_tenant_role()` ?**
    - What we know: le ROADMAP demande SECURITY DEFINER + search_path figé ; le code réel de `current_tenant_id()` (modèle désigné par CONTEXT.md) est SQL STABLE simple, sans DEFINER.

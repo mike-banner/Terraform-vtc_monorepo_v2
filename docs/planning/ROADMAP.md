@@ -335,7 +335,7 @@ Chaque phase est livrable seule et mise en production avant la suivante. Aucune 
 `NN-PLAN.md` détaillé (`/gsd-plan-phase NN`).
 
 ### Phase 13: Rôles tenant dans la RLS
-**Status:** Not started
+**Status:** In progress (plans 13-01 à 13-03 faits en local ; mise en production : plan 13-04, sur GO explicite)
 **Goal:** Que les droits de `ROUTE_POLICY` soient vrais en base, quel que soit le client qui appelle.
 **Constats du 2026-09-27** (policies de prod) :
 - `pricing_rules` (`pricing_isolation`, `pricing_tenant_isolation`), `vehicles` (`vehicles_isolation`,
@@ -350,20 +350,24 @@ Chaque phase est livrable seule et mise en production avant la suivante. Aucune 
 - Policies en doublon (4 SELECT sur `bookings`, 2 `FOR ALL` sur `drivers`, `vehicles`, `pricing_rules`, 3 SELECT
   plateforme sur `financial_movements`) : la plus permissive gagne toujours, ce qui rend la relecture trompeuse.
 **Requirements:**
-- [ ] Fonction `current_tenant_role()` (STABLE, `SECURITY DEFINER`, `search_path` figé) sur le modèle de
-  `current_tenant_id()`.
-- [ ] Matrice rôle × table × opération écrite **avant** les migrations, dérivée de `ROUTE_POLICY` ; la faire
-  valider (notamment : le manager écrit-il les tarifs ? le driver voit-il les courses non assignées ?).
-- [ ] Réécrire les policies par table et par commande (plus de `FOR ALL`), supprimer les doublons.
-- [ ] `bookings` : le client n'écrit plus de colonnes financières ni de statut en direct ; transitions via RPC
-  (Phase 14). Driver limité à ses courses (`driver_id`).
-- [ ] Suite de tests SQL jouée en CI (`db-lint.yml`) : pour chaque rôle, chaque opération autorisée passe et
-  chaque opération interdite échoue — sur le modèle de la validation locale de la Phase 11.
-- [ ] Une fois la RLS en place, `ROUTE_POLICY` ne sert plus qu'à la navigation (UX), plus à la sécurité.
-**Plans:** 2/4 plans executed
+- [x] Fonction current_tenant_role() (STABLE, search_path figé, **sans** SECURITY DEFINER — comme current_tenant_id() réel ; le libellé initial « SECURITY DEFINER » était inexact, voir 13-01-PLAN) sur le modèle de current_tenant_id().
+- [x] Matrice rôle × table × opération écrite **avant** les migrations, dérivée de `ROUTE_POLICY` ; la faire
+  valider (notamment : le manager écrit-il les tarifs ? le driver voit-il les courses non assignées ?). — matrice dans 13-01-PLAN (validée en discuss-phase, D-01 à D-11) et en tête de 20260929100100_tenant_role_policies.sql.
+- [x] Réécrire les policies par table et par commande (plus de `FOR ALL`), supprimer les doublons. — 20 policies supprimées (dont « select bookings tenant », « update bookings tenant », tenant_can_view_own_finance, platform_admin_read_financial, absentes du constat initial).
+- [x] `bookings` : le client n'écrit plus de colonnes financières ni de statut en direct ; transitions via RPC
+  (Phase 14). Driver limité à ses courses (`driver_id`). — montants et statut : grants UPDATE par colonne (20260929100200) ; protect_booking_immutable_fields ne couvrait ni status ni total_amount en pending. Transitions via RPC : Phase 14.
+- [x] Suite de tests SQL jouée en CI (`db-lint.yml`) : pour chaque rôle, chaque opération autorisée passe et
+  chaque opération interdite échoue — sur le modèle de la validation locale de la Phase 11. — supabase/lint/rls_role_checks.sql, step « RLS role checks » de db-lint.yml ; règles 5/6 de security_checks.sql.
+- [ ] Une fois la RLS en place, `ROUTE_POLICY` ne sert plus qu'à la navigation (UX), plus à la sécurité. — vrai pour les pages et les accès directs Supabase ; les routes /api/tenant/* en service_role dépendent encore de ROUTE_POLICY jusqu'à la Phase 14 (retrait de SUPABASE_SERVICE_ROLE_KEY).
+
+**Conséquences assumées (D-08, D-09) :** un compte `driver` enregistre son téléphone depuis `/app/profile`,
+mais toute modification de nom, prénom ou carte pro VTC dans `EditableDriverCard` est refusée (erreur 42501
+affichée, D-08 révisé) ; le KPI « revenu du mois » du dashboard vaut 0 pour un driver (`tenant_dashboard_kpi`
+est en security_invoker sur `financial_movements`).
+**Plans:** 3/4 plans executed
 - [x] 13-01-PLAN.md — base locale reconstruite, inventaire des policies vérifié, `current_tenant_role()` (sans SECURITY DEFINER), matrice
 - [x] 13-02-PLAN.md — réécriture des policies par table et par commande (20 supprimées), grants UPDATE par colonne sur `bookings`
-- [ ] 13-03-PLAN.md — tests SQL par rôle en CI, lint « une policy par commande », ROUTE_POLICY documenté, ROADMAP
+- [x] 13-03-PLAN.md — tests SQL par rôle en CI, lint « une policy par commande », ROUTE_POLICY documenté, ROADMAP
 - [ ] 13-04-PLAN.md — mise en production : contrôle de l'état prod (lecture seule), GO manuel, supabase db push --linked, contrôle policies/advisors, types régénérés
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
