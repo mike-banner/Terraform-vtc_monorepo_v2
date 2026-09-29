@@ -18,6 +18,14 @@ export function isTenant(profile: any) {
  * Deny-by-default : un chemin absent de cette table est refusé. Une nouvelle page
  * ou route doit s'y déclarer — `scripts/check-route-policy.mjs` le vérifie en CI,
  * pour qu'un oubli soit un échec de build et non une faille silencieuse.
+ *
+ * Depuis la Phase 13, les droits par rôle sont portés par la RLS
+ * (migration 20260929100100_tenant_role_policies.sql, testée par
+ * supabase/lint/rls_role_checks.sql). Pour les pages et les accès directs
+ * Supabase (vehicles, pricing, chauffeurs, profil), cette table ne sert plus
+ * qu'à la navigation. Elle reste en revanche la seule barrière des routes
+ * /api/tenant/* et /api/missions/*, qui tournent en service_role (hors RLS),
+ * jusqu'à leur passage en RPC (Phase 14).
  */
 const ALL_TENANT_ROLES: TenantRole[] = ["owner", "manager", "driver"];
 

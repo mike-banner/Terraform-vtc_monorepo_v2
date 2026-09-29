@@ -1677,6 +1677,10 @@ export type Database = {
         Returns: number
       }
       current_tenant_id: { Args: never; Returns: string }
+      current_tenant_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["tenant_role"]
+      }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_tenant_account: { Args: never; Returns: undefined }
       expire_unpaid_bookings: { Args: never; Returns: undefined }
