@@ -323,7 +323,7 @@ rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la R
 
 | Phase | Objet | Charge | Dépend de |
 |---|---|---|---|
-| 13 | 2/4 | In Progress|  |
+| 13 | Rôles tenant dans la RLS — **Complete (2026-09-29)** | 5–7 j | clôture V1 |
 | 14 | Routes serveur → RPC / Edge Functions | 4–5 j | 13 |
 | 15 | Socle données temps réel | 3–4 j | 13 |
 | 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
