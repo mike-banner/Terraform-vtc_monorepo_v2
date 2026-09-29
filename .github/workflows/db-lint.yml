@@ -37,6 +37,14 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -f supabase/lint/security_checks.sql
 
+      # Droits par rôle tenant (Phase 13) : chaque opération autorisée passe,
+      # chaque opération interdite échoue. Transaction annulée, aucune trace.
+      - name: RLS role checks
+        run: |
+          psql "$(supabase status -o env | grep '^DB_URL=' | cut -d= -f2- | tr -d '"')" \
+            -v ON_ERROR_STOP=1 \
+            -f supabase/lint/rls_role_checks.sql
+
       - name: Stop local stack
         if: always()
         run: supabase stop
