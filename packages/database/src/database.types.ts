@@ -1731,6 +1731,22 @@ export type Database = {
         Args: { t_id: string; y: number }
         Returns: string
       }
+      platform_tenant_analytics: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          bookings_count: number
+          cancelled_count: number
+          collected_gross: number
+          completed_count: number
+          refunded_gross: number
+          revenue_gross: number
+          revenue_net: number
+          tenant_id: string
+          tenant_name: string
+          tenant_status: string
+          vat_collected: number
+        }[]
+      }
     }
     Enums: {
       booking_source: "manual_driver" | "customer"
