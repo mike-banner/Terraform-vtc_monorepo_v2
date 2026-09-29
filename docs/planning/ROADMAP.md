@@ -335,7 +335,8 @@ Chaque phase est livrable seule et mise en production avant la suivante. Aucune 
 `NN-PLAN.md` détaillé (`/gsd-plan-phase NN`).
 
 ### Phase 13: Rôles tenant dans la RLS
-**Status:** In progress (plans 13-01 à 13-03 faits en local ; mise en production : plan 13-04, sur GO explicite)
+**Status:** Complete — déployée en production le 2026-09-29 (migrations `20260929100000`, `20260929100100`,
+`20260929100200`, `20260929100300`)
 **Goal:** Que les droits de `ROUTE_POLICY` soient vrais en base, quel que soit le client qui appelle.
 **Constats du 2026-09-27** (policies de prod) :
 - `pricing_rules` (`pricing_isolation`, `pricing_tenant_isolation`), `vehicles` (`vehicles_isolation`,
@@ -364,11 +365,22 @@ Chaque phase est livrable seule et mise en production avant la suivante. Aucune 
 mais toute modification de nom, prénom ou carte pro VTC dans `EditableDriverCard` est refusée (erreur 42501
 affichée, D-08 révisé) ; le KPI « revenu du mois » du dashboard vaut 0 pour un driver (`tenant_dashboard_kpi`
 est en security_invoker sur `financial_movements`).
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans executed
 - [x] 13-01-PLAN.md — base locale reconstruite, inventaire des policies vérifié, `current_tenant_role()` (sans SECURITY DEFINER), matrice
 - [x] 13-02-PLAN.md — réécriture des policies par table et par commande (20 supprimées), grants UPDATE par colonne sur `bookings`
 - [x] 13-03-PLAN.md — tests SQL par rôle en CI, lint « une policy par commande », ROUTE_POLICY documenté, ROADMAP
-- [ ] 13-04-PLAN.md — mise en production : contrôle de l'état prod (lecture seule), GO manuel, supabase db push --linked, contrôle policies/advisors, types régénérés
+- [x] 13-04-PLAN.md — mise en production le 2026-09-29 : contrôle prod conforme au baseline (31 policies), GO donné,
+  `supabase db push --linked` (3 migrations), policies/lint sécurité re-vérifiés en prod (0 violation), types régénérés.
+
+**Constat hors-plan découvert pendant le déploiement (2026-09-29) :** trois triggers de garde sur `bookings`
+(`trg_protect_booking_fields`, `trg_prevent_booking_delete`, `trg_validate_booking_status_transition`) étaient
+désactivés (`tgenabled='D'`) en **production uniquement** (actifs en local) — dérive antérieure à la Phase 13,
+aucune migration du repo ne les désactivant. Trouvé parce que la vérification `0|0|1` du plan 13-04 avait
+d'abord été mal exécutée (colonnes SQL dupliquées écrasées dans le JSON), corrigé en refaisant la requête avec
+des alias explicites. Réactivés via une 4e migration (`20260929100300_reenable_bookings_triggers.sql`), confirmé
+`tgenabled='O'` sur les 3. Impact réel limité (RLS + grants par colonne de la Phase 13 couvraient déjà l'essentiel
+pendant la fenêtre de désactivation), mais l'origine de la désactivation reste inconnue — pas d'investigation
+plus poussée pour l'instant.
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
 **Status:** Not started
