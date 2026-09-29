@@ -360,6 +360,10 @@ Chaque phase est livrable seule et mise en production avant la suivante. Aucune 
 - [ ] Suite de tests SQL jouée en CI (`db-lint.yml`) : pour chaque rôle, chaque opération autorisée passe et
   chaque opération interdite échoue — sur le modèle de la validation locale de la Phase 11.
 - [ ] Une fois la RLS en place, `ROUTE_POLICY` ne sert plus qu'à la navigation (UX), plus à la sécurité.
+**Plans:** 3 plans
+- [ ] 13-01-PLAN.md — base locale reconstruite, inventaire des policies vérifié, `current_tenant_role()` (sans SECURITY DEFINER), matrice
+- [ ] 13-02-PLAN.md — réécriture des policies par table et par commande (20 supprimées), grants UPDATE par colonne sur `bookings`
+- [ ] 13-03-PLAN.md — tests SQL par rôle en CI, lint « une policy par commande », ROUTE_POLICY documenté, ROADMAP
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
 **Status:** Not started
