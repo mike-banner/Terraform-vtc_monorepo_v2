@@ -357,7 +357,9 @@ Applicable (`security_enforcement` non desactive dans `.planning/config.json`).
 | A5 | `price_per_minute` n'existe pas non plus en prod | Pattern 6 | Si elle existe, la RPC de setup devrait l'ecrire |
 | A6 | Les Edge Functions (`stripe_webhook`, `cancel-booking`, ...) ne sont pas impactees par la reactivation des 3 triggers | Pitfall 2 | Un remboursement apres `pickup_time` pourrait etre bloque |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+RESOLVED lors de la planification (2026-09-30) : Q1 et Q3 par les décisions du plan 14-01 (checkpoint), Q2 par le GO utilisateur (marqueur de confiance, ADR-012, plan 14-02), Q4 plan 14-06, Q5 plan 14-07, Q6 plan 14-09, Q7 plan 14-04 (défauts retenus, modifiables par l utilisateur). Q1 : prod contient 13 lignes de transitions (vérifié le 2026-09-29).
 
 1. **Que contiennent en prod `booking_status_transitions` et l'etat des 3 triggers ?** (RISQUE CRITIQUE)
    - Connu : locale vide ; prod inconnue ; 3 triggers `tgenabled='D'`, cause inconnue.
