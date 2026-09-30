@@ -397,6 +397,21 @@ plus poussée pour l'instant.
 - [ ] `api/auth/login` : remplacé par `signInWithPassword` côté client (Phase 17).
 - [ ] Retirer `SUPABASE_SERVICE_ROLE_KEY` de `backoffice_env_vars` (Terraform) en fin de phase.
 
+**Plans:** 13 plans (6 lots, une branche par lot)
+- [ ] 14-01-PLAN.md — relevé prod en lecture seule ; décisions utilisateur : encaissement cash d'une course `accepted`, portée de la modification, arrondi TVA (checkpoint)
+- [ ] 14-02-PLAN.md — socle : seed des 13 transitions de prod, marqueur de confiance `vtc.trusted_rpc` (ADR-012), test négatif de forge, lint triggers/allowlist anon, fixtures RPC
+- [ ] 14-03-PLAN.md — `calculate_booking_price` / `booking_vat_split` en SQL (D-03), vecteurs de test, dette des copies dans BACKLOG
+- [ ] 14-04-PLAN.md — RPC `terrain_transition` et `driver_cancel_booking` (D-06/D-07, H-15, idempotence, ledger cash)
+- [ ] 14-05-PLAN.md — RPC `update_booking_details` et `create_manual_booking` (D-03/D-04)
+- [ ] 14-06-PLAN.md — RPC owner `update_tenant_logo`, `update_tenant_settings`, `complete_tenant_setup` (D-11/D-12)
+- [ ] 14-07-PLAN.md — notation publique : RPC anon, page et route dans vtc-websites, lien QR au build (D-09/D-10)
+- [ ] 14-08-PLAN.md — proxys terrain-transition, booking-actions, create-booking ; suppression de update-booking-status (D-01/D-05)
+- [ ] 14-09-PLAN.md — proxys tenant et onboarding, suppression de server.ts et de la page publique, step CI D-13, règles backoffice (D-08)
+- [ ] 14-10-PLAN.md — mise en production des migrations (contrôle prod, GO, push, équivalence, types)
+- [ ] 14-11-PLAN.md — déploiement du code sur GO, vérification des parcours en production
+- [ ] 14-12-PLAN.md — retrait de la clé de Terraform et des workspaces sur GO séparé (D-13)
+- [ ] 14-13-PLAN.md — correctif séparé : réactivation des 3 triggers bookings désactivés en prod, après analyse des flux Stripe
+
 ### Phase 15: Socle données temps réel
 **Status:** Not started
 **Goal:** Que tout écran du backoffice reflète en quelques secondes un changement fait ailleurs
