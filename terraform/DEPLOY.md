@@ -23,7 +23,6 @@ Exportez ces variables dans votre shell (ou dans votre pipeline CI) avant de lan
 | `TF_VAR_supabase_access_token` | Identique à `SUPABASE_ACCESS_TOKEN` (requis par le provider Terraform) |
 | `TF_VAR_cloudflare_api_token` | Dashboard Cloudflare → My Profile → API Tokens (droits Edit sur Pages) |
 | `TF_VAR_supabase_db_password` | Mot de passe de la base de données Supabase (à générer) |
-| `TF_VAR_supabase_service_role_key` | Dashboard Supabase → Settings → API → `service_role` (commence par `sb_secret_`) — injectée dans les apps Cloudflare Pages |
 | `TF_VAR_supabase_organization_id` | Dashboard Supabase → Organization Settings → Organization Slug |
 | `TF_VAR_cloudflare_account_id` | Dashboard Cloudflare → visible dans l'URL (format `account/<id>`) |
 | `TF_VAR_environment` | Nom d'environnement (ex : `production`, `staging`) |
@@ -37,7 +36,6 @@ export SUPABASE_ACCESS_TOKEN="sbp_..."
 export TF_VAR_supabase_access_token="$SUPABASE_ACCESS_TOKEN"
 export TF_VAR_cloudflare_api_token="..."
 export TF_VAR_supabase_db_password="..."
-export TF_VAR_supabase_service_role_key="sb_secret_..."
 export TF_VAR_supabase_organization_id="..."
 export TF_VAR_cloudflare_account_id="..."
 export TF_VAR_environment="production"
@@ -116,14 +114,12 @@ supabase secrets set --project-ref <PROJECT_REF> \
 
 ### Rotation de `SUPABASE_SERVICE_ROLE_KEY` (runbook)
 
-La clé lit 4 endroits — les 4 à mettre à jour dans l'ordre :
+Depuis la Phase 14, la clé n'est plus injectée dans Cloudflare Pages ni lue par Terraform. Elle vit à deux endroits :
 
-1. **Secret GitHub** `SUPABASE_SERVICE_ROLE_KEY` (repo → Settings → Secrets) → alimente `TF_VAR_supabase_service_role_key` du workflow Terraform CI
-2. **`.env` locaux** : `.env` (racine), `apps/vtc-backoffice/.env`, `apps/vtc-backoffice/.dev.vars`, `apps/superadmin/.env`
-3. **`terraform apply`** (relancer, pousse la nouvelle valeur dans les 3 projets Cloudflare Pages)
-4. Les Edge Functions Supabase : rien à faire (injection automatique par la plateforme)
+1. **Secrets du projet Supabase** : injection automatique dans les Edge Functions, rien à faire.
+2. **`.env` locaux** des scripts et tests (`.env` à la racine, `apps/superadmin/.env`) : à mettre à jour à la main.
 
-> Le dashboard Cloudflare n'est **plus** à toucher : depuis le patch Terraform, `SUPABASE_SERVICE_ROLE_KEY` fait partie de `common_env_vars` et un `terraform apply` suivant la rotation suffit (ensuite redeploy les apps via le workflow deploy).
+Le secret GitHub `SUPABASE_SERVICE_ROLE_KEY` n'est plus lu par aucun workflow et peut être supprimé.
 
 Pour enregistrer l'endpoint webhook sur Stripe, pointez sur :
 ```

@@ -37,7 +37,8 @@ locals {
     PNPM_VERSION             = "9.0.0"
   }
 
-  # Seule app à lire SUPABASE_SERVICE_ROLE_KEY (src/lib/supabase/server.ts).
+  # Depuis la Phase 14 (D-13), le backoffice n'a plus de clé service_role : ses écritures passent par des RPC
+  # gardées par rôle. La clé ne vit plus que dans les secrets du projet Supabase (Edge Functions).
   #
   # STRIPE_*/RESEND_API_KEY ne sont volontairement plus injectés ici. Le paiement
   # et l'e-mail ne s'exécutent pas sur Cloudflare : le backoffice se contente
@@ -45,9 +46,7 @@ locals {
   # qui lisent les clés via `Deno.env`, depuis les secrets du projet Supabase —
   # vérifiés présents le 2026-09-25. Une copie ici n'était lue par personne et
   # faisait croire qu'une rotation de clé côté Terraform suffisait.
-  backoffice_env_vars = merge(local.base_env_vars, {
-    SUPABASE_SERVICE_ROLE_KEY = var.supabase_service_role_key
-  })
+  backoffice_env_vars = local.base_env_vars
 }
 
 # Trigger CI/CD pipelines after Hard Reset

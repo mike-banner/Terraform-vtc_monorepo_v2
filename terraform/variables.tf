@@ -53,8 +53,3 @@ variable "resend_api_key" {
   default     = "re_placeholder"
 }
 
-variable "supabase_service_role_key" {
-  type        = string
-  description = "Clé service role Supabase (bypass RLS) — lue par le SSR backoffice via runtime.env"
-  sensitive   = true
-}
