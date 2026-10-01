@@ -121,6 +121,8 @@ Depuis la Phase 14, la clé n'est plus injectée dans Cloudflare Pages ni lue pa
 
 Le secret GitHub `SUPABASE_SERVICE_ROLE_KEY` n'est plus lu par aucun workflow et peut être supprimé.
 
+Sur une PR touchant `terraform/`, le workflow poste le `terraform plan` en commentaire : à lire avant tout merge, car le merge sur `main` applique en production.
+
 Pour enregistrer l'endpoint webhook sur Stripe, pointez sur :
 ```
 https://<PROJECT_REF>.supabase.co/functions/v1/stripe-webhook
