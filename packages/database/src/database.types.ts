@@ -1821,6 +1821,7 @@ export type Database = {
           p_distance_km?: number
           p_dropoff_address?: string
           p_duration_hours?: number
+          p_manual_total?: number
           p_pickup_address: string
           p_pickup_time: string
         }

@@ -981,16 +981,15 @@ const run = (): void => {
 
     const isHourly = b.booking_type === "hourly";
     document.getElementById("edit-dropoff-container")?.classList.toggle("hidden", isHourly);
-    document.getElementById("edit-distance-container")?.classList.toggle("hidden", isHourly);
     document.getElementById("edit-duration-container")?.classList.toggle("hidden", !isHourly);
-
-    if (!isHourly) {
-      (document.getElementById("edit-distance-km") as HTMLInputElement).value = String((b as any).distance_km ?? "");
-    } else {
+    if (isHourly) {
       (document.getElementById("edit-duration-hours") as HTMLInputElement).value = String((b as any).duration_hours ?? 1);
     }
 
-    updateEditPricePreview();
+    // Montant : modifiable par owner/manager seulement (la RPC le refuse aux chauffeurs).
+    const amountInput = document.getElementById("edit-amount") as HTMLInputElement;
+    amountInput.value = Number((b as any).total_amount ?? 0).toFixed(2);
+    amountInput.readOnly = editForm?.getAttribute("data-can-edit-price") !== "true";
 
     editModal.style.display = "flex";
     requestAnimationFrame(() => editModalInner?.classList.remove("scale-95"));
@@ -1006,43 +1005,20 @@ const run = (): void => {
   closeEditModalBtn?.addEventListener("click", closeEditModal);
   editModalOverlay?.addEventListener("click", closeEditModal);
 
-  // Live price preview dans le modal édition
-  const updateEditPricePreview = () => {
-    const priceEl = document.getElementById("edit-price-preview");
-    if (!priceEl || !editForm) return;
-
-    // Course à prix manuel : le serveur conserve le montant saisi à la création, l'estimation ne s'applique pas.
-    const isManual = (currentDetailBooking as any)?.pricing_mode === "manual";
-    const setText = (id: string, text: string) => { const el = document.getElementById(id); if (el) el.textContent = text; };
-    setText("edit-price-label", isManual ? "Prix manuel" : "Tarif estimé");
-    setText("edit-price-hint", isManual ? "Ce montant est conservé, seuls l'heure et les adresses changent" : "Calculé côté serveur à la validation");
-    if (isManual) {
-      priceEl.textContent = `${Number((currentDetailBooking as any).total_amount).toFixed(2)}€`;
-      return;
-    }
-
-    const rules = JSON.parse(editForm.getAttribute("data-pricing-rules") || "[]") as import("@/lib/pricing").PricingRule[];
+  // Mise à disposition : changer les heures propose un nouveau montant (barème du véhicule), corrigeable à la main.
+  const suggestEditAmount = () => {
+    const amountInput = document.getElementById("edit-amount") as HTMLInputElement | null;
+    if (!amountInput || amountInput.readOnly || !editForm) return;
+    const rules = JSON.parse(editForm.getAttribute("data-pricing-rules") || "[]") as PricingRule[];
     const vehicleCategory = (document.getElementById("edit-vehicle-id") as HTMLInputElement)?.value ?? "";
-    const bookingType = (document.getElementById("edit-booking-type") as HTMLInputElement)?.value ?? "transfer";
-
     const rule = findPricingRule(rules, vehicleCategory);
-    if (!rule) { priceEl.textContent = "---€"; return; }
-
-    const km = Number((document.getElementById("edit-distance-km") as HTMLInputElement)?.value || 0);
+    if (!rule) return;
     const hours = Number((document.getElementById("edit-duration-hours") as HTMLInputElement)?.value || 1);
-
-    const price = calculatePrice({
-      bookingType: bookingType === "hourly" ? "hourly" : "transfer",
-      distanceKm: km,
-      durationHours: hours,
-      rule,
-    });
-
-    priceEl.textContent = price > 0 ? `${price.toFixed(2)}€` : "---€";
+    const price = calculatePrice({ bookingType: "hourly", durationHours: hours, rule });
+    if (price > 0) amountInput.value = price.toFixed(2);
   };
 
-  document.getElementById("edit-distance-km")?.addEventListener("input", updateEditPricePreview);
-  document.getElementById("edit-duration-hours")?.addEventListener("input", updateEditPricePreview);
+  document.getElementById("edit-duration-hours")?.addEventListener("input", suggestEditAmount);
 
   editForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -1054,7 +1030,7 @@ const run = (): void => {
     const pickupTime = (document.getElementById("edit-pickup-time") as HTMLInputElement)?.value;
     const pickupAddress = (document.getElementById("edit-pickup-address") as HTMLInputElement)?.value;
     const dropoffAddress = (document.getElementById("edit-dropoff-address") as HTMLInputElement)?.value;
-    const distanceKm = (document.getElementById("edit-distance-km") as HTMLInputElement)?.value;
+    const amount = (document.getElementById("edit-amount") as HTMLInputElement)?.value;
     const durationHours = (document.getElementById("edit-duration-hours") as HTMLInputElement)?.value;
 
     const payload: Record<string, unknown> = {
@@ -1066,9 +1042,12 @@ const run = (): void => {
 
     if (bookingType !== "hourly") {
       payload.dropoff_address = dropoffAddress;
-      if (distanceKm) payload.distance_km = Number(distanceKm);
     } else {
       if (durationHours) payload.duration_hours = Number(durationHours);
+    }
+    // Le montant n'est envoyé que s'il a changé : sinon la course garde son mode de prix actuel.
+    if (amount && Number(amount) !== Number((currentDetailBooking as any)?.total_amount)) {
+      payload.manual_total = Number(amount);
     }
 
     try {
