@@ -383,7 +383,7 @@ pendant la fenêtre de désactivation), mais l'origine de la désactivation rest
 plus poussée pour l'instant.
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
-**Status:** In progress — RPC en production (14-10) et code déployé et vérifié le 2026-10-01 (14-11) ; reste : clé Terraform (14-12), triggers (14-13)
+**Status:** In progress — RPC en production (14-10) et code déployé et vérifié le 2026-10-01 (14-11) ; clé Terraform retirée (14-12), triggers réactivés en partie (14-13) ; reste : vérifier la suppression des variables dans Cloudflare, tester l'annulation d'une course future
 **Goal:** Plus aucune logique métier ni clé `service_role` dans le serveur Astro du backoffice.
 **Requirements:**
 - [x] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
@@ -395,9 +395,9 @@ plus poussée pour l'instant.
 - [x] `create-booking` : prix calculé côté serveur uniquement (règle du projet).
 - [x] `api/submit-rating` et `rate/[id]` (page publique client) : déplacer vers `vtc-websites`. — vérifié en production le 2026-10-01 (14-11) : QR scanné au téléphone, note 3 enregistrée.
 - [ ] `api/auth/login` : remplacé par `signInWithPassword` côté client (Phase 17). — hors Phase 14 (CONTEXT, Deferred) : la route n'utilise pas le client admin ; suivi en Phase 17.
-- [ ] Retirer `SUPABASE_SERVICE_ROLE_KEY` de `backoffice_env_vars` (Terraform) en fin de phase.
+- [x] Retirer `SUPABASE_SERVICE_ROLE_KEY` de `backoffice_env_vars` (Terraform) en fin de phase. — appliqué le 2026-10-01 (14-12) ; constat : les variables restent visibles dans Cloudflare après l'apply, suppression à finir.
 
-**Plans:** 11/13 plans executed
+**Plans:** 13/13 plans executed
 - [x] 14-01-PLAN.md — relevé prod en lecture seule ; décisions utilisateur : encaissement cash d'une course `accepted`, portée de la modification, arrondi TVA (checkpoint)
 - [x] 14-02-PLAN.md — socle : seed des 13 transitions de prod, marqueur de confiance `vtc.trusted_rpc` (ADR-012), test négatif de forge, lint triggers/allowlist anon, fixtures RPC
 - [x] 14-03-PLAN.md — `calculate_booking_price` / `booking_vat_split` en SQL (D-03), vecteurs de test, dette des copies dans BACKLOG — formule SQL, `calculate_booking_price` et `booking_vat_split` (arrondi V1), vecteurs de test
@@ -409,8 +409,8 @@ plus poussée pour l'instant.
 - [x] 14-09-PLAN.md — proxys tenant et onboarding, suppression de server.ts et de la page publique, step CI D-13, règles backoffice (D-08) — proxys tenant/onboarding, `server.ts` supprimé, step CI D-13
 - [x] 14-10-PLAN.md — mise en production des migrations (contrôle prod, GO, push, équivalence, types) — 11 migrations poussées en production le 2026-10-01 (GO), 13 fonctions identiques prod/local, 3 violations attendues (triggers), types régénérés
 - [x] 14-11-PLAN.md — déploiement du code sur GO, vérification des parcours en production — PR #13 mergée, CI et déploiement verts, 4 contrôles HTTP, parcours vérifiés en production par l'utilisateur le 2026-10-01
-- [ ] 14-12-PLAN.md — retrait de la clé de Terraform et des workspaces sur GO séparé (D-13)
-- [ ] 14-13-PLAN.md — correctif séparé : réactivation des 3 triggers bookings désactivés en prod, après analyse des flux Stripe
+- [x] 14-12-PLAN.md — retrait de la clé de Terraform et des workspaces sur GO séparé (D-13) — PR #24 : Terraform appliqué en production le 2026-10-01, 4 variables retirées de la configuration des 3 projets Cloudflare ; suppression effective côté Cloudflare et Terraform Cloud à confirmer
+- [x] 14-13-PLAN.md — correctif séparé : réactivation des 3 triggers bookings désactivés en prod, après analyse des flux Stripe — partiel le 2026-10-01 : 2 triggers réactivés, `trg_prevent_late_cancellation` laissé désactivé (impasse pour une course payée tant que la non-réalisée payée n'est pas conçue), exception documentée dans le lint
 
 **Livré hors plan pendant la vérification en production (2026-10-01) :** défauts trouvés par l'utilisateur en testant, corrigés et déployés
 (PR #14 à #22) : message d'erreur à la connexion (la page ne lisait pas `?error=`) ; formulaire de modification : montant éditable

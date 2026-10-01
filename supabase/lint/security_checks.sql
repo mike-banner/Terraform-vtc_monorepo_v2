@@ -121,10 +121,12 @@ BEGIN
   END LOOP;
 
   -- 7. Trigger de garde de bookings absent ou désactivé. Dérive constatée en prod le 2026-09-29
-  --    (trois triggers en tgenabled='D').
+  --    (trois triggers en tgenabled='D'). Exception assumée : trg_prevent_late_cancellation reste désactivé en
+  --    production (plan 14-13, 2026-10-01) tant que la « non réalisée » d'une course payée n'est pas conçue ; il est
+  --    donc absent de cette liste. À réintégrer dès qu'il est réactivé.
   FOR r IN
     SELECT t.name
-    FROM unnest(ARRAY['trg_prevent_booking_delete','trg_prevent_late_cancellation',
+    FROM unnest(ARRAY['trg_prevent_booking_delete',
       'trg_prevent_pickup_time_change_after_paid','trg_prevent_policy_update','trg_protect_booking_fields',
       'trg_validate_booking_status_transition','trg_auto_financial_movement']) AS t(name)
     WHERE NOT EXISTS (
