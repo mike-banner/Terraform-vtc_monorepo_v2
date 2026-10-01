@@ -709,8 +709,14 @@ const run = (): void => {
         const forfaitLabel = document.getElementById("forfait-custom-label");
         if (forfaitLabel) forfaitLabel.textContent = "Aucun forfait";
 
-        // Afficher km ou heure seulement si un mode a déjà été choisi
-        const madsMode = (document.getElementById("mads_mode_hidden") as HTMLInputElement | null)?.value ?? "";
+        // Mode « À l'heure » par défaut : la durée et le prix sont visibles dès le choix du type.
+        const madsModeHidden = document.getElementById("mads_mode_hidden") as HTMLInputElement | null;
+        if (madsModeHidden && !madsModeHidden.value) {
+          madsModeHidden.value = "hour";
+          const madsLabel = document.getElementById("mads-mode-label");
+          if (madsLabel) madsLabel.textContent = "À l'heure";
+        }
+        const madsMode = madsModeHidden?.value ?? "";
         if (madsMode === "km") {
           distanceKmContainer?.classList.remove("hidden");
           distanceKmContainer?.style.setProperty("display", "flex");
@@ -770,6 +776,15 @@ const run = (): void => {
       if (val) {
         const kmInput = document.getElementById("distance_km") as HTMLInputElement | null;
         if (kmInput) kmInput.value = "";
+      } else {
+        // « Aucun forfait » : on vide ce que le forfait avait rempli (zones et montant), sinon l'ancien prix serait validé.
+        const clear = (selector: string) => {
+          const el = document.querySelector<HTMLInputElement>(selector);
+          if (el) el.value = "";
+        };
+        clear("input[name='pickup']");
+        clear("#dropoff-input");
+        clear("input[name='manual_total']");
       }
       // km field stays hidden for transfer — price comes from forfait or manual entry
       updatePriceAndFields();
