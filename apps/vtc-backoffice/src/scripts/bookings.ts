@@ -50,7 +50,7 @@ const updateTerrainUI = (booking: AnyBooking): void => {
   const isEnRoute = hasTag("en_route");
   const isCompleted = status === "completed";
 
-  if (isCompleted || String(booking.status ?? "").startsWith("cancel") || status === "to_validate") {
+  if (isCompleted || String(booking.status ?? "").startsWith("cancel") || booking.status === "no_show" || status === "to_validate") {
     root.innerHTML = "";
     return;
   }
@@ -260,7 +260,7 @@ const run = (): void => {
         paid: "Payée",
         completed: "Terminée",
         cancelled: "Annulée",
-        no_show: "Non présentation",
+        no_show: "Non réalisée",
       };
 
       const firstName = booking.customers?.first_name ?? "";
@@ -287,8 +287,10 @@ const run = (): void => {
       if (refEl) refEl.innerText = `REF: #${String(id).split("-")[0].toUpperCase()}`;
 
       if (statusEl) {
-        const status = String(booking.mission_status ?? booking.status ?? "");
-        statusEl.innerText = STATUS_LABELS_FR[status] || status;
+        // Course annulée ou non réalisée : le statut de la course prime sur l'état de la mission (« À venir »).
+        const closed = String(booking.status ?? "").startsWith("cancel") || booking.status === "no_show";
+        const status = closed ? "cancelled" : String(booking.mission_status ?? booking.status ?? "");
+        statusEl.innerText = booking.status === "no_show" ? "Non réalisée" : (STATUS_LABELS_FR[status] || status);
 
         const statusColors: Record<string, string> = {
           to_validate: "bg-amber-500/10 text-amber-500 border-amber-500/20",
@@ -487,10 +489,11 @@ const run = (): void => {
 
   const renderSearchCard = (booking: AnyBooking): string => {
     const name = `${booking.customers?.first_name ?? ""} ${booking.customers?.last_name ?? ""}`.trim() || "Client";
-    const isCancelled = String(booking.status ?? "").startsWith("cancel");
+    const isNoShow = booking.status === "no_show";
+    const isCancelled = String(booking.status ?? "").startsWith("cancel") || isNoShow;
     const status = String(booking.mission_status ?? "");
     const statusBadge = isCancelled ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" : (STATUS_BADGE[status] ?? "bg-white/10 text-white border border-white/10");
-    const statusLabel = isCancelled ? "Annulée" : (STATUS_LABEL[status] ?? "Terminée");
+    const statusLabel = isNoShow ? "Non réalisée" : isCancelled ? "Annulée" : (STATUS_LABEL[status] ?? "Terminée");
     const type = String(booking.booking_type ?? "transfer");
     const pickupTime = booking.pickup_time ? new Date(booking.pickup_time) : null;
     const dateStr = pickupTime && !Number.isNaN(pickupTime.getTime())

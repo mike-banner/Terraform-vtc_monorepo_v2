@@ -26,7 +26,7 @@ let query = supabaseServer
     .select("*, customers(*)", { count: "exact" })
     .eq("current_tenant_id", profile.tenant_id as string);
 
-const CANCELLED_STATUSES = ["cancelled", "cancelled_no_refund", "cancelled_pending_refund", "cancelled_refunded", "deprecated_refunded"] as const;
+const CANCELLED_STATUSES = ["cancelled", "cancelled_no_refund", "cancelled_pending_refund", "cancelled_refunded", "deprecated_refunded", "no_show"] as const;
 
 if (currentStatus === "cancelled") {
     query = query.in("status", CANCELLED_STATUSES as unknown as string[]);
@@ -112,7 +112,7 @@ const STATUS_LABELS_FR: Record<string, string> = {
     cancelled_refunded: "Remboursée",
     cancelled_no_refund: "Annulée",
     deprecated_refunded: "Remboursée",
-    no_show: "Non présentation",
+    no_show: "Non réalisée",
     expired_payment: "Paiement expiré",
     refund_failed: "Échec remboursement"
 };
@@ -259,13 +259,14 @@ const getFilterUrl = (params: Record<string, string>) => {
                                             {(booking.booking_type as any) === 'hourly' ? 'Mise à Dispo' : 'Transfert'}
                                         </Badge>
                                         <Badge variant={
-                                            String(booking.status).startsWith("cancel") ? "rose" :
+                                            (String(booking.status).startsWith("cancel") || booking.status === "no_show") ? "rose" :
                                             booking.mission_status === "completed" ? "emerald" :
                                             booking.mission_status === "in_progress" ? "primary" :
                                             booking.mission_status === "to_validate" ? "amber" :
                                             "slate"
                                         }>
-                                            {String(booking.status).startsWith("cancel") ? 'Annulée' :
+                                            {booking.status === 'no_show' ? 'Non réalisée' :
+                                             String(booking.status).startsWith("cancel") ? 'Annulée' :
                                              booking.mission_status === 'to_validate' ? 'À Valider' :
                                              booking.mission_status === 'not_started' ? 'Non Démarré' :
                                              booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
@@ -381,13 +382,14 @@ const getFilterUrl = (params: Record<string, string>) => {
                                                 </td>
                                                 <td class="px-8 py-4">
                                                     <Badge variant={
-                                                        String(booking.status).startsWith("cancel") ? "rose" :
+                                                        (String(booking.status).startsWith("cancel") || booking.status === "no_show") ? "rose" :
                                                         booking.mission_status === "completed" ? "emerald" :
                                                         booking.mission_status === "in_progress" ? "primary" :
                                                         booking.mission_status === "to_validate" ? "amber" :
                                                         "slate"
                                                     }>
-                                                        {String(booking.status).startsWith("cancel") ? 'Annulée' :
+                                                        {booking.status === 'no_show' ? 'Non réalisée' :
+                                             String(booking.status).startsWith("cancel") ? 'Annulée' :
                                                          booking.mission_status === 'to_validate' ? 'À Valider' :
                                                          booking.mission_status === 'not_started' ? 'Non Démarré' :
                                                          booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
@@ -399,7 +401,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                                                             {Number(booking.total_amount).toFixed(0)}€
                                                         </span>
                                                         <div class={`mt-2 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${
-                                                            String(booking.status).startsWith("cancel") ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
+                                                            (String(booking.status).startsWith("cancel") || booking.status === "no_show") ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
                                                             booking.status === "completed" || booking.status === "paid" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
                                                             booking.status === "pending" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
                                                             "bg-primary/10 text-primary border-primary/20"
