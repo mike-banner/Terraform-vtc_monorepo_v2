@@ -324,7 +324,7 @@ rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la R
 | Phase | Objet | Charge | Dépend de |
 |---|---|---|---|
 | 13 | Rôles tenant dans la RLS — **Complete (2026-09-29)** | 5–7 j | clôture V1 |
-| 14 | 2/13 | In Progress|  |
+| 14 | 13/13 | Complete | 2026-10-01 |
 | 15 | Socle données temps réel | 3–4 j | 13 |
 | 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
 | 17 | Bascule SPA + PWA | 4–5 j | 16 |
@@ -383,7 +383,7 @@ pendant la fenêtre de désactivation), mais l'origine de la désactivation rest
 plus poussée pour l'instant.
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
-**Status:** In progress — RPC en production (14-10) et code déployé et vérifié le 2026-10-01 (14-11) ; clé Terraform retirée (14-12), triggers réactivés en partie (14-13) ; reste : vérifier la suppression des variables dans Cloudflare, tester l'annulation d'une course future
+**Status:** Complete le 2026-10-01 — 13/13 plans, parcours vérifiés en production, clé `service_role` retirée du backoffice et tournée dans Supabase. Reliquats non bloquants listés ci-dessous.
 **Goal:** Plus aucune logique métier ni clé `service_role` dans le serveur Astro du backoffice.
 **Requirements:**
 - [x] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
@@ -422,6 +422,14 @@ heure de Paris (le rendu serveur était en UTC) ; action « Non réalisée / cli
 instructions client séparées de l'historique ; CI : lint SQL seulement si `supabase/` change.
 **Constat à traiter plus tard :** les notes saisies dans les tunnels du site (`specialNotes`) ne sont pas enregistrées (V1 en
 construction) et le tunnel Transfert n'a pas de champ de note ; la création de course du backoffice n'en a pas non plus.
+
+**Reliquats de la phase 14 (non bloquants, 2026-10-01) :** (1) Cloudflare : `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`,
+`STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY` restent présentes dans les 3 projets Pages (production et preview) : Terraform ne les
+a pas supprimées (l'API Pages exige `null`) ; suppression manuelle, sans effet sur le code ; la clé `service_role` a été tournée
+côté Supabase, donc l'ancienne valeur est sans usage. (2) `trg_prevent_late_cancellation` toujours désactivé en production
+(exception dans la règle 7 du lint) : à réactiver après avoir conçu la « non réalisée » d'une course payée. (3) Notes des
+tunnels du site non enregistrées, pas de champ d'instructions à la création en backoffice. (4) `api/auth/login` : Phase 17.
+(5) Modèle de licence (instance dédiée par client : base et Cloudflare propres, maintenance par abonnement) à planifier.
 
 ### Phase 15: Socle données temps réel
 **Status:** Not started
