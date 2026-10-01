@@ -1,10 +1,13 @@
 name: 'DB Lint'
 
+# Le contrôle reconstruit toute la base (3 min) : inutile pour un changement purement front.
 on:
   push:
     branches: [main, dev]
+    paths: ['supabase/**', 'scripts/check_migration_drift.py', '.github/workflows/db-lint.yml']
   pull_request:
     branches: [main, dev]
+    paths: ['supabase/**', 'scripts/check_migration_drift.py', '.github/workflows/db-lint.yml']
   # Permet de relancer le contrôle à la main après un correctif de migration.
   workflow_dispatch:
 

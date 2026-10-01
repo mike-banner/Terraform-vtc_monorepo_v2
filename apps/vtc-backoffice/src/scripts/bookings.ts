@@ -174,13 +174,37 @@ const updateRatingUI = (booking: AnyBooking): void => {
     if (canvas && booking.id) {
       const siteOrigin = (import.meta.env.PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, "") || window.location.origin;
       const ratingUrl = `${siteOrigin}/rate/${booking.id}`;
+      // 112 px pour une adresse de ~80 caractères donnait des modules de 2-3 px : illisible pour un téléphone.
       QRCode.toCanvas(canvas, ratingUrl, {
-        width: 112,
-        margin: 1,
+        width: 240,
+        margin: 2,
+        errorCorrectionLevel: "M",
         color: { dark: "#000000", light: "#ffffff" },
       }).catch(console.error);
     }
   }
+};
+
+
+// Le journal mission_note mélange des balises techniques ([terrain], [annulation], [non réalisée]) et du texte libre.
+// On l'affiche en phrases lisibles, en heure de Paris.
+const formatMissionHistory = (raw: string): string => {
+  const when = (iso: string): string => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  };
+  const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean).flatMap((line): string[] => {
+    let m: RegExpMatchArray | null;
+    if ((m = line.match(/^\[terrain\] en_route_at=(\S+)/))) return [`En route le ${when(m[1])}`];
+    if ((m = line.match(/^\[terrain\] on_board_at=(\S+)/))) return [`Client à bord le ${when(m[1])}`];
+    if ((m = line.match(/^\[terrain\] completed_at=(\S+)/))) return [`Course terminée le ${when(m[1])}`];
+    if (line.startsWith("[terrain] completed_at_was_corrected")) return ["Heure de fin corrigée manuellement"];
+    if ((m = line.match(/^\[annulation\] initiateur=(\S+)\s*\|\s*motif=(.*)$/))) return [`Annulée (${m[1]}) : ${m[2]}`];
+    if ((m = line.match(/^\[non réalisée\] motif=(.*)$/))) return [`Non réalisée, client absent : ${m[1]}`];
+    return [line];
+  });
+  return lines.join("\n");
 };
 
 const run = (): void => {
@@ -281,7 +305,7 @@ const run = (): void => {
       if (dropoffEl) dropoffEl.innerText = String(booking.dropoff_address ?? "Non spécifiée");
       if (passengersEl) passengersEl.innerText = String(booking.passenger_count ?? 1);
       if (luggageEl) luggageEl.innerText = String(booking.luggage_count ?? 0);
-      if (notesEl) notesEl.innerText = String(booking.mission_note ?? booking.notes ?? "Aucune note particulière.");
+      if (notesEl) notesEl.innerText = formatMissionHistory(String(booking.mission_note ?? "")) || "Aucun événement pour l'instant.";
 
       const id = booking.id ?? "---";
       if (refEl) refEl.innerText = `REF: #${String(id).split("-")[0].toUpperCase()}`;
