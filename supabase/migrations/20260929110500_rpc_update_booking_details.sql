@@ -27,7 +27,7 @@ BEGIN
   IF coalesce(b.mission_status::text, '') NOT IN ('to_validate','not_started') THEN
     RAISE EXCEPTION 'Action impossible : mission déjà démarrée ou terminée' USING ERRCODE = '22023';
   END IF;
-  -- DECISION-EDIT: A (plan 14-01) ; variante B : IN ('pending')
+  -- Variante A retenue (plan 14-01) ; variante B : IN ('pending')
   IF b.status NOT IN ('pending','accepted') THEN
     RAISE EXCEPTION 'Course non modifiable dans ce statut' USING ERRCODE = '22023';
   END IF;
