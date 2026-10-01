@@ -93,6 +93,51 @@ SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
 SELECT pg_temp.expect_error('update: mission démarrée', $q$select public.update_booking_details('b2000000-0000-4000-8000-000000000002', now() + interval '4 days', 'X')$q$, '22023', 'Action impossible : mission déjà démarrée ou terminée');
 RESET ROLE;
 
+-- create_manual_booking -----------------------------------------------------------
+CREATE TEMP TABLE _c (k text, booking_id uuid, total_price numeric);
+GRANT ALL ON _c TO authenticated;
+CREATE TEMP TABLE _n (k text, n bigint);
+
+SET LOCAL ROLE anon;
+SELECT set_config('request.jwt.claims', '{"role":"anon"}', true);
+SELECT pg_temp.expect_denied('create: anon', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid')$q$);
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
+SELECT pg_temp.expect_denied('create: driver1', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid')$q$);
+SELECT pg_temp.login('66666666-6666-4666-8666-666666666666');
+SELECT pg_temp.expect_denied('create: pending', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid')$q$);
+SELECT pg_temp.login('22222222-2222-4222-8222-222222222222');
+SELECT pg_temp.expect_error('create: manager sans fiche', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid')$q$, '22023', 'Profil chauffeur introuvable. Crée ton profil chauffeur avant de créer une course manuelle.');
+
+SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
+SELECT pg_temp.expect_error('create: email vide', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', '')$q$, '22023', 'Email client invalide');
+SELECT pg_temp.expect_error('create: email sans @', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean.rpc')$q$, '22023', 'Email client invalide');
+SELECT pg_temp.expect_sqlstate('create: type foo', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_booking_type => 'foo')$q$, '22023');
+SELECT pg_temp.expect_error('create: montant 10000', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_manual_total => 10000)$q$, '22023', 'Montant invalide : 10000€');
+SELECT pg_temp.expect_error('create: véhicule tenant B', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_vehicle_id => 'ee000000-0000-4000-8000-0000000000bb')$q$, '22023', 'Véhicule introuvable pour ce tenant');
+
+INSERT INTO _c SELECT 'rule', * FROM public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', '  Client.New@RPC.invalid ', p_distance_km => 30);
+INSERT INTO _c SELECT 'rule2', * FROM public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'client.new@rpc.invalid', p_distance_km => 30);
+INSERT INTO _c SELECT 'manual', * FROM public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'client.new@rpc.invalid', p_manual_total => 120);
+INSERT INTO _c SELECT 'zero', * FROM public.create_manual_booking('Gare', NULL, now() + interval '2 days', 'Jean Dupont', 'client.new@rpc.invalid', p_manual_total => 0, p_distance_km => 30);
+
+SELECT pg_temp.login('55555555-5555-4555-8555-555555555555');
+SELECT pg_temp.expect_error('create: tenant B sans règle', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Paul Martin', 'paul@rpc.invalid')$q$, '22023', 'Aucune règle tarifaire active et aucun montant manuel fourni.');
+INSERT INTO _c SELECT 'b_manual', * FROM public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Paul Martin', 'paul@rpc.invalid', p_manual_total => 100);
+RESET ROLE;
+
+SELECT pg_temp.expect_count('create: retour 70', $q$select count(*) from _c where k = 'rule' and total_price = 70$q$, 1);
+SELECT pg_temp.expect_count('create: course règle', $q$select count(*) from public.bookings b join _c on _c.booking_id = b.id where _c.k = 'rule' and b.status = 'accepted' and b.mission_status = 'not_started' and b.pricing_mode = 'direct' and b.booking_source = 'manual_driver' and b.driver_id = 'd0000000-0000-4000-8000-000000000000' and b.vehicle_id = 'ee000000-0000-4000-8000-00000000000a' and b.subtotal_amount = 63.64 and b.vat_amount = 6.36 and b.total_amount = 70 and b.payment_mode = 'cash' and b.current_tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, 1);
+SELECT pg_temp.expect_count('create: client normalisé', $q$select count(*) from public.customers where tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and email = 'client.new@rpc.invalid' and first_name = 'Jean' and last_name = 'Dupont'$q$, 1);
+SELECT pg_temp.expect_count('create: client réutilisé', $q$select count(*) from public.customers where tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and email = 'client.new@rpc.invalid'$q$, 1);
+SELECT pg_temp.expect_count('create: manuel 120', $q$select count(*) from public.bookings b join _c on _c.booking_id = b.id where _c.k = 'manual' and _c.total_price = 120 and b.pricing_mode = 'manual' and b.total_amount = 120 and b.subtotal_amount = 109.09 and b.vat_amount = 10.91$q$, 1);
+SELECT pg_temp.expect_count('create: montant 0 -> règle', $q$select count(*) from public.bookings b join _c on _c.booking_id = b.id where _c.k = 'zero' and b.pricing_mode = 'direct' and _c.total_price = 70 and b.dropoff_address = 'Gare'$q$, 1);
+SELECT pg_temp.expect_count('create: tenant B exonéré', $q$select count(*) from public.bookings b join _c on _c.booking_id = b.id where _c.k = 'b_manual' and b.subtotal_amount = 100 and b.vat_amount = 0 and b.vehicle_id = 'ee000000-0000-4000-8000-0000000000bc' and b.driver_id = 'db000000-0000-4000-8000-0000000000bb'$q$, 1);
+SELECT pg_temp.expect_count('create: aucun mouvement ledger', 'select count(*) from public.financial_movements', :mvts_avant);
+SELECT pg_temp.expect_count('create: marqueur vide', $q$select count(*) from (select 1) x where coalesce(current_setting('vtc.trusted_rpc', true), '') = ''$q$, 1);
+
 DO $$ BEGIN RAISE NOTICE 'RPC booking edit checks passed.'; END $$;
 
 ROLLBACK;
