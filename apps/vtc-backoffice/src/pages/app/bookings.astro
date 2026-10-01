@@ -739,7 +739,7 @@ const getFilterUrl = (params: Record<string, string>) => {
     </div>
 
     <!-- 🎭 MODAL: DÉTAILS MISSION ELITE -->
-    <div slot="modals" id="detail-booking-modal" data-driver-id={driverId} class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-500" style="display: none;">
+    <div slot="modals" id="detail-booking-modal" data-driver-id={driverId} data-can-manage={["owner", "manager"].includes(profile.tenant_role) ? "true" : "false"} class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-500" style="display: none;">
         <div class="absolute inset-0 bg-background/80 backdrop-blur-sm modal-overlay"></div>
         <div class="relative bg-card max-w-2xl w-full max-h-[90vh] rounded-[calc(var(--radius)+8px)] border border-border shadow-2xl overflow-y-auto overflow-x-hidden custom-scrollbar transform scale-95 transition-all duration-500" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
             <div class="p-6 sm:p-8">
@@ -897,7 +897,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                                     <svg class="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                                     </svg>
-                                    <p class="text-[11px] text-rose-300/70 font-medium leading-relaxed">Convention VTC — un motif d'annulation est obligatoire et sera conservé dans le dossier.</p>
+                                    <p id="cancel-hint" class="text-[11px] text-rose-300/70 font-medium leading-relaxed">Convention VTC — un motif d'annulation est obligatoire et sera conservé dans le dossier.</p>
                                 </div>
                                 <textarea id="cancel-reason" placeholder="Décrivez le motif d'annulation…" rows="3" class="w-full bg-white/5 border border-rose-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/40 resize-none transition-colors"></textarea>
                                 <div class="flex gap-3">

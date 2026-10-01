@@ -1783,6 +1783,10 @@ export type Database = {
           refund_allowed: boolean
         }[]
       }
+      mark_booking_no_show: {
+        Args: { p_booking_id: string; p_reason: string }
+        Returns: string
+      }
       next_invoice_number: {
         Args: { t_id: string; y: number }
         Returns: string

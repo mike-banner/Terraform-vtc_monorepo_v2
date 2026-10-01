@@ -27,6 +27,7 @@ type AnyBooking = Record<string, unknown> & {
 };
 
 let currentDetailBooking: AnyBooking | null = null;
+let cancelMode: "cancel" | "no_show" = "cancel";
 
 const parseBookingFromRow = (row: Element): AnyBooking => {
   const encodedData = row.getAttribute("data-booking") ?? "";
@@ -370,8 +371,23 @@ const run = (): void => {
       const editBtn = document.getElementById("modal-edit-btn");
       if (editBtn) editBtn.classList.toggle("hidden", !preMission);
 
+      // Heure de prise en charge passée : l'annulation est impossible, seule la « non réalisée » (client absent)
+      // reste, réservée à owner/manager et aux courses acceptées.
+      const isPast = !!booking.pickup_time && new Date(booking.pickup_time as string).getTime() <= Date.now();
+      const canManage = document.getElementById("detail-booking-modal")?.dataset.canManage === "true";
+      cancelMode = preMission && isPast ? "no_show" : "cancel";
       const cancelSection = document.getElementById("cancel-section");
-      if (cancelSection) cancelSection.classList.toggle("hidden", !preMission);
+      if (cancelSection) {
+        const noShowAllowed = canManage && booking.status === "accepted";
+        cancelSection.classList.toggle("hidden", !preMission || (cancelMode === "no_show" && !noShowAllowed));
+      }
+      const isNoShow = cancelMode === "no_show";
+      const setCancelText = (id: string, text: string) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+      setCancelText("cancel-booking-btn", isNoShow ? "Non réalisée (client absent)" : "Annuler la course");
+      setCancelText("cancel-confirm-btn", isNoShow ? "Confirmer : non réalisée" : "Confirmer l'annulation");
+      setCancelText("cancel-hint", isNoShow
+        ? "La prise en charge est passée : la course est clôturée comme non réalisée, sans encaissement. Un motif est obligatoire."
+        : "Convention VTC — un motif d'annulation est obligatoire et sera conservé dans le dossier.");
 
       // Bouton Facture (post-mission)
       const invoiceBtn = document.getElementById("modal-invoice-btn") as HTMLButtonElement | null;
@@ -905,6 +921,8 @@ const run = (): void => {
   const cancelConfirmBtn = document.getElementById("cancel-confirm-btn");
   const cancelBackBtn = document.getElementById("cancel-back-btn");
 
+  const cancelLabel = () => cancelMode === "no_show" ? "Confirmer : non réalisée" : "Confirmer l'annulation";
+
   cancelBookingBtn?.addEventListener("click", () => {
     cancelTriggerArea?.classList.add("hidden");
     cancelFormArea?.classList.remove("hidden");
@@ -930,26 +948,26 @@ const run = (): void => {
     const bookingId = currentDetailBooking?.id;
     if (!bookingId) return;
 
-    cancelConfirmBtn.textContent = "Annulation…";
+    cancelConfirmBtn.textContent = "Enregistrement…";
     (cancelConfirmBtn as HTMLButtonElement).disabled = true;
 
     try {
       const res = await fetch("/api/tenant/booking-actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cancel", booking_id: bookingId, reason }),
+        body: JSON.stringify({ action: cancelMode, booking_id: bookingId, reason }),
       });
       const data = await res.json() as { success?: boolean; error?: string };
       if (data.success) {
         window.location.reload();
       } else {
         alert(data.error ?? "Erreur lors de l'annulation.");
-        cancelConfirmBtn.textContent = "Confirmer l'annulation";
+        cancelConfirmBtn.textContent = cancelLabel();
         (cancelConfirmBtn as HTMLButtonElement).disabled = false;
       }
     } catch {
       alert("Erreur réseau.");
-      cancelConfirmBtn.textContent = "Confirmer l'annulation";
+      cancelConfirmBtn.textContent = cancelLabel();
       (cancelConfirmBtn as HTMLButtonElement).disabled = false;
     }
   });
