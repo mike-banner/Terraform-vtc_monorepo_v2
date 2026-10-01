@@ -4,14 +4,14 @@ import AppLayout from "../../layouts/AppLayout.astro";
 import Badge from "../../components/ui/Badge.astro";
 import Button from "../../components/ui/Button.astro";
 import Card from "../../components/ui/Card.astro";
-import { createAdminClient } from "../../lib/supabase/server";
+import { rpcErrorStatus } from "../../lib/rpc-error";
 
-const { profile, supabase: supabaseAdmin } = Astro.locals;
+const { profile, supabase } = Astro.locals;
 
 if (!profile) return Astro.redirect("/login");
 
 // Fetch current tenant data
-const { data: tenant } = await supabaseAdmin
+const { data: tenant } = await supabase
     .from("tenants")
     .select("*")
     .eq("id", profile.tenant_id!)
@@ -23,72 +23,13 @@ if (tenant.setup_completed) return Astro.redirect("/app/dashboard");
 // Handling POST request on the same page
 if (Astro.request.method === "POST") {
     try {
-        const body = await Astro.request.json();
-        const adminClient = createAdminClient(Astro.locals);
-
-        const { legal, vehicle, pricing } = body;
-
-        let driverId = null;
-        if (vehicle.is_primary_driver) {
-            // Upsert Driver
-            const { data: driver, error: driverError } = await adminClient
-                .from("drivers")
-                .upsert({
-                    user_id: profile.id,
-                    tenant_id: profile.tenant_id!,
-                    first_name: profile.first_name || '',
-                    last_name: profile.last_name || '',
-                    phone: tenant.phone || '',
-                    license_number: legal.vtc_license_number
-                }, { onConflict: 'user_id' })
-                .select("id")
-                .single();
-
-            if (driverError) throw driverError;
-            driverId = driver.id;
+        const { legal, vehicle, pricing } = await Astro.request.json();
+        const { error } = await supabase.rpc("complete_tenant_setup", {
+            p_legal: legal, p_vehicle: vehicle, p_pricing: pricing,
+        });
+        if (error) {
+            return new Response(JSON.stringify({ error: error.message }), { status: rpcErrorStatus(error.code) });
         }
-
-        // 1. Update Tenant (Exclure vtc_license_number qui va dans la table drivers)
-        const { vtc_license_number, ...tenantData } = legal;
-        const { error: tenantError } = await adminClient
-            .from("tenants")
-            .update({
-                ...tenantData,
-                setup_completed: true
-            })
-            .eq("id", profile.tenant_id!);
-        if (tenantError) throw tenantError;
-
-        // 2. Insert First Vehicle
-        const { error: vehicleError } = await adminClient
-            .from("vehicles")
-            .insert({
-                tenant_id: profile.tenant_id!,
-                driver_id: driverId,
-                brand: vehicle.brand,
-                model: vehicle.model,
-                plate_number: vehicle.plate_number,
-                category: vehicle.category,
-                capacity: parseInt(vehicle.capacity),
-                luggage_capacity: parseInt(vehicle.luggage_capacity),
-                status: 'active'
-            });
-        if (vehicleError) throw vehicleError;
-
-        // 3. Insert Default Pricing Rule
-        const { error: pricingError } = await adminClient
-            .from("pricing_rules")
-            .insert({
-                tenant_id: profile.tenant_id!,
-                service_category: vehicle.category,
-                base_price: parseFloat(pricing.base_price),
-                price_per_km: parseFloat(pricing.price_per_km),
-                price_per_minute: parseFloat(pricing.price_per_minute || 0.5),
-                minimum_fare: parseFloat(pricing.minimum_fare),
-                active: true
-            });
-        if (pricingError) throw pricingError;
-
         return new Response(JSON.stringify({ success: true }), { status: 200 });
     } catch (err: any) {
         console.error("Setup Error:", err);

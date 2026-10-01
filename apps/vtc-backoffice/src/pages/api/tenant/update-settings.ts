@@ -1,10 +1,7 @@
 // src/pages/api/tenant/update-settings.ts
-// Mise à jour des paramètres entreprise (TVA, forme juridique).
-// Passe par le admin client pour contourner l'absence de policy RLS UPDATE sur tenants.
+// Proxy vers la RPC owner update_tenant_settings (D-11 Phase 14) : TVA dérivée par trg_sync_tenant_vat.
 import type { APIRoute } from "astro";
-import { createAdminClient } from "@/lib/supabase/server";
-
-const EXEMPT_FORMS = ["auto_entrepreneur", "ei"];
+import { rpcErrorStatus } from "@/lib/rpc-error";
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -19,21 +16,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return new Response(JSON.stringify({ error: "Paramètre manquant: legal_form" }), { status: 400 });
     }
 
-    const isExempt = EXEMPT_FORMS.includes(legal_form);
-
-    const supabase = createAdminClient(locals);
-
-    const { error } = await supabase
-      .from("tenants")
-      .update({
-        legal_form,
-        vat_number: isExempt ? null : (vat_number?.trim() || null),
-        is_vat_exempt: isExempt,
-        vat_rate: isExempt ? 0 : 10,
-      })
-      .eq("id", profile.tenant_id);
-
-    if (error) throw error;
+    const { error } = await locals.supabase.rpc("update_tenant_settings", {
+      p_legal_form: legal_form,
+      p_vat_number: vat_number ?? undefined,
+    });
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: rpcErrorStatus(error.code) });
+    }
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err: any) {

@@ -302,13 +302,14 @@ par une action ou une décision de l'utilisateur.
 | Point | Origine | Destination | Pourquoi pas maintenant |
 |---|---|---|---|
 | Restaurer Stripe Invoicing dans `generate-invoice` | Phase 8 | **Pré-requis de lancement**, hors V2 | Bloqué sur un réglage *Settings > Invoicing* du compte Stripe connecté de démo (côté utilisateur). **Bloquant avant une vraie prod.** |
-| Protection anti-mots de passe compromis | Phase 10 | **Risque assumé** (décision utilisateur du 2026-09-27) | **Réservée aux offres Supabase Pro et au-delà**, le projet est en offre Free. Décision : laisser en l'état tant que la plateforme est en démonstration — politique actuelle 6 caractères, sans exigence de composition, et le WARN `auth_leaked_password_protection` du linter reste attendu. **À rouvrir avant la mise en production réelle**, avec Stripe Invoicing : passage en Pro, ou à défaut politique durcie (disponible en Free). |
-| `EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail) | Secrets | Décision utilisateur | Il faut un expéditeur sur un domaine vérifié chez Resend. 2 envois sur 4 en échec en juillet. |
+| Protection anti-mots de passe compromis | Phase 10 | **Risque assumé, définitif tant qu'on est en Free** (décision utilisateur du 2026-09-27, reconfirmée le 2026-09-28) | **Réservée aux offres Supabase Pro et au-delà**, le projet est en offre Free — non faisable sur ce plan, on ne le fera pas tant qu'on n'upgrade pas. Politique actuelle 6 caractères, sans exigence de composition, et le WARN `auth_leaked_password_protection` du linter reste attendu (revérifié le 2026-09-28 : toujours désactivé). **À rouvrir avant la mise en production réelle**, avec Stripe Invoicing : passage en Pro, ou à défaut politique durcie (disponible en Free). |
+| ~~`EMAIL_FROM` absent des secrets Supabase (repli sur une adresse Gmail)~~ | Secrets | **Fait le 2026-09-28** | Secret `EMAIL_FROM=mike.webfree@gmail.com` ajouté aux secrets Supabase (`supabase secrets set`), en attendant un domaine vérifié chez Resend (compte gratuit). À revoir : domaine propre + vérification DNS chez Resend avant volume réel. |
 | ~~Vue analytique superadmin (volume, CA brut/net)~~ | Phase 4.5 | **Fait le 2026-09-27** | Voir Phase 4.5 : écran `/analytics`, fonction `platform_tenant_analytics`. |
 | ~~Export comptable normé (FEC)~~ | Phase 8 | **Fait le 2026-09-27** | Voir Phase 8. Reste une validation du plan de comptes par l'expert-comptable (action utilisateur). |
 | ~~80 erreurs `deno check` dans `generate-invoice`~~ | Phase 8 | **Fait le 2026-09-27** | Les 14 Edge Functions passent `deno check`, vérifié en CI. |
 | ~~Guards `requireTenantRole` redondants avec `ROUTE_POLICY`~~ | Phase 9 | **Fait le 2026-09-27** | Voir Phase 9 : guards et fonctions retirés, trou API `pending` et boucle driver/setup fermés. |
-| Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | Backlog (déjà) | Démarrage en chauffeur solo, décision du 2026-09-24. |
+| Rôle `manager` inerte, multi-chauffeurs en exploitation | Phase 9 | [Backlog](BACKLOG.md#multi-chauffeurs--rôle-manager) | Démarrage en chauffeur solo, décision du 2026-09-24. Détail des briques manquantes noté le 2026-09-28. |
+| ~~Comptes de démo orphelins en prod (`driver@test.com`, `mike.webfree@gmail.com`, `onboarding@test.com`, `driver0@test.com`/parigo-vtc, `driver2@test.com`/flowstate88080808)~~ | Constat 2026-09-28 | **Fait le 2026-09-28** | Supprimés (users + tenants `parigo-vtc`/`flowstate88080808` + 1 booking orphelin), aucun mouvement `financial_movements` associé donc aucun conflit avec le ledger immuable. Prod ne garde que `elite@test.com` (Elite Lyon) et `test-demo@vtc.fr` (VTC Elite Demo). Pas de seed local créé : un nouveau tenant de démo sera monté de A à Z plus tard pour tester le multi-sites. |
 | ~~Deux fonctions de synchro TVA redondantes~~ ; assujettissement dérivé de `legal_form` | Phase 11 | Fusion **faite le 2026-09-27** ; assujettissement : backlog | Assujettissement : décision utilisateur du 2026-09-26, à rouvrir au premier auto-entrepreneur assujetti. |
 | ~~Tests E2E Playwright écrivant en production~~ | Phase 11 | **Fait le 2026-09-27** | `tests/e2e-env.ts` : cible locale par défaut (`.env.e2e`, modèle `.env.e2e.example`), toute autre cible refusée sans `E2E_ALLOW_PRODUCTION=1`. Limite : l'API admin Auth de la stack locale refuse les jetons HS256 avec la CLI Supabase 2.75 — mettre la CLI à jour (2.118) pour jouer les tests en local. |
 | ~~`RatingQRModal.tsx` appelle `useState` après un `return` conditionnel~~ | Constat 2026-09-27 | **Fait le 2026-09-27** | URL calculée au rendu, plus d'état ni d'effet. |
@@ -322,8 +323,8 @@ rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la R
 
 | Phase | Objet | Charge | Dépend de |
 |---|---|---|---|
-| 13 | Rôles tenant dans la RLS | 5–7 j | clôture V1 |
-| 14 | Routes serveur → RPC / Edge Functions | 4–5 j | 13 |
+| 13 | Rôles tenant dans la RLS — **Complete (2026-09-29)** | 5–7 j | clôture V1 |
+| 14 | 2/13 | In Progress|  |
 | 15 | Socle données temps réel | 3–4 j | 13 |
 | 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
 | 17 | Bascule SPA + PWA | 4–5 j | 16 |
@@ -334,7 +335,8 @@ Chaque phase est livrable seule et mise en production avant la suivante. Aucune 
 `NN-PLAN.md` détaillé (`/gsd-plan-phase NN`).
 
 ### Phase 13: Rôles tenant dans la RLS
-**Status:** Not started
+**Status:** Complete — déployée en production le 2026-09-29 (migrations `20260929100000`, `20260929100100`,
+`20260929100200`, `20260929100300`)
 **Goal:** Que les droits de `ROUTE_POLICY` soient vrais en base, quel que soit le client qui appelle.
 **Constats du 2026-09-27** (policies de prod) :
 - `pricing_rules` (`pricing_isolation`, `pricing_tenant_isolation`), `vehicles` (`vehicles_isolation`,
@@ -349,31 +351,66 @@ Chaque phase est livrable seule et mise en production avant la suivante. Aucune 
 - Policies en doublon (4 SELECT sur `bookings`, 2 `FOR ALL` sur `drivers`, `vehicles`, `pricing_rules`, 3 SELECT
   plateforme sur `financial_movements`) : la plus permissive gagne toujours, ce qui rend la relecture trompeuse.
 **Requirements:**
-- [ ] Fonction `current_tenant_role()` (STABLE, `SECURITY DEFINER`, `search_path` figé) sur le modèle de
-  `current_tenant_id()`.
-- [ ] Matrice rôle × table × opération écrite **avant** les migrations, dérivée de `ROUTE_POLICY` ; la faire
-  valider (notamment : le manager écrit-il les tarifs ? le driver voit-il les courses non assignées ?).
-- [ ] Réécrire les policies par table et par commande (plus de `FOR ALL`), supprimer les doublons.
-- [ ] `bookings` : le client n'écrit plus de colonnes financières ni de statut en direct ; transitions via RPC
-  (Phase 14). Driver limité à ses courses (`driver_id`).
-- [ ] Suite de tests SQL jouée en CI (`db-lint.yml`) : pour chaque rôle, chaque opération autorisée passe et
-  chaque opération interdite échoue — sur le modèle de la validation locale de la Phase 11.
-- [ ] Une fois la RLS en place, `ROUTE_POLICY` ne sert plus qu'à la navigation (UX), plus à la sécurité.
+- [x] Fonction current_tenant_role() (STABLE, search_path figé, **sans** SECURITY DEFINER — comme current_tenant_id() réel ; le libellé initial « SECURITY DEFINER » était inexact, voir 13-01-PLAN) sur le modèle de current_tenant_id().
+- [x] Matrice rôle × table × opération écrite **avant** les migrations, dérivée de `ROUTE_POLICY` ; la faire
+  valider (notamment : le manager écrit-il les tarifs ? le driver voit-il les courses non assignées ?). — matrice dans 13-01-PLAN (validée en discuss-phase, D-01 à D-11) et en tête de 20260929100100_tenant_role_policies.sql.
+- [x] Réécrire les policies par table et par commande (plus de `FOR ALL`), supprimer les doublons. — 20 policies supprimées (dont « select bookings tenant », « update bookings tenant », tenant_can_view_own_finance, platform_admin_read_financial, absentes du constat initial).
+- [x] `bookings` : le client n'écrit plus de colonnes financières ni de statut en direct ; transitions via RPC
+  (Phase 14). Driver limité à ses courses (`driver_id`). — montants et statut : grants UPDATE par colonne (20260929100200) ; protect_booking_immutable_fields ne couvrait ni status ni total_amount en pending. Transitions via RPC : Phase 14.
+- [x] Suite de tests SQL jouée en CI (`db-lint.yml`) : pour chaque rôle, chaque opération autorisée passe et
+  chaque opération interdite échoue — sur le modèle de la validation locale de la Phase 11. — supabase/lint/rls_role_checks.sql, step « RLS role checks » de db-lint.yml ; règles 5/6 de security_checks.sql.
+- [ ] Une fois la RLS en place, `ROUTE_POLICY` ne sert plus qu'à la navigation (UX), plus à la sécurité. — vrai pour les pages et les accès directs Supabase ; les routes /api/tenant/* en service_role dépendent encore de ROUTE_POLICY jusqu'à la Phase 14 (retrait de SUPABASE_SERVICE_ROLE_KEY).
+
+**Conséquences assumées (D-08, D-09) :** un compte `driver` enregistre son téléphone depuis `/app/profile`,
+mais toute modification de nom, prénom ou carte pro VTC dans `EditableDriverCard` est refusée (erreur 42501
+affichée, D-08 révisé) ; le KPI « revenu du mois » du dashboard vaut 0 pour un driver (`tenant_dashboard_kpi`
+est en security_invoker sur `financial_movements`).
+**Plans:** 4/4 plans executed
+- [x] 13-01-PLAN.md — base locale reconstruite, inventaire des policies vérifié, `current_tenant_role()` (sans SECURITY DEFINER), matrice
+- [x] 13-02-PLAN.md — réécriture des policies par table et par commande (20 supprimées), grants UPDATE par colonne sur `bookings`
+- [x] 13-03-PLAN.md — tests SQL par rôle en CI, lint « une policy par commande », ROUTE_POLICY documenté, ROADMAP
+- [x] 13-04-PLAN.md — mise en production le 2026-09-29 : contrôle prod conforme au baseline (31 policies), GO donné,
+  `supabase db push --linked` (3 migrations), policies/lint sécurité re-vérifiés en prod (0 violation), types régénérés.
+
+**Constat hors-plan découvert pendant le déploiement (2026-09-29) :** trois triggers de garde sur `bookings`
+(`trg_protect_booking_fields`, `trg_prevent_booking_delete`, `trg_validate_booking_status_transition`) étaient
+désactivés (`tgenabled='D'`) en **production uniquement** (actifs en local) — dérive antérieure à la Phase 13,
+aucune migration du repo ne les désactivant. Trouvé parce que la vérification `0|0|1` du plan 13-04 avait
+d'abord été mal exécutée (colonnes SQL dupliquées écrasées dans le JSON), corrigé en refaisant la requête avec
+des alias explicites. Réactivés via une 4e migration (`20260929100300_reenable_bookings_triggers.sql`), confirmé
+`tgenabled='O'` sur les 3. Impact réel limité (RLS + grants par colonne de la Phase 13 couvraient déjà l'essentiel
+pendant la fenêtre de désactivation), mais l'origine de la désactivation reste inconnue — pas d'investigation
+plus poussée pour l'instant.
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
-**Status:** Not started
+**Status:** In progress — RPC en production le 2026-10-01 (14-10) ; code et clé : 14-11, 14-12
 **Goal:** Plus aucune logique métier ni clé `service_role` dans le serveur Astro du backoffice.
 **Requirements:**
-- [ ] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
+- [x] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
   `api/auth/login`) et des 10 fichiers qui appellent `createAdminClient()` ; pour chacun : RPC (logique de
-  données, transaction) ou Edge Function (appel externe : Stripe, e-mail, stockage).
+  données, transaction) ou Edge Function (appel externe : Stripe, e-mail, stockage). — 10 fichiers, 9 routes/pages (pas 8) : tout en RPC, aucune Edge Function nécessaire (aucun appel externe) ; supprimés : update-booking-status, rate/[id], submit-rating, lib/supabase/server.ts (plans 14-08, 14-09).
 - [ ] Transitions de course (`booking-actions`, `update-booking-status`, `terrain-transition`) en RPC uniques et
   idempotentes, gardées par rôle, s'appuyant sur `trg_validate_booking_status_transition` ; règle H-15 d'ADR-002
   conservée côté serveur.
 - [ ] `create-booking` : prix calculé côté serveur uniquement (règle du projet).
 - [ ] `api/submit-rating` et `rate/[id]` (page publique client) : déplacer vers `vtc-websites`.
-- [ ] `api/auth/login` : remplacé par `signInWithPassword` côté client (Phase 17).
+- [ ] `api/auth/login` : remplacé par `signInWithPassword` côté client (Phase 17). — hors Phase 14 (CONTEXT, Deferred) : la route n'utilise pas le client admin ; suivi en Phase 17.
 - [ ] Retirer `SUPABASE_SERVICE_ROLE_KEY` de `backoffice_env_vars` (Terraform) en fin de phase.
+
+**Plans:** 2/13 plans executed
+- [x] 14-01-PLAN.md — relevé prod en lecture seule ; décisions utilisateur : encaissement cash d'une course `accepted`, portée de la modification, arrondi TVA (checkpoint)
+- [x] 14-02-PLAN.md — socle : seed des 13 transitions de prod, marqueur de confiance `vtc.trusted_rpc` (ADR-012), test négatif de forge, lint triggers/allowlist anon, fixtures RPC
+- [ ] 14-03-PLAN.md — `calculate_booking_price` / `booking_vat_split` en SQL (D-03), vecteurs de test, dette des copies dans BACKLOG
+- [ ] 14-04-PLAN.md — RPC `terrain_transition` et `driver_cancel_booking` (D-06/D-07, H-15, idempotence, ledger cash)
+- [ ] 14-05-PLAN.md — RPC `update_booking_details` et `create_manual_booking` (D-03/D-04)
+- [ ] 14-06-PLAN.md — RPC owner `update_tenant_logo`, `update_tenant_settings`, `complete_tenant_setup` (D-11/D-12)
+- [ ] 14-07-PLAN.md — notation publique : RPC anon, page et route dans vtc-websites, lien QR au build (D-09/D-10)
+- [ ] 14-08-PLAN.md — proxys terrain-transition, booking-actions, create-booking ; suppression de update-booking-status (D-01/D-05)
+- [ ] 14-09-PLAN.md — proxys tenant et onboarding, suppression de server.ts et de la page publique, step CI D-13, règles backoffice (D-08)
+- [ ] 14-10-PLAN.md — mise en production des migrations (contrôle prod, GO, push, équivalence, types)
+- [ ] 14-11-PLAN.md — déploiement du code sur GO, vérification des parcours en production
+- [ ] 14-12-PLAN.md — retrait de la clé de Terraform et des workspaces sur GO séparé (D-13)
+- [ ] 14-13-PLAN.md — correctif séparé : réactivation des 3 triggers bookings désactivés en prod, après analyse des flux Stripe
 
 ### Phase 15: Socle données temps réel
 **Status:** Not started

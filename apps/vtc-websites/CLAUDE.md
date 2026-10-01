@@ -1,6 +1,6 @@
 # Règles — vtc-websites (drivers-front)
 
-Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de réservation. **Vitrine passive : aucune logique critique ou financière ne vit ici**, tout est délégué au backoffice. Décision d'architecture : `docs/decisions/vtc-websites/0002-resolution-domaine-multi-tenant.md`.
+Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de réservation. **Vitrine passive (hors notation publique d'une course, `/rate/<id>`) : aucune logique critique ou financière ne vit ici**, tout est délégué au backoffice. Décision d'architecture : `docs/decisions/vtc-websites/0002-resolution-domaine-multi-tenant.md`.
 
 > Conventions transverses (commits sans marque IA, gestion des secrets) : `AGENTS.md` à la racine.
 
@@ -16,12 +16,12 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 |---|---|---|
 | `tenants` | Champs publics uniquement (`id`, `name`, `logo_url`, `primary_domain`, `phone`, `email`) | RPC `get_public_tenant` — **pas de lecture directe** |
 | `vehicles`, `pricing_rules` | Lecture publique | SDK direct |
-| `bookings` | Aucune lecture directe. Résultat d'une réservation payée : RPC `get_public_booking_result(session_id)` | RPC / Edge Function backoffice |
+| `bookings` | Aucune lecture directe. Résultat d'une réservation payée : RPC `get_public_booking_result(session_id)` | RPC / Edge Function backoffice. Notation : RPC `get_rating_context(booking_id)` (nom, logo, avis Google du tenant, déjà-noté) et `submit_rating(booking_id, rating, comment)` — seules écritures autorisées depuis le site, validées côté base (Phase 14, D-09). |
 | `customers`, `stripe_events` | Interdit total | — |
 
 ## Interdits
 
-- Aucune écriture/UPDATE directe sur `bookings`, `pricing_rules` depuis le client.
+- Aucune écriture/UPDATE directe sur `bookings`, `pricing_rules` depuis le client. Exception unique : la note d'une course terminée, via la RPC `submit_rating` (`/api/submit-rating`).
 - Aucun calcul financier côté client — le montant final envoyé à Stripe est calculé par l'Edge Function backoffice à partir des règles en base.
 - Le front ne change jamais le statut d'un booking (réservé aux webhooks Stripe / actions admin).
 
