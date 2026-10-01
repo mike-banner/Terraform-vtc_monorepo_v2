@@ -36,7 +36,7 @@ INSERT INTO public.vehicles (id, tenant_id, driver_id, category, brand, model, p
   ('ee000000-0000-4000-8000-0000000000bc', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'db000000-0000-4000-8000-0000000000bb', 'berline', 'Test', 'B2', 'RPC-B-002');
 
 SELECT count(*) AS mvts_avant FROM public.financial_movements \gset
-SELECT cancellation_policy_id::text AS b1_policy FROM public.bookings WHERE id = 'b1000000-0000-4000-8000-000000000001' \gset
+CREATE TEMP TABLE _pol AS SELECT cancellation_policy_id FROM public.bookings WHERE id = 'b1000000-0000-4000-8000-000000000001';
 
 -- update_booking_details : accès ----------------------------------------------
 SET LOCAL ROLE anon;
@@ -74,17 +74,17 @@ SELECT pg_temp.expect_count('update: b1 en base', $q$select count(*) from public
 SELECT pg_temp.expect_count('update: b10 prix manuel conservé', $q$select count(*) from _r where k = 'b10' and v = 150$q$, 1);
 SELECT pg_temp.expect_count('update: b10 HT/TVA recalculés', $q$select count(*) from public.bookings where id = 'b1000000-0000-4000-8000-00000000000a' and total_amount = 150 and subtotal_amount = 136.36 and vat_amount = 13.64$q$, 1);
 SELECT pg_temp.expect_count('update: b3 modifiée', $q$select count(*) from public.bookings where id = 'b3000000-0000-4000-8000-000000000003' and pickup_address = 'Nouvelle adresse'$q$, 1);
-SELECT pg_temp.expect_count('update: policy inchangée', format($q$select count(*) from public.bookings where id = 'b1000000-0000-4000-8000-000000000001' and cancellation_policy_id::text is not distinct from nullif(%L, '')$q$, :'b1_policy'), 1);
+SELECT pg_temp.expect_count('update: policy inchangée', $q$select count(*) from public.bookings b, _pol p where b.id = 'b1000000-0000-4000-8000-000000000001' and b.cancellation_policy_id is not distinct from p.cancellation_policy_id$q$, 1);
 
 -- Prod : trigger de garde désactivé, la RPC doit tenir seule.
-SELECT pickup_time AS b4_pickup FROM public.bookings WHERE id = 'b4000000-0000-4000-8000-000000000004' \gset
+CREATE TEMP TABLE _b4 AS SELECT pickup_time FROM public.bookings WHERE id = 'b4000000-0000-4000-8000-000000000004';
 ALTER TABLE public.bookings DISABLE TRIGGER trg_prevent_pickup_time_change_after_paid;
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
 SELECT pg_temp.expect_error('update: b4 payée, trigger désactivé', $q$select public.update_booking_details('b4000000-0000-4000-8000-000000000004', now() + interval '9 days', 'X')$q$, '22023', 'Course non modifiable dans ce statut');
 RESET ROLE;
 ALTER TABLE public.bookings ENABLE TRIGGER trg_prevent_pickup_time_change_after_paid;
-SELECT pg_temp.expect_count('update: b4 pickup inchangé', format($q$select count(*) from public.bookings where id = 'b4000000-0000-4000-8000-000000000004' and pickup_time = %L$q$, :'b4_pickup'), 1);
+SELECT pg_temp.expect_count('update: b4 pickup inchangé', $q$select count(*) from public.bookings b, _b4 p where b.id = 'b4000000-0000-4000-8000-000000000004' and b.pickup_time = p.pickup_time$q$, 1);
 
 -- Mission démarrée.
 UPDATE public.bookings SET mission_status = 'in_progress' WHERE id = 'b2000000-0000-4000-8000-000000000002';
