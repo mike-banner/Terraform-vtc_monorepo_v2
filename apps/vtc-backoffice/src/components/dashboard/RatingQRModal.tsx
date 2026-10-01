@@ -45,7 +45,7 @@ export const RatingQRModal: React.FC<RatingQRModalProps> = ({
         </p>
 
         <div className='p-6 bg-white rounded-[2rem] shadow-2xl shadow-white/5 mb-10'>
-          {ratingUrl && <QRCodeSVG value={ratingUrl} size={200} level='H' includeMargin={false} />}
+          {ratingUrl && <QRCodeSVG value={ratingUrl} size={240} level='M' marginSize={2} />}
         </div>
 
         <div className='w-full p-4 bg-white/5 border border-white/5 rounded-2xl'>

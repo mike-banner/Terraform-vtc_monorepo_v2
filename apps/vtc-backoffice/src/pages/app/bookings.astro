@@ -835,8 +835,8 @@ const getFilterUrl = (params: Record<string, string>) => {
 
                     <!-- NOTES -->
                     <div class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
-                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Notes / Instructions</p>
-                        <p id="modal-notes" class="text-xs text-foreground font-medium leading-relaxed">---</p>
+                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Historique de la course</p>
+                        <p id="modal-notes" class="text-xs text-foreground font-medium leading-relaxed whitespace-pre-line">---</p>
                     </div>
 
                     <!-- AVIS & QR CODE -->
@@ -851,7 +851,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                         <div id="modal-qr-section" class="hidden">
                             <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Recueillir l'Avis Passager</p>
                             <div class="flex flex-col sm:flex-row items-center gap-6">
-                                <canvas id="modal-qr-canvas" class="w-28 h-28 rounded-2xl bg-white p-1.5 flex-shrink-0"></canvas>
+                                <canvas id="modal-qr-canvas" class="w-56 h-56 rounded-2xl bg-white p-1.5 flex-shrink-0"></canvas>
                                 <div class="text-center sm:text-left">
                                     <p class="text-xs font-bold text-foreground">Faites scanner ce QR code au passager</p>
                                     <p class="text-[10px] text-muted-foreground mt-1">Généré localement — aucune donnée envoyée à des tiers</p>
