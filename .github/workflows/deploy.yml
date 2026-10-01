@@ -126,6 +126,10 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          # Lien du QR de notation (RatingQRModal, scripts/bookings.ts) : la page /rate/<id>
+          # vit sur vtc-websites depuis la Phase 14 (D-10). Sans cette variable, le lien
+          # retombait sur l'origine du backoffice, qui n'a plus cette page.
+          PUBLIC_SITE_URL: https://vtc-drivers-front-${{ env.ENVIRONMENT }}.pages.dev
         run: pnpm build
 
       - name: Deploy Backoffice
