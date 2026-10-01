@@ -383,34 +383,45 @@ pendant la fenêtre de désactivation), mais l'origine de la désactivation rest
 plus poussée pour l'instant.
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
-**Status:** In progress — RPC en production le 2026-10-01 (14-10) ; code et clé : 14-11, 14-12
+**Status:** In progress — RPC en production (14-10) et code déployé et vérifié le 2026-10-01 (14-11) ; reste : clé Terraform (14-12), triggers (14-13)
 **Goal:** Plus aucune logique métier ni clé `service_role` dans le serveur Astro du backoffice.
 **Requirements:**
 - [x] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
   `api/auth/login`) et des 10 fichiers qui appellent `createAdminClient()` ; pour chacun : RPC (logique de
   données, transaction) ou Edge Function (appel externe : Stripe, e-mail, stockage). — 10 fichiers, 9 routes/pages (pas 8) : tout en RPC, aucune Edge Function nécessaire (aucun appel externe) ; supprimés : update-booking-status, rate/[id], submit-rating, lib/supabase/server.ts (plans 14-08, 14-09).
-- [ ] Transitions de course (`booking-actions`, `update-booking-status`, `terrain-transition`) en RPC uniques et
+- [x] Transitions de course (`booking-actions`, `update-booking-status`, `terrain-transition`) en RPC uniques et
   idempotentes, gardées par rôle, s'appuyant sur `trg_validate_booking_status_transition` ; règle H-15 d'ADR-002
-  conservée côté serveur.
-- [ ] `create-booking` : prix calculé côté serveur uniquement (règle du projet).
-- [ ] `api/submit-rating` et `rate/[id]` (page publique client) : déplacer vers `vtc-websites`.
+  conservée côté serveur. — vérifié en production le 2026-10-01 (14-11) : en route, terminée en cash, annulation d'une course future, non réalisée.
+- [x] `create-booking` : prix calculé côté serveur uniquement (règle du projet).
+- [x] `api/submit-rating` et `rate/[id]` (page publique client) : déplacer vers `vtc-websites`. — vérifié en production le 2026-10-01 (14-11) : QR scanné au téléphone, note 3 enregistrée.
 - [ ] `api/auth/login` : remplacé par `signInWithPassword` côté client (Phase 17). — hors Phase 14 (CONTEXT, Deferred) : la route n'utilise pas le client admin ; suivi en Phase 17.
 - [ ] Retirer `SUPABASE_SERVICE_ROLE_KEY` de `backoffice_env_vars` (Terraform) en fin de phase.
 
-**Plans:** 2/13 plans executed
+**Plans:** 11/13 plans executed
 - [x] 14-01-PLAN.md — relevé prod en lecture seule ; décisions utilisateur : encaissement cash d'une course `accepted`, portée de la modification, arrondi TVA (checkpoint)
 - [x] 14-02-PLAN.md — socle : seed des 13 transitions de prod, marqueur de confiance `vtc.trusted_rpc` (ADR-012), test négatif de forge, lint triggers/allowlist anon, fixtures RPC
-- [ ] 14-03-PLAN.md — `calculate_booking_price` / `booking_vat_split` en SQL (D-03), vecteurs de test, dette des copies dans BACKLOG
-- [ ] 14-04-PLAN.md — RPC `terrain_transition` et `driver_cancel_booking` (D-06/D-07, H-15, idempotence, ledger cash)
-- [ ] 14-05-PLAN.md — RPC `update_booking_details` et `create_manual_booking` (D-03/D-04)
-- [ ] 14-06-PLAN.md — RPC owner `update_tenant_logo`, `update_tenant_settings`, `complete_tenant_setup` (D-11/D-12)
-- [ ] 14-07-PLAN.md — notation publique : RPC anon, page et route dans vtc-websites, lien QR au build (D-09/D-10)
-- [ ] 14-08-PLAN.md — proxys terrain-transition, booking-actions, create-booking ; suppression de update-booking-status (D-01/D-05)
-- [ ] 14-09-PLAN.md — proxys tenant et onboarding, suppression de server.ts et de la page publique, step CI D-13, règles backoffice (D-08)
-- [ ] 14-10-PLAN.md — mise en production des migrations (contrôle prod, GO, push, équivalence, types)
-- [ ] 14-11-PLAN.md — déploiement du code sur GO, vérification des parcours en production
+- [x] 14-03-PLAN.md — `calculate_booking_price` / `booking_vat_split` en SQL (D-03), vecteurs de test, dette des copies dans BACKLOG — formule SQL, `calculate_booking_price` et `booking_vat_split` (arrondi V1), vecteurs de test
+- [x] 14-04-PLAN.md — RPC `terrain_transition` et `driver_cancel_booking` (D-06/D-07, H-15, idempotence, ledger cash) — `terrain_transition` et `driver_cancel_booking`, ledger cash une seule fois
+- [x] 14-05-PLAN.md — RPC `update_booking_details` et `create_manual_booking` (D-03/D-04) — `update_booking_details` et `create_manual_booking`
+- [x] 14-06-PLAN.md — RPC owner `update_tenant_logo`, `update_tenant_settings`, `complete_tenant_setup` (D-11/D-12) — RPC owner tenant ; 1 URL de logo existante sur 2 ne passe pas la regex (assumé, relue à l'écriture seulement)
+- [x] 14-07-PLAN.md — notation publique : RPC anon, page et route dans vtc-websites, lien QR au build (D-09/D-10) — notation publique vers vtc-websites, types régénérés
+- [x] 14-08-PLAN.md — proxys terrain-transition, booking-actions, create-booking ; suppression de update-booking-status (D-01/D-05) — proxys de course, `update-booking-status` supprimée
+- [x] 14-09-PLAN.md — proxys tenant et onboarding, suppression de server.ts et de la page publique, step CI D-13, règles backoffice (D-08) — proxys tenant/onboarding, `server.ts` supprimé, step CI D-13
+- [x] 14-10-PLAN.md — mise en production des migrations (contrôle prod, GO, push, équivalence, types) — 11 migrations poussées en production le 2026-10-01 (GO), 13 fonctions identiques prod/local, 3 violations attendues (triggers), types régénérés
+- [x] 14-11-PLAN.md — déploiement du code sur GO, vérification des parcours en production — PR #13 mergée, CI et déploiement verts, 4 contrôles HTTP, parcours vérifiés en production par l'utilisateur le 2026-10-01
 - [ ] 14-12-PLAN.md — retrait de la clé de Terraform et des workspaces sur GO séparé (D-13)
 - [ ] 14-13-PLAN.md — correctif séparé : réactivation des 3 triggers bookings désactivés en prod, après analyse des flux Stripe
+
+**Livré hors plan pendant la vérification en production (2026-10-01) :** défauts trouvés par l'utilisateur en testant, corrigés et déployés
+(PR #14 à #22) : message d'erreur à la connexion (la page ne lisait pas `?error=`) ; formulaire de modification : montant éditable
+par owner/manager (migration `20261001150000`, `update_booking_details` reçoit `p_manual_total`, course basculée en prix manuel),
+distance retirée ; mise à disposition « à l'heure » par défaut ; « Aucun forfait » vide zones et montant ; heures affichées en
+heure de Paris (le rendu serveur était en UTC) ; action « Non réalisée / client absent » (migration `20261001170000`,
+`mark_booking_no_show`, owner/manager, aucun effet ledger) avec libellés et actions terrain corrigés ; QR de notation lisible
+(112 px → 240 px) ; page publique `/rate/<id>` refaite pour le téléphone avec bouton « Fermer cette page » ; fiche de course :
+instructions client séparées de l'historique ; CI : lint SQL seulement si `supabase/` change.
+**Constat à traiter plus tard :** les notes saisies dans les tunnels du site (`specialNotes`) ne sont pas enregistrées (V1 en
+construction) et le tunnel Transfert n'a pas de champ de note ; la création de course du backoffice n'en a pas non plus.
 
 ### Phase 15: Socle données temps réel
 **Status:** Not started
