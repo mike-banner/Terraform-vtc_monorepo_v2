@@ -15,6 +15,10 @@ jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
+    # Le plan est posté en commentaire de la PR : sans ce droit l'étape échoue en 403 et le contrôle reste rouge.
+    permissions:
+      contents: read
+      pull-requests: write
     defaults:
       run:
         working-directory: terraform
