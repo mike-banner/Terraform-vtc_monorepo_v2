@@ -1,0 +1,130 @@
+---
+import "../../styles/global.css";
+import { supabase } from "../../core/supabase";
+
+const { id } = Astro.params;
+const { data: ctx } = await supabase.rpc("get_rating_context", { p_booking_id: id as string }).maybeSingle();
+if (!ctx) {
+  Astro.response.status = 404;
+}
+const tenantName = ctx?.tenant_name ?? "";
+const star = "M10 15l-5.878 3.09 1.123-6.545-4.756-4.635 6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z";
+---
+
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Notez votre course{tenantName ? ` | ${tenantName}` : ""}</title>
+  </head>
+  <body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-6">
+    {!ctx ? (
+      <main class="glass-card max-w-md w-full p-10 text-center">
+        <h1 class="text-luxe-label">Lien de notation invalide</h1>
+        <p class="text-on-surface-variant mt-4">Cette course est introuvable. Vérifiez le lien reçu.</p>
+      </main>
+    ) : (
+      <main class="glass-card max-w-md w-full p-10">
+        <div class="flex flex-col items-center text-center mb-8">
+          {ctx.logo_url ? (
+            <img src={ctx.logo_url} alt={tenantName} class="h-12 w-auto mb-6 object-contain" />
+          ) : (
+            <svg class="w-12 h-12 text-primary mb-6" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d={star} /></svg>
+          )}
+          <h1 class="text-luxe-label">Notez votre course</h1>
+          <p class="text-on-surface-variant mt-2">{tenantName} vous invite à évaluer votre trajet terminé</p>
+        </div>
+
+        {ctx.already_rated ? (
+          <div class="alert alert-success">
+            <span>Merci ! Votre avis a bien été enregistré. Bonne journée !</span>
+          </div>
+        ) : (
+          <>
+            <form id="rating-form" class="space-y-6">
+              <div class="flex justify-center gap-3">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button type="button" data-star={n} aria-label={`${n} sur 5`} class="star-btn w-12 h-12 rounded-xl border flex items-center justify-center text-on-surface-variant border-border bg-surface-container-low">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d={star} /></svg>
+                  </button>
+                ))}
+              </div>
+              <input type="hidden" name="rating" id="rating-input" />
+              <label class="block">
+                <span class="text-luxe-label">Un commentaire ? (optionnel)</span>
+                <textarea name="comment" rows="4" maxlength="500" placeholder="Partagez votre expérience..." class="textarea w-full mt-2"></textarea>
+              </label>
+              <p id="rating-error" class="text-error hidden"></p>
+              <button type="submit" id="submit-btn" class="btn-premium w-full" disabled>Envoyer mon avis</button>
+            </form>
+
+            <div id="success-internal" class="alert alert-success hidden">
+              <span>Merci pour votre retour ! Votre avis a bien été transmis.</span>
+            </div>
+
+            <div id="success-google" class="hidden text-center space-y-4">
+              <p class="text-luxe-label">Vous avez adoré votre trajet !</p>
+              <p class="text-on-surface-variant">Votre avis positif aide d'autres passagers à nous découvrir. Partagez-le sur Google en un clic.</p>
+              <a id="google-reviews-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-premium inline-block">Publier sur Google</a>
+            </div>
+          </>
+        )}
+      </main>
+    )}
+
+    {ctx && !ctx.already_rated && (
+      <script define:vars={{ bookingId: id, googleReviewsUrl: ctx.google_reviews_url ?? null }}>
+        const stars = document.querySelectorAll('.star-btn');
+        const ratingInput = document.getElementById('rating-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const form = document.getElementById('rating-form');
+        const errorEl = document.getElementById('rating-error');
+        const googleLink = document.getElementById('google-reviews-link');
+        if (googleLink && googleReviewsUrl) googleLink.href = googleReviewsUrl;
+
+        const on = ['text-primary', 'border-primary', 'bg-surface-container'];
+        const off = ['text-on-surface-variant', 'border-border', 'bg-surface-container-low'];
+
+        stars.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const val = parseInt(btn.dataset.star);
+            ratingInput.value = String(val);
+            submitBtn.disabled = false;
+            stars.forEach((s) => {
+              const active = parseInt(s.dataset.star) <= val;
+              s.classList.remove(...(active ? off : on));
+              s.classList.add(...(active ? on : off));
+            });
+          });
+        });
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const rating = parseInt(ratingInput.value);
+          const comment = new FormData(form).get('comment');
+          errorEl.classList.add('hidden');
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Envoi en cours...';
+          try {
+            const { error } = await fetch('/api/submit-rating', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bookingId, rating, comment }),
+            }).then((r) => r.json());
+            if (error) throw new Error(error);
+            form.classList.add('hidden');
+            const target = rating >= 4 && googleReviewsUrl ? 'success-google' : 'success-internal';
+            document.getElementById(target).classList.remove('hidden');
+          } catch (err) {
+            errorEl.textContent = err instanceof Error && err.message ? err.message : "Une erreur est survenue lors de l'envoi.";
+            errorEl.classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Envoyer mon avis';
+          }
+        });
+      </script>
+    )}
+  </body>
+</html>

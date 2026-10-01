@@ -1672,9 +1672,34 @@ export type Database = {
         Args: { onboarding_uuid: string }
         Returns: undefined
       }
+      complete_tenant_setup: {
+        Args: { p_legal: Json; p_pricing: Json; p_vehicle: Json }
+        Returns: undefined
+      }
       compute_booking_balance: {
         Args: { p_booking_id: string }
         Returns: number
+      }
+      create_manual_booking: {
+        Args: {
+          p_booking_type?: string
+          p_client_email: string
+          p_client_name: string
+          p_distance_km?: number
+          p_dropoff: string
+          p_duration_hours?: number
+          p_luggage_count?: number
+          p_manual_total?: number
+          p_passenger_count?: number
+          p_payment_mode?: string
+          p_pickup: string
+          p_pickup_time: string
+          p_vehicle_id?: string
+        }
+        Returns: {
+          booking_id: string
+          total_price: number
+        }[]
       }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_role: {
@@ -1683,6 +1708,10 @@ export type Database = {
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_tenant_account: { Args: never; Returns: undefined }
+      driver_cancel_booking: {
+        Args: { p_booking_id: string; p_reason: string }
+        Returns: string
+      }
       expire_unpaid_bookings: { Args: never; Returns: undefined }
       get_available_vehicles: {
         Args: { p_tenant_id: string }
@@ -1720,6 +1749,15 @@ export type Database = {
           primary_domain: string
         }[]
       }
+      get_rating_context: {
+        Args: { p_booking_id: string }
+        Returns: {
+          already_rated: boolean
+          google_reviews_url: string
+          logo_url: string
+          tenant_name: string
+        }[]
+      }
       initiate_refund: {
         Args: { p_booking_id: string; p_reason: string }
         Returns: {
@@ -1746,6 +1784,34 @@ export type Database = {
           tenant_status: string
           vat_collected: number
         }[]
+      }
+      submit_rating: {
+        Args: { p_booking_id: string; p_comment?: string; p_rating: number }
+        Returns: undefined
+      }
+      terrain_transition: {
+        Args: {
+          p_action: string
+          p_booking_id: string
+          p_corrected_at?: string
+        }
+        Returns: string
+      }
+      update_booking_details: {
+        Args: {
+          p_booking_id: string
+          p_distance_km?: number
+          p_dropoff_address?: string
+          p_duration_hours?: number
+          p_pickup_address: string
+          p_pickup_time: string
+        }
+        Returns: number
+      }
+      update_tenant_logo: { Args: { p_url: string }; Returns: string }
+      update_tenant_settings: {
+        Args: { p_legal_form: string; p_vat_number?: string }
+        Returns: undefined
       }
     }
     Enums: {
