@@ -330,6 +330,7 @@ rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la R
 | 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
 | 17 | Bascule SPA + PWA | 4–5 j | 16 |
 | 18 | Web Push (arrière-plan) | 3–4 j | 15, 17 |
+| 19 | Plateforme d'administration séparée (superadmin hors dépôt public, registre des instances) | 2–3 j | 14.1 |
 | **Total** | | **≈ 28–37 j (6–8 semaines)** | |
 
 Chaque phase est livrable seule et mise en production avant la suivante. Aucune phase n'est lancée sans
@@ -452,7 +453,8 @@ cycle de vie d'une course payée complet, notes des clients enregistrées, insta
   demande réellement enregistré).
 - [ ] **Installer une instance dédiée** : procédure reproductible (Terraform : un workspace par client ; projet Supabase,
   migrations, fonctions, secrets ; projets Cloudflare ; données de départ du tenant) ; registre des instances (client,
-  version, dernières migrations appliquées) ; contrôle de dérive par instance ; runbook de mise à jour.
+  version, dernières migrations appliquées) tenu dans un fichier privé hors dépôt ; contrôle de dérive par instance ;
+  runbook de mise à jour ; **aucun projet superadmin créé chez un client** (variable Terraform, déploiement conditionnel).
 - [ ] Reliquats de la phase 14 non bloquants : suppression manuelle des 4 variables Cloudflare restantes.
 **Plans:** 0 plans
 
@@ -515,6 +517,19 @@ temps réel. Livrable page par page.
 - [ ] Clic sur la notification : ouvre la course concernée ; l'app se resynchronise à l'ouverture (Phase 15).
 - [ ] Préférences de notification par utilisateur ; nettoyage des abonnements expirés (réponse 404/410).
 - [ ] iOS : push seulement pour la PWA installée (≥ 16.4), après consentement — parcours documenté dans l'app.
+
+### Phase 19: Plateforme d'administration séparée
+**Status:** Not started (décision du 2026-10-01 : pas urgent, dernière phase du milestone V2)
+**Goal:** Que l'outil d'administration de la plateforme (approbation des clients, analyses de tous les tenants, registre des
+instances) vive hors du dépôt public et ne se retrouve jamais chez un client.
+**Requirements:**
+- [ ] Sortir `apps/superadmin` du dépôt public (dépôt privé) ; le monorepo public ne contient plus l'outil de la plateforme ;
+  retirer sa construction de `deploy.yml` et son projet de `terraform/pages.tf`, ou le déplacer dans le nouveau dépôt.
+- [ ] Tableau des instances dans le superadmin : client, projets, version déployée, dernière mise à jour (le fichier privé du
+  registre de la phase 14.1 fait foi, le tableau l'affiche).
+- [ ] Reprendre ce que le superadmin lit aujourd'hui dans la base (vues et fonctions de plateforme, `platform_role`) : une
+  instance dédiée ne doit exposer à un client aucune donnée d'un autre client.
+**Plans:** 0 plans
 
 ### Phase 999: Backlog / Future (V4)
 - ~~Migration du backoffice en React pur~~ — planifiée le 2026-09-27 : Milestone V2, Phases 12 à 18.
