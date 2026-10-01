@@ -433,7 +433,7 @@ tunnels du site non enregistrées, pas de champ d'instructions à la création e
 (5) Modèle de licence (instance dédiée par client : base et Cloudflare propres, maintenance par abonnement) à planifier.
 
 ### Phase 14.1: Prêt pour le premier client (INSERTED)
-**Status:** Not planned yet (décision du 2026-10-01 : installation chez un premier client, avec sa propre base Supabase et son propre Cloudflare)
+**Status:** Contexte capturé le 2026-10-01 (`14.1-CONTEXT.md`), à planifier. Installation chez un premier client avec sa propre base Supabase et son propre Cloudflare.
 **Goal:** Installer le produit chez un premier client sans contournement ni impasse métier : factures émises par nous,
 cycle de vie d'une course payée complet, notes des clients enregistrées, installation d'une instance reproductible.
 **Depends on:** Phase 14
@@ -442,9 +442,9 @@ cycle de vie d'une course payée complet, notes des clients enregistrées, insta
   Stripe Invoicing (le contournement PDF local devient le flux officiel) ; numérotation séquentielle `FAC-AAAA-NNNN` déjà en
   base ; mentions légales vérifiées (SIRET, TVA ou mention 293 B, identité du client) ; **avoirs** (`AV-AAAA-NNNN`) pour toute
   correction, les `creditNotes` Stripe n'existant plus sans facture Stripe ; ledger inchangé (immuable) ; à relire par l'expert-comptable.
-- [ ] **Course payée non réalisée** : action « non réalisée » étendue aux courses payées par carte, avec retenue et
-  remboursement d'après la politique d'annulation (`no_show_refund_rate`), jamais d'écriture ledger sans décision
-  explicite ; puis réactivation de `trg_prevent_late_cancellation` et retour de la règle 7 du lint à 7 triggers.
+- [ ] **Annulation et remboursement d'une course payée** (décision D-05 à D-09) : une seule action « Annuler » avant et après l'heure,
+  politique d'annulation réglée par le propriétaire dans les Settings, menu à quatre cas avec le pourcentage affiché et une note,
+  remboursement automatique par Stripe ; `trg_prevent_late_cancellation` retiré (et non réactivé).
 - [ ] **Notes des clients** : les `specialNotes` des tunnels du site (mise à disposition, longue distance, business) sont
   enregistrées ; le tunnel Transfert reçoit un champ de note ; la création de course du backoffice reçoit un champ
   « Instructions » (n° de vol, panneau, accès) ; stockage distinct du journal technique (`mission_note`) ou balisé.
