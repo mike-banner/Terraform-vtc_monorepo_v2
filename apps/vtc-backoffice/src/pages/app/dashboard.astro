@@ -62,7 +62,7 @@ const { data: overdueData } = await supabaseAdmin
     .eq("current_tenant_id", profile.tenant_id!)
     .eq("mission_status", "not_started")
     .lt("pickup_time", fiveMinAgo)
-    .not("status", "in", "(cancelled,cancelled_no_refund,cancelled_pending_refund,cancelled_refunded)")
+    .not("status", "in", "(cancelled,cancelled_no_refund,cancelled_pending_refund,cancelled_refunded,no_show)")
     .order("pickup_time", { ascending: true })
     .limit(1);
 
@@ -74,7 +74,7 @@ const { data: allUpcoming } = await supabaseAdmin
     .eq("current_tenant_id", profile.tenant_id!)
     .gte("pickup_time", now.toISOString())
     .not("mission_status", "in", "(in_progress,completed)")
-    .not("status", "in", "(cancelled,cancelled_no_refund,cancelled_pending_refund,cancelled_refunded)")
+    .not("status", "in", "(cancelled,cancelled_no_refund,cancelled_pending_refund,cancelled_refunded,no_show)")
     .order("pickup_time", { ascending: true })
     .limit(3);
 

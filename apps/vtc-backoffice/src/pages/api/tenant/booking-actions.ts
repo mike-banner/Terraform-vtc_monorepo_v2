@@ -25,6 +25,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ success: true, new_status: data }, 200);
   }
 
+  if (action === "no_show") {
+    const { data, error } = await locals.supabase.rpc("mark_booking_no_show", {
+      p_booking_id: booking_id,
+      p_reason: body.reason ?? "",
+    });
+    if (error) return json({ error: error.message }, rpcErrorStatus(error.code));
+    return json({ success: true, new_status: data }, 200);
+  }
+
   if (action === "update") {
     const { data, error } = await locals.supabase.rpc("update_booking_details", {
       p_booking_id: booking_id,
