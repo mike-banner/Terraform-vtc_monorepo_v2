@@ -31,7 +31,6 @@ for VAR in \
   TF_VAR_cloudflare_account_id \
   TF_VAR_supabase_url \
   TF_VAR_supabase_anon_key \
-  TF_VAR_supabase_service_role_key \
   TF_VAR_stripe_secret_key \
   TF_VAR_stripe_webhook_secret \
   TF_VAR_resend_api_key \
