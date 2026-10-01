@@ -324,7 +324,8 @@ rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la R
 | Phase | Objet | Charge | Dépend de |
 |---|---|---|---|
 | 13 | Rôles tenant dans la RLS — **Complete (2026-09-29)** | 5–7 j | clôture V1 |
-| 14 | 13/13 | Complete | 2026-10-01 |
+| 14 | Routes serveur → RPC / Edge Functions — **Complete (2026-10-01)** | 5–7 j | 13 |
+| 14.1 | Prêt pour le premier client (inséré le 2026-10-01) | à estimer | 14 |
 | 15 | Socle données temps réel | 3–4 j | 13 |
 | 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
 | 17 | Bascule SPA + PWA | 4–5 j | 16 |
@@ -430,6 +431,33 @@ côté Supabase, donc l'ancienne valeur est sans usage. (2) `trg_prevent_late_ca
 (exception dans la règle 7 du lint) : à réactiver après avoir conçu la « non réalisée » d'une course payée. (3) Notes des
 tunnels du site non enregistrées, pas de champ d'instructions à la création en backoffice. (4) `api/auth/login` : Phase 17.
 (5) Modèle de licence (instance dédiée par client : base et Cloudflare propres, maintenance par abonnement) à planifier.
+
+### Phase 14.1: Prêt pour le premier client (INSERTED)
+**Status:** Not planned yet (décision du 2026-10-01 : installation chez un premier client, avec sa propre base Supabase et son propre Cloudflare)
+**Goal:** Installer le produit chez un premier client sans contournement ni impasse métier : factures émises par nous,
+cycle de vie d'une course payée complet, notes des clients enregistrées, installation d'une instance reproductible.
+**Depends on:** Phase 14
+**Requirements:**
+- [ ] **Factures émises par nous** (décision à confirmer en discussion) : `generate-invoice` ne dépend plus du réglage
+  Stripe Invoicing (le contournement PDF local devient le flux officiel) ; numérotation séquentielle `FAC-AAAA-NNNN` déjà en
+  base ; mentions légales vérifiées (SIRET, TVA ou mention 293 B, identité du client) ; **avoirs** (`AV-AAAA-NNNN`) pour toute
+  correction, les `creditNotes` Stripe n'existant plus sans facture Stripe ; ledger inchangé (immuable) ; à relire par l'expert-comptable.
+- [ ] **Course payée non réalisée** : action « non réalisée » étendue aux courses payées par carte, avec retenue et
+  remboursement d'après la politique d'annulation (`no_show_refund_rate`), jamais d'écriture ledger sans décision
+  explicite ; puis réactivation de `trg_prevent_late_cancellation` et retour de la règle 7 du lint à 7 triggers.
+- [ ] **Notes des clients** : les `specialNotes` des tunnels du site (mise à disposition, longue distance, business) sont
+  enregistrées ; le tunnel Transfert reçoit un champ de note ; la création de course du backoffice reçoit un champ
+  « Instructions » (n° de vol, panneau, accès) ; stockage distinct du journal technique (`mission_note`) ou balisé.
+- [ ] **Tunnel « Mise à disposition »** : sortir de l'état « V1, redirection Stripe en construction » (flux de paiement ou de
+  demande réellement enregistré).
+- [ ] **Installer une instance dédiée** : procédure reproductible (Terraform : un workspace par client ; projet Supabase,
+  migrations, fonctions, secrets ; projets Cloudflare ; données de départ du tenant) ; registre des instances (client,
+  version, dernières migrations appliquées) ; contrôle de dérive par instance ; runbook de mise à jour.
+- [ ] Reliquats de la phase 14 non bloquants : suppression manuelle des 4 variables Cloudflare restantes.
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 14.1 to break down)
 
 ### Phase 15: Socle données temps réel
 **Status:** Not started
