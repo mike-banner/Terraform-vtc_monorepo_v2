@@ -1672,6 +1672,24 @@ export type Database = {
         Args: { onboarding_uuid: string }
         Returns: undefined
       }
+      booking_vat_split: {
+        Args: { p_gross: number; p_is_exempt: boolean; p_vat_rate: number }
+        Returns: {
+          gross: number
+          net: number
+          vat: number
+        }[]
+      }
+      calculate_booking_price: {
+        Args: {
+          p_booking_type: Database["public"]["Enums"]["booking_type_enum"]
+          p_distance_km: number
+          p_duration_hours: number
+          p_tenant_id: string
+          p_vehicle_id: string
+        }
+        Returns: number
+      }
       complete_tenant_setup: {
         Args: { p_legal: Json; p_pricing: Json; p_vehicle: Json }
         Returns: undefined

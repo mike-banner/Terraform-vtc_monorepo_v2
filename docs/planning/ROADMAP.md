@@ -383,7 +383,7 @@ pendant la fenêtre de désactivation), mais l'origine de la désactivation rest
 plus poussée pour l'instant.
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
-**Status:** In progress (code prêt, mise en production aux plans 14-10 à 14-13)
+**Status:** In progress — RPC en production le 2026-10-01 (14-10) ; code et clé : 14-11, 14-12
 **Goal:** Plus aucune logique métier ni clé `service_role` dans le serveur Astro du backoffice.
 **Requirements:**
 - [x] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
