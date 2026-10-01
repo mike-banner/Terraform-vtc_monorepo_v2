@@ -27,6 +27,10 @@ DECLARE
   -- Tables couvertes par la matrice de rôles tenant (Phase 13) : une policy par
   -- commande, jamais FOR ALL. Les policies service_role sont hors RLS (BYPASSRLS).
   role_tables text[] := ARRAY['bookings', 'customers', 'drivers', 'vehicles', 'pricing_rules', 'financial_movements'];
+
+  -- Fonctions SECURITY DEFINER exécutables par anon (RPC publiques). Les deux dernières sont
+  -- les RPC de notation du plan 14-07.
+  allowed_anon_definer text[] := ARRAY['get_public_tenant','get_available_vehicles','get_public_booking_result','get_rating_context','submit_rating'];
 BEGIN
   -- 1. Vue SECURITY DEFINER : la RLS des tables sources ne s'applique pas.
   FOR r IN
@@ -114,6 +118,62 @@ BEGIN
     HAVING count(*) > 1
   LOOP
     violations := violations || format('table %I has several %s policies (%s)', r.tablename, r.cmd, r.names);
+  END LOOP;
+
+  -- 7. Trigger de garde de bookings absent ou désactivé. Dérive constatée en prod le 2026-09-29
+  --    (trois triggers en tgenabled='D').
+  FOR r IN
+    SELECT t.name
+    FROM unnest(ARRAY['trg_prevent_booking_delete','trg_prevent_late_cancellation',
+      'trg_prevent_pickup_time_change_after_paid','trg_prevent_policy_update','trg_protect_booking_fields',
+      'trg_validate_booking_status_transition','trg_auto_financial_movement']) AS t(name)
+    WHERE NOT EXISTS (
+      SELECT 1 FROM pg_trigger g
+      WHERE g.tgrelid = 'public.bookings'::regclass AND g.tgname = t.name AND g.tgenabled = 'O'
+    )
+  LOOP
+    violations := violations || format('trigger %I on bookings is missing or disabled', r.name);
+  END LOOP;
+
+  -- 8. Table de transitions vide : trg_validate_booking_status_transition rejetterait tout changement de statut.
+  IF (SELECT count(*) FROM public.booking_status_transitions) = 0 THEN
+    violations := violations || 'booking_status_transitions is empty';
+  END IF;
+
+  -- 9. Fonction SECURITY DEFINER exécutable par anon hors allowlist (le droit peut venir de PUBLIC).
+  FOR r IN
+    SELECT p.proname, pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.prosecdef
+      AND has_function_privilege('anon', p.oid, 'EXECUTE')
+      AND NOT (p.proname = ANY (allowed_anon_definer))
+  LOOP
+    violations := violations || format('function %I(%s) is SECURITY DEFINER and executable by anon', r.proname, r.args);
+  END LOOP;
+
+  -- 10. Invariant qui rend vtc.trusted_rpc non exploitable (ADR-012) : anon/authenticated n'ont
+  --     aucun privilège UPDATE sur les colonnes sensibles de bookings, ni policy INSERT/ALL sur
+  --     bookings et financial_movements.
+  FOR r IN
+    SELECT ro.name AS role_name, c.name AS col
+    FROM unnest(ARRAY['anon','authenticated']) AS ro(name),
+         unnest(ARRAY['status','mission_status','total_amount','subtotal_amount','vat_amount','payment_mode',
+           'pickup_time','pickup_address','dropoff_address','rating','cancellation_policy_id']) AS c(name)
+    WHERE has_column_privilege(ro.name, 'public.bookings', c.name, 'UPDATE')
+  LOOP
+    violations := violations || format('role %s can UPDATE bookings.%s (breaks ADR-012 invariant)', r.role_name, r.col);
+  END LOOP;
+  FOR r IN
+    SELECT pol.tablename, pol.policyname
+    FROM pg_policies pol
+    WHERE pol.schemaname = 'public'
+      AND pol.tablename IN ('bookings', 'financial_movements')
+      AND pol.cmd IN ('INSERT', 'ALL')
+      AND pol.roles && ARRAY['public', 'anon', 'authenticated']::name[]
+  LOOP
+    violations := violations || format('policy %I on %I allows INSERT to clients (breaks ADR-012 invariant)', r.policyname, r.tablename);
   END LOOP;
 
   IF array_length(violations, 1) > 0 THEN
