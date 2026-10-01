@@ -9,6 +9,10 @@ if (!ctx) {
 }
 const tenantName = ctx?.tenant_name ?? "";
 const star = "M10 15l-5.878 3.09 1.123-6.545-4.756-4.635 6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z";
+const labels = ["Mauvais", "Décevant", "Correct", "Très bien", "Excellent"];
+
+const btnPrimary = "inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-5 text-base font-bold text-primary-content transition-colors duration-150 hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50";
+const btnSecondary = "inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-border px-5 text-base font-medium text-on-surface transition-colors duration-150 hover:bg-surface-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 ---
 
 <!DOCTYPE html>
@@ -19,111 +23,164 @@ const star = "M10 15l-5.878 3.09 1.123-6.545-4.756-4.635 6.572-.955L10 0l2.939 5
     <meta name="robots" content="noindex" />
     <title>Notez votre course{tenantName ? ` | ${tenantName}` : ""}</title>
   </head>
-  <body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-6">
+  <body class="bg-surface text-on-surface min-h-dvh flex items-start justify-center px-4 py-8 sm:items-center sm:py-12">
     {!ctx ? (
-      <main class="glass-card max-w-md w-full p-10 text-center">
-        <h1 class="text-luxe-label">Lien de notation invalide</h1>
-        <p class="text-on-surface-variant mt-4">Cette course est introuvable. Vérifiez le lien reçu.</p>
+      <main class="w-full max-w-md rounded-2xl border border-border bg-surface-container p-6 text-center sm:p-8">
+        <h1 class="font-headline text-2xl font-semibold text-balance">Lien de notation invalide</h1>
+        <p class="mt-3 text-base text-on-surface-variant">Cette course est introuvable. Vérifiez le lien reçu ou scannez de nouveau le QR code.</p>
       </main>
     ) : (
-      <main class="glass-card max-w-md w-full p-10">
-        <div class="flex flex-col items-center text-center mb-8">
+      <main class="w-full max-w-md rounded-2xl border border-border bg-surface-container p-6 sm:p-8">
+        <header class="mb-6 flex flex-col items-center text-center">
           {ctx.logo_url ? (
-            <img src={ctx.logo_url} alt={tenantName} class="h-12 w-auto mb-6 object-contain" />
-          ) : (
-            <svg class="w-12 h-12 text-primary mb-6" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d={star} /></svg>
-          )}
-          <h1 class="text-luxe-label">Notez votre course</h1>
-          <p class="text-on-surface-variant mt-2">{tenantName} vous invite à évaluer votre trajet terminé</p>
-        </div>
+            <img src={ctx.logo_url} alt={tenantName} class="mb-5 h-12 w-auto max-w-full object-contain" />
+          ) : tenantName ? (
+            <p class="mb-5 font-headline text-base font-semibold text-on-surface">{tenantName}</p>
+          ) : null}
+          <h1 id="page-title" tabindex="-1" class="font-headline text-2xl font-semibold text-balance focus:outline-none">
+            {ctx.already_rated ? "Avis déjà envoyé" : "Comment s'est passé votre trajet ?"}
+          </h1>
+          <p id="page-subtitle" class="mt-2 text-base text-on-surface-variant text-pretty">
+            {ctx.already_rated
+              ? "Merci, votre avis a bien été enregistré."
+              : tenantName ? `Votre avis aide ${tenantName} à améliorer son service.` : "Votre avis aide à améliorer le service."}
+          </p>
+        </header>
 
         {ctx.already_rated ? (
-          <div class="alert alert-success">
-            <span>Merci ! Votre avis a bien été enregistré. Bonne journée !</span>
+          <div class="space-y-3">
+            <button type="button" data-close class={btnPrimary}>Fermer cette page</button>
+            <p data-close-hint role="status" class="hidden text-sm text-on-surface-variant text-pretty"></p>
           </div>
         ) : (
           <>
-            <form id="rating-form" class="space-y-6">
-              <div class="flex justify-center gap-3">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button type="button" data-star={n} aria-label={`${n} sur 5`} class="star-btn w-12 h-12 rounded-xl border flex items-center justify-center text-on-surface-variant border-border bg-surface-container-low">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d={star} /></svg>
-                  </button>
-                ))}
-              </div>
-              <input type="hidden" name="rating" id="rating-input" />
+            <form id="rating-form" class="space-y-6" novalidate>
+              <fieldset>
+                <legend class="mb-3 text-sm font-medium text-on-surface-variant">Votre note</legend>
+                <div class="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <label class="relative min-w-0 flex-1 cursor-pointer">
+                      <input type="radio" name="rating" value={n} class="peer sr-only" aria-label={`${n} sur 5, ${labels[n - 1]}`} />
+                      <span data-star-box class="flex h-14 items-center justify-center rounded-xl border border-border bg-surface text-border transition-colors duration-150 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary">
+                        <svg class="h-7 w-7 fill-transparent" viewBox="0 0 20 20" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" aria-hidden="true"><path d={star} /></svg>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p id="rating-hint" aria-live="polite" class="mt-3 min-h-6 text-center text-sm text-on-surface-variant">Touchez une étoile pour noter</p>
+              </fieldset>
+
               <label class="block">
-                <span class="text-luxe-label">Un commentaire ? (optionnel)</span>
-                <textarea name="comment" rows="4" maxlength="500" placeholder="Partagez votre expérience..." class="textarea w-full mt-2"></textarea>
+                <span class="text-sm font-medium text-on-surface-variant">Un commentaire (facultatif)</span>
+                <textarea name="comment" rows="4" maxlength="500" placeholder="Ce qui vous a plu, ce qui peut être amélioré" class="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"></textarea>
               </label>
-              <p id="rating-error" class="text-error hidden"></p>
-              <button type="submit" id="submit-btn" class="btn-premium w-full" disabled>Envoyer mon avis</button>
+
+              <p id="rating-error" role="alert" class="hidden text-base text-error"></p>
+              <button type="submit" id="submit-btn" class={btnPrimary} disabled>Envoyer mon avis</button>
+              <noscript><p class="text-sm text-on-surface-variant">Activez JavaScript pour envoyer votre avis.</p></noscript>
             </form>
 
-            <div id="success-internal" class="alert alert-success hidden">
-              <span>Merci pour votre retour ! Votre avis a bien été transmis.</span>
+            <div id="success-internal" class="hidden space-y-3">
+              <button type="button" data-close class={btnPrimary}>Fermer cette page</button>
+              <p data-close-hint role="status" class="hidden text-sm text-on-surface-variant text-pretty"></p>
             </div>
 
-            <div id="success-google" class="hidden text-center space-y-4">
-              <p class="text-luxe-label">Vous avez adoré votre trajet !</p>
-              <p class="text-on-surface-variant">Votre avis positif aide d'autres passagers à nous découvrir. Partagez-le sur Google en un clic.</p>
-              <a id="google-reviews-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-premium inline-block">Publier sur Google</a>
+            <div id="success-google" class="hidden space-y-3">
+              <a id="google-reviews-link" href="#" target="_blank" rel="noopener noreferrer" class={btnPrimary}>Publier sur Google</a>
+              <button type="button" data-close class={btnSecondary}>Fermer cette page</button>
+              <p data-close-hint role="status" class="hidden text-sm text-on-surface-variant text-pretty"></p>
             </div>
           </>
         )}
       </main>
     )}
 
-    {ctx && !ctx.already_rated && (
-      <script define:vars={{ bookingId: id, googleReviewsUrl: ctx.google_reviews_url ?? null }}>
-        const stars = document.querySelectorAll('.star-btn');
-        const ratingInput = document.getElementById('rating-input');
-        const submitBtn = document.getElementById('submit-btn');
-        const form = document.getElementById('rating-form');
-        const errorEl = document.getElementById('rating-error');
-        const googleLink = document.getElementById('google-reviews-link');
-        if (googleLink && googleReviewsUrl) googleLink.href = googleReviewsUrl;
-
-        const on = ['text-primary', 'border-primary', 'bg-surface-container'];
-        const off = ['text-on-surface-variant', 'border-border', 'bg-surface-container-low'];
-
-        stars.forEach((btn) => {
+    {ctx && (
+      <script define:vars={{ bookingId: id, googleReviewsUrl: ctx.google_reviews_url ?? null, tenantName, labels }}>
+        // Fermeture : un onglet ouvert par un scan ne peut souvent pas être fermé par un script. Si la page
+        // est encore là après l'essai, on le dit au lieu de laisser un bouton muet.
+        document.querySelectorAll('[data-close]').forEach((btn) => {
           btn.addEventListener('click', () => {
-            const val = parseInt(btn.dataset.star);
-            ratingInput.value = String(val);
-            submitBtn.disabled = false;
-            stars.forEach((s) => {
-              const active = parseInt(s.dataset.star) <= val;
-              s.classList.remove(...(active ? off : on));
-              s.classList.add(...(active ? on : off));
-            });
+            window.close();
+            setTimeout(() => {
+              const hint = btn.parentElement.querySelector('[data-close-hint]');
+              if (!hint) return;
+              hint.textContent = "Ce navigateur ne permet pas de fermer la page. Fermez l'onglet ou revenez à l'application précédente.";
+              hint.classList.remove('hidden');
+            }, 300);
           });
         });
 
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const rating = parseInt(ratingInput.value);
-          const comment = new FormData(form).get('comment');
-          errorEl.classList.add('hidden');
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Envoi en cours...';
-          try {
-            const { error } = await fetch('/api/submit-rating', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ bookingId, rating, comment }),
-            }).then((r) => r.json());
-            if (error) throw new Error(error);
+        const form = document.getElementById('rating-form');
+        if (form) {
+          const radios = form.querySelectorAll('input[name="rating"]');
+          const boxes = form.querySelectorAll('[data-star-box]');
+          const hint = document.getElementById('rating-hint');
+          const submitBtn = document.getElementById('submit-btn');
+          const errorEl = document.getElementById('rating-error');
+          const title = document.getElementById('page-title');
+          const subtitle = document.getElementById('page-subtitle');
+          const googleLink = document.getElementById('google-reviews-link');
+          if (googleLink && googleReviewsUrl) googleLink.href = googleReviewsUrl;
+
+          const paint = (value) => {
+            boxes.forEach((box, i) => {
+              const active = i < value;
+              box.classList.toggle('text-primary', active);
+              box.classList.toggle('border-primary', active);
+              box.classList.toggle('text-border', !active);
+              box.classList.toggle('border-border', !active);
+              box.querySelector('svg').classList.toggle('fill-current', active);
+              box.querySelector('svg').classList.toggle('fill-transparent', !active);
+            });
+          };
+
+          radios.forEach((radio) => {
+            radio.addEventListener('change', () => {
+              const value = parseInt(radio.value, 10);
+              paint(value);
+              hint.textContent = `${value} sur 5 : ${labels[value - 1]}`;
+              submitBtn.disabled = false;
+            });
+          });
+
+          const showDone = (target, message) => {
             form.classList.add('hidden');
-            const target = rating >= 4 && googleReviewsUrl ? 'success-google' : 'success-internal';
+            title.textContent = 'Merci pour votre avis';
+            subtitle.textContent = message;
             document.getElementById(target).classList.remove('hidden');
-          } catch (err) {
-            errorEl.textContent = err instanceof Error && err.message ? err.message : "Une erreur est survenue lors de l'envoi.";
-            errorEl.classList.remove('hidden');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Envoyer mon avis';
-          }
-        });
+            title.focus();
+          };
+
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const checked = form.querySelector('input[name="rating"]:checked');
+            if (!checked || submitBtn.disabled) return;
+            const rating = parseInt(checked.value, 10);
+            const comment = new FormData(form).get('comment');
+            errorEl.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Envoi en cours…';
+            try {
+              const { error } = await fetch('/api/submit-rating', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookingId, rating, comment }),
+              }).then((r) => r.json());
+              if (error) throw new Error(error);
+              if (rating >= 4 && googleReviewsUrl) {
+                showDone('success-google', "Ravi que le trajet vous ait plu. Publier votre avis sur Google aide d'autres passagers à choisir.");
+              } else {
+                showDone('success-internal', tenantName ? `Votre avis a bien été transmis à ${tenantName}.` : 'Votre avis a bien été transmis.');
+              }
+            } catch (err) {
+              errorEl.textContent = err instanceof Error && err.message ? err.message : "L'envoi a échoué. Vérifiez votre connexion et réessayez.";
+              errorEl.classList.remove('hidden');
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Envoyer mon avis';
+            }
+          });
+        }
       </script>
     )}
   </body>
