@@ -330,6 +330,7 @@ rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la R
 | 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
 | 17 | Bascule SPA + PWA | 4–5 j | 16 |
 | 18 | Web Push (arrière-plan) | 3–4 j | 15, 17 |
+| 19 | Plateforme d'administration séparée (superadmin hors dépôt public, registre des instances) | 2–3 j | 14.1 |
 | **Total** | | **≈ 28–37 j (6–8 semaines)** | |
 
 Chaque phase est livrable seule et mise en production avant la suivante. Aucune phase n'est lancée sans
@@ -433,7 +434,7 @@ tunnels du site non enregistrées, pas de champ d'instructions à la création e
 (5) Modèle de licence (instance dédiée par client : base et Cloudflare propres, maintenance par abonnement) à planifier.
 
 ### Phase 14.1: Prêt pour le premier client (INSERTED)
-**Status:** Not planned yet (décision du 2026-10-01 : installation chez un premier client, avec sa propre base Supabase et son propre Cloudflare)
+**Status:** Contexte capturé le 2026-10-01 (`14.1-CONTEXT.md`), à planifier. Installation chez un premier client avec sa propre base Supabase et son propre Cloudflare.
 **Goal:** Installer le produit chez un premier client sans contournement ni impasse métier : factures émises par nous,
 cycle de vie d'une course payée complet, notes des clients enregistrées, installation d'une instance reproductible.
 **Depends on:** Phase 14
@@ -442,9 +443,9 @@ cycle de vie d'une course payée complet, notes des clients enregistrées, insta
   Stripe Invoicing (le contournement PDF local devient le flux officiel) ; numérotation séquentielle `FAC-AAAA-NNNN` déjà en
   base ; mentions légales vérifiées (SIRET, TVA ou mention 293 B, identité du client) ; **avoirs** (`AV-AAAA-NNNN`) pour toute
   correction, les `creditNotes` Stripe n'existant plus sans facture Stripe ; ledger inchangé (immuable) ; à relire par l'expert-comptable.
-- [ ] **Course payée non réalisée** : action « non réalisée » étendue aux courses payées par carte, avec retenue et
-  remboursement d'après la politique d'annulation (`no_show_refund_rate`), jamais d'écriture ledger sans décision
-  explicite ; puis réactivation de `trg_prevent_late_cancellation` et retour de la règle 7 du lint à 7 triggers.
+- [ ] **Annulation et remboursement d'une course payée** (décision D-05 à D-09) : une seule action « Annuler » avant et après l'heure,
+  politique d'annulation réglée par le propriétaire dans les Settings, menu à quatre cas avec le pourcentage affiché et une note,
+  remboursement automatique par Stripe ; `trg_prevent_late_cancellation` retiré (et non réactivé).
 - [ ] **Notes des clients** : les `specialNotes` des tunnels du site (mise à disposition, longue distance, business) sont
   enregistrées ; le tunnel Transfert reçoit un champ de note ; la création de course du backoffice reçoit un champ
   « Instructions » (n° de vol, panneau, accès) ; stockage distinct du journal technique (`mission_note`) ou balisé.
@@ -452,7 +453,8 @@ cycle de vie d'une course payée complet, notes des clients enregistrées, insta
   demande réellement enregistré).
 - [ ] **Installer une instance dédiée** : procédure reproductible (Terraform : un workspace par client ; projet Supabase,
   migrations, fonctions, secrets ; projets Cloudflare ; données de départ du tenant) ; registre des instances (client,
-  version, dernières migrations appliquées) ; contrôle de dérive par instance ; runbook de mise à jour.
+  version, dernières migrations appliquées) tenu dans un fichier privé hors dépôt ; contrôle de dérive par instance ;
+  runbook de mise à jour ; **aucun projet superadmin créé chez un client** (variable Terraform, déploiement conditionnel).
 - [ ] Reliquats de la phase 14 non bloquants : suppression manuelle des 4 variables Cloudflare restantes.
 **Plans:** 0 plans
 
@@ -515,6 +517,19 @@ temps réel. Livrable page par page.
 - [ ] Clic sur la notification : ouvre la course concernée ; l'app se resynchronise à l'ouverture (Phase 15).
 - [ ] Préférences de notification par utilisateur ; nettoyage des abonnements expirés (réponse 404/410).
 - [ ] iOS : push seulement pour la PWA installée (≥ 16.4), après consentement — parcours documenté dans l'app.
+
+### Phase 19: Plateforme d'administration séparée
+**Status:** Not started (décision du 2026-10-01 : pas urgent, dernière phase du milestone V2)
+**Goal:** Que l'outil d'administration de la plateforme (approbation des clients, analyses de tous les tenants, registre des
+instances) vive hors du dépôt public et ne se retrouve jamais chez un client.
+**Requirements:**
+- [ ] Sortir `apps/superadmin` du dépôt public (dépôt privé) ; le monorepo public ne contient plus l'outil de la plateforme ;
+  retirer sa construction de `deploy.yml` et son projet de `terraform/pages.tf`, ou le déplacer dans le nouveau dépôt.
+- [ ] Tableau des instances dans le superadmin : client, projets, version déployée, dernière mise à jour (le fichier privé du
+  registre de la phase 14.1 fait foi, le tableau l'affiche).
+- [ ] Reprendre ce que le superadmin lit aujourd'hui dans la base (vues et fonctions de plateforme, `platform_role`) : une
+  instance dédiée ne doit exposer à un client aucune donnée d'un autre client.
+**Plans:** 0 plans
 
 ### Phase 999: Backlog / Future (V4)
 - ~~Migration du backoffice en React pur~~ — planifiée le 2026-09-27 : Milestone V2, Phases 12 à 18.
