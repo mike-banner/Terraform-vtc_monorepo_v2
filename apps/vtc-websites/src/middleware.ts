@@ -8,8 +8,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const hostname = url.hostname; // ex: "elite-lyon.fr" ou "localhost"
   const tenantId = import.meta.env.PUBLIC_TENANT_ID;
 
-  console.log(`[Middleware] Resolving Tenant for host: ${host} (hostname: ${hostname}), env tenantId: ${tenantId}`);
-
   if (!context.locals.tenant) {
     let resolvedTenant = null;
 
