@@ -150,7 +150,7 @@ RESET ROLE;
 SELECT pg_temp.expect_val('setup: setup_completed', $q$select setup_completed::text from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, 'true');
 SELECT pg_temp.expect_val('setup: siret', $q$select siret from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, '12345678901234');
 SELECT pg_temp.expect_val('setup: rcs', $q$select rcs_number from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, 'RCS Lyon 123');
-SELECT pg_temp.expect_val('setup: capital', $q$select capital_social::text from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, '1000');
+SELECT pg_temp.expect_val('setup: capital', $q$select capital_social::numeric::text from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, '1000.00');
 SELECT pg_temp.expect_val('setup: vat_number', $q$select vat_number from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, 'FR99');
 SELECT pg_temp.expect_val('setup: name inchangé', $q$select name from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, 'RPC Test A');
 SELECT pg_temp.expect_val('setup: stripe_account_id', $q$select stripe_account_id from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, NULL);
