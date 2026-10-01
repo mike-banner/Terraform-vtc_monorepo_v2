@@ -45,6 +45,15 @@ jobs:
             exit 1
           fi
 
+      # D-13 Phase 14 : le backoffice n'utilise plus le client admin ni la clé service_role
+      # (écritures via RPC gardées par rôle). Toute réapparition casse la CI.
+      - name: Refuser le client admin dans le backoffice
+        run: |
+          if git grep -n -I -E 'createAdminClient|SUPABASE_SERVICE_ROLE_KEY' -- apps/vtc-backoffice ':!*.md'; then
+            echo "::error::createAdminClient ou SUPABASE_SERVICE_ROLE_KEY dans apps/vtc-backoffice (interdit depuis la Phase 14)."
+            exit 1
+          fi
+
       # Lint correctness (pas de style) : bloque sur les erreurs, laisse passer la
       # dette signalée en warning. Voir eslint.config.mjs.
       - name: Lint
