@@ -186,25 +186,28 @@ const updateRatingUI = (booking: AnyBooking): void => {
 };
 
 
-// Le journal mission_note mélange des balises techniques ([terrain], [annulation], [non réalisée]) et du texte libre.
-// On l'affiche en phrases lisibles, en heure de Paris.
-const formatMissionHistory = (raw: string): string => {
+// mission_note mélange le texte libre (instructions du client ou du chauffeur : n° de vol, accès...) et des balises
+// techniques ([terrain], [annulation], [non réalisée]). On les affiche séparément : instructions d'un côté,
+// historique en phrases lisibles (heure de Paris) de l'autre.
+const splitMissionNote = (raw: string): { instructions: string; history: string } => {
   const when = (iso: string): string => {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleString("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   };
-  const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean).flatMap((line): string[] => {
+  const instructions: string[] = [];
+  const history: string[] = [];
+  for (const line of raw.split("\n").map((l) => l.trim()).filter(Boolean)) {
     let m: RegExpMatchArray | null;
-    if ((m = line.match(/^\[terrain\] en_route_at=(\S+)/))) return [`En route le ${when(m[1])}`];
-    if ((m = line.match(/^\[terrain\] on_board_at=(\S+)/))) return [`Client à bord le ${when(m[1])}`];
-    if ((m = line.match(/^\[terrain\] completed_at=(\S+)/))) return [`Course terminée le ${when(m[1])}`];
-    if (line.startsWith("[terrain] completed_at_was_corrected")) return ["Heure de fin corrigée manuellement"];
-    if ((m = line.match(/^\[annulation\] initiateur=(\S+)\s*\|\s*motif=(.*)$/))) return [`Annulée (${m[1]}) : ${m[2]}`];
-    if ((m = line.match(/^\[non réalisée\] motif=(.*)$/))) return [`Non réalisée, client absent : ${m[1]}`];
-    return [line];
-  });
-  return lines.join("\n");
+    if ((m = line.match(/^\[terrain\] en_route_at=(\S+)/))) history.push(`En route le ${when(m[1])}`);
+    else if ((m = line.match(/^\[terrain\] on_board_at=(\S+)/))) history.push(`Client à bord le ${when(m[1])}`);
+    else if ((m = line.match(/^\[terrain\] completed_at=(\S+)/))) history.push(`Course terminée le ${when(m[1])}`);
+    else if (line.startsWith("[terrain] completed_at_was_corrected")) history.push("Heure de fin corrigée manuellement");
+    else if ((m = line.match(/^\[annulation\] initiateur=(\S+)\s*\|\s*motif=(.*)$/))) history.push(`Annulée (${m[1]}) : ${m[2]}`);
+    else if ((m = line.match(/^\[non réalisée\] motif=(.*)$/))) history.push(`Non réalisée, client absent : ${m[1]}`);
+    else instructions.push(line);
+  }
+  return { instructions: instructions.join("\n"), history: history.join("\n") };
 };
 
 const run = (): void => {
@@ -305,7 +308,13 @@ const run = (): void => {
       if (dropoffEl) dropoffEl.innerText = String(booking.dropoff_address ?? "Non spécifiée");
       if (passengersEl) passengersEl.innerText = String(booking.passenger_count ?? 1);
       if (luggageEl) luggageEl.innerText = String(booking.luggage_count ?? 0);
-      if (notesEl) notesEl.innerText = formatMissionHistory(String(booking.mission_note ?? "")) || "Aucun événement pour l'instant.";
+      if (notesEl) {
+        const { instructions, history } = splitMissionNote(String(booking.mission_note ?? ""));
+        notesEl.innerText = instructions || "Aucune instruction particulière.";
+        const historyEl = document.getElementById("modal-history");
+        historyEl?.parentElement?.classList.toggle("hidden", !history);
+        if (historyEl) historyEl.innerText = history;
+      }
 
       const id = booking.id ?? "---";
       if (refEl) refEl.innerText = `REF: #${String(id).split("-")[0].toUpperCase()}`;

@@ -835,8 +835,14 @@ const getFilterUrl = (params: Record<string, string>) => {
 
                     <!-- NOTES -->
                     <div class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
-                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Historique de la course</p>
+                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Notes / Instructions</p>
                         <p id="modal-notes" class="text-xs text-foreground font-medium leading-relaxed whitespace-pre-line">---</p>
+                    </div>
+
+                    <!-- HISTORIQUE (événements de la course, masqué s'il est vide) -->
+                    <div class="hidden bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
+                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Historique de la course</p>
+                        <p id="modal-history" class="text-xs text-foreground font-medium leading-relaxed whitespace-pre-line"></p>
                     </div>
 
                     <!-- AVIS & QR CODE -->
