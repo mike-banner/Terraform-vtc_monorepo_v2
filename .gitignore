@@ -45,3 +45,6 @@ test-results/
 # Supabase
 .supabase/
 .agents/
+
+# cache local de la CLI Supabase
+supabase/.temp/
