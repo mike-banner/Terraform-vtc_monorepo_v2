@@ -33,6 +33,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       p_dropoff_address: body.dropoff_address ?? undefined,
       p_distance_km: body.distance_km ?? undefined,
       p_duration_hours: body.duration_hours ?? undefined,
+      p_manual_total: body.manual_total ?? undefined,
     });
     if (error) return json({ error: error.message }, rpcErrorStatus(error.code));
     return json({ success: true, new_total: data }, 200);
