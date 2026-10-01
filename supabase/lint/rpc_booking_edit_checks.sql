@@ -76,6 +76,20 @@ SELECT pg_temp.expect_count('update: b10 HT/TVA recalculés', $q$select count(*)
 SELECT pg_temp.expect_count('update: b3 modifiée', $q$select count(*) from public.bookings where id = 'b3000000-0000-4000-8000-000000000003' and pickup_address = 'Nouvelle adresse'$q$, 1);
 SELECT pg_temp.expect_count('update: policy inchangée', $q$select count(*) from public.bookings b, _pol p where b.id = 'b1000000-0000-4000-8000-000000000001' and b.cancellation_policy_id is not distinct from p.cancellation_policy_id$q$, 1);
 
+-- Montant modifiable (owner/manager) -----------------------------------------------
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
+SELECT pg_temp.expect_error('update: driver ne change pas le montant', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 80)$q$, '42501', 'Seuls le propriétaire et le manager peuvent modifier le montant');
+SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
+SELECT pg_temp.expect_error('update: montant 0', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 0)$q$, '22023', 'Montant invalide : 0€');
+SELECT pg_temp.expect_error('update: montant 10000', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 10000)$q$, '22023', 'Montant invalide : 10000€');
+INSERT INTO _r SELECT 'b10_prix', public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'Autre adresse', NULL, NULL, NULL, 200);
+INSERT INTO _r SELECT 'b3_prix', public.update_booking_details('b3000000-0000-4000-8000-000000000003', now() + interval '4 days', 'Nouvelle adresse', NULL, NULL, NULL, 55);
+RESET ROLE;
+SELECT pg_temp.expect_count('update: b10 montant 200', $q$select count(*) from _r where k = 'b10_prix' and v = 200$q$, 1);
+SELECT pg_temp.expect_count('update: b10 en base', $q$select count(*) from public.bookings where id = 'b1000000-0000-4000-8000-00000000000a' and total_amount = 200 and subtotal_amount = 181.82 and vat_amount = 18.18 and pricing_mode = 'manual'$q$, 1);
+SELECT pg_temp.expect_count('update: b3 passe en prix manuel', $q$select count(*) from public.bookings where id = 'b3000000-0000-4000-8000-000000000003' and total_amount = 55 and pricing_mode = 'manual'$q$, 1);
+
 -- Prod : trigger de garde désactivé, la RPC doit tenir seule.
 CREATE TEMP TABLE _b4 AS SELECT pickup_time FROM public.bookings WHERE id = 'b4000000-0000-4000-8000-000000000004';
 ALTER TABLE public.bookings DISABLE TRIGGER trg_prevent_pickup_time_change_after_paid;
