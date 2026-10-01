@@ -1,7 +1,7 @@
 ---
 phase: 14-routes-serveur-rpc-edge-functions
 plan: 13
-status: analysis-done-decision-pending
+status: complete
 ---
 
 # 14-13 — Réactivation des triggers de garde de `bookings`
@@ -44,4 +44,14 @@ Option « partiel » : réactiver `trg_prevent_pickup_time_change_after_paid` et
 garder `trg_prevent_late_cancellation` désactivé le temps de concevoir la « non réalisée » d'une course payée, et documenter
 l'exception dans la règle 7 de `security_checks.sql`.
 
-DECISION-TRIGGERS: en attente
+DECISION-TRIGGERS: partiel:trg_prevent_pickup_time_change_after_paid,trg_prevent_policy_update
+
+Réponse de l'utilisateur (citation) : « pour le plan 13 ok go partiel ».
+
+## Réalisation (2026-10-01)
+
+- Migration `20261001190000_reenable_bookings_guard_triggers.sql` : `ENABLE TRIGGER` sur les deux triggers retenus, poussée en production (dry-run : cette seule migration).
+- Production après push : `trg_prevent_pickup_time_change_after_paid` et `trg_prevent_policy_update` = `O` ; `trg_prevent_late_cancellation` = `D` (exception assumée) ; les 4 autres `O`.
+- Lint : la règle 7 de `security_checks.sql` retire `trg_prevent_late_cancellation` de la liste exigée, avec commentaire ; à réintégrer dès sa réactivation.
+- Suites SQL locales vertes (security, rls_role, 7 rpc).
+- Suite à concevoir : « non réalisée » d'une course payée (frais, remboursement partiel d'après la politique), puis réactivation de `trg_prevent_late_cancellation`.
