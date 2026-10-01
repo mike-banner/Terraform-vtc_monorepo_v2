@@ -324,7 +324,7 @@ rôles ne sont que dans le middleware Astro, une SPA exposerait tout ce que la R
 | Phase | Objet | Charge | Dépend de |
 |---|---|---|---|
 | 13 | Rôles tenant dans la RLS — **Complete (2026-09-29)** | 5–7 j | clôture V1 |
-| 14 | Routes serveur → RPC / Edge Functions | 4–5 j | 13 |
+| 14 | 2/13 | In Progress|  |
 | 15 | Socle données temps réel | 3–4 j | 13 |
 | 16 | Pages en React (îlots dans Astro) | 9–12 j | 14, 15 |
 | 17 | Bascule SPA + PWA | 4–5 j | 16 |
@@ -383,23 +383,23 @@ pendant la fenêtre de désactivation), mais l'origine de la désactivation rest
 plus poussée pour l'instant.
 
 ### Phase 14: Routes serveur → RPC / Edge Functions
-**Status:** Not started
+**Status:** In progress (code prêt, mise en production aux plans 14-10 à 14-13)
 **Goal:** Plus aucune logique métier ni clé `service_role` dans le serveur Astro du backoffice.
 **Requirements:**
-- [ ] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
+- [x] Inventaire des 11 routes (`api/tenant/*` ×8, `api/missions/terrain-transition`, `api/submit-rating`,
   `api/auth/login`) et des 10 fichiers qui appellent `createAdminClient()` ; pour chacun : RPC (logique de
-  données, transaction) ou Edge Function (appel externe : Stripe, e-mail, stockage).
+  données, transaction) ou Edge Function (appel externe : Stripe, e-mail, stockage). — 10 fichiers, 9 routes/pages (pas 8) : tout en RPC, aucune Edge Function nécessaire (aucun appel externe) ; supprimés : update-booking-status, rate/[id], submit-rating, lib/supabase/server.ts (plans 14-08, 14-09).
 - [ ] Transitions de course (`booking-actions`, `update-booking-status`, `terrain-transition`) en RPC uniques et
   idempotentes, gardées par rôle, s'appuyant sur `trg_validate_booking_status_transition` ; règle H-15 d'ADR-002
   conservée côté serveur.
 - [ ] `create-booking` : prix calculé côté serveur uniquement (règle du projet).
 - [ ] `api/submit-rating` et `rate/[id]` (page publique client) : déplacer vers `vtc-websites`.
-- [ ] `api/auth/login` : remplacé par `signInWithPassword` côté client (Phase 17).
+- [ ] `api/auth/login` : remplacé par `signInWithPassword` côté client (Phase 17). — hors Phase 14 (CONTEXT, Deferred) : la route n'utilise pas le client admin ; suivi en Phase 17.
 - [ ] Retirer `SUPABASE_SERVICE_ROLE_KEY` de `backoffice_env_vars` (Terraform) en fin de phase.
 
-**Plans:** 13 plans (6 lots, une branche par lot)
-- [ ] 14-01-PLAN.md — relevé prod en lecture seule ; décisions utilisateur : encaissement cash d'une course `accepted`, portée de la modification, arrondi TVA (checkpoint)
-- [ ] 14-02-PLAN.md — socle : seed des 13 transitions de prod, marqueur de confiance `vtc.trusted_rpc` (ADR-012), test négatif de forge, lint triggers/allowlist anon, fixtures RPC
+**Plans:** 2/13 plans executed
+- [x] 14-01-PLAN.md — relevé prod en lecture seule ; décisions utilisateur : encaissement cash d'une course `accepted`, portée de la modification, arrondi TVA (checkpoint)
+- [x] 14-02-PLAN.md — socle : seed des 13 transitions de prod, marqueur de confiance `vtc.trusted_rpc` (ADR-012), test négatif de forge, lint triggers/allowlist anon, fixtures RPC
 - [ ] 14-03-PLAN.md — `calculate_booking_price` / `booking_vat_split` en SQL (D-03), vecteurs de test, dette des copies dans BACKLOG
 - [ ] 14-04-PLAN.md — RPC `terrain_transition` et `driver_cancel_booking` (D-06/D-07, H-15, idempotence, ledger cash)
 - [ ] 14-05-PLAN.md — RPC `update_booking_details` et `create_manual_booking` (D-03/D-04)
