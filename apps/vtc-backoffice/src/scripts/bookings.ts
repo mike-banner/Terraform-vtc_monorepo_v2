@@ -996,6 +996,16 @@ const run = (): void => {
     const priceEl = document.getElementById("edit-price-preview");
     if (!priceEl || !editForm) return;
 
+    // Course à prix manuel : le serveur conserve le montant saisi à la création, l'estimation ne s'applique pas.
+    const isManual = (currentDetailBooking as any)?.pricing_mode === "manual";
+    const setText = (id: string, text: string) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    setText("edit-price-label", isManual ? "Prix manuel" : "Tarif estimé");
+    setText("edit-price-hint", isManual ? "Ce montant est conservé, seuls l'heure et les adresses changent" : "Calculé côté serveur à la validation");
+    if (isManual) {
+      priceEl.textContent = `${Number((currentDetailBooking as any).total_amount).toFixed(2)}€`;
+      return;
+    }
+
     const rules = JSON.parse(editForm.getAttribute("data-pricing-rules") || "[]") as import("@/lib/pricing").PricingRule[];
     const vehicleCategory = (document.getElementById("edit-vehicle-id") as HTMLInputElement)?.value ?? "";
     const bookingType = (document.getElementById("edit-booking-type") as HTMLInputElement)?.value ?? "transfer";
