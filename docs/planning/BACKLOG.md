@@ -44,3 +44,18 @@ existe. Pas de solution ni d'API identifiée pour l'instant — à rechercher le
 
 **Déclencheur pour rouvrir :** une erreur de saisie constatée sur un `license_number` en prod, ou un besoin
 de vérification réglementaire.
+
+## Formule de prix dupliquée dans les Edge Functions
+
+**Reporté depuis :** Phase 14 (2026-09-29), D-03 : la formule des écritures du backoffice vit dans
+`public.calculate_booking_price` / `public.booking_vat_split` (migration `20260929110300`).
+**État actuel :** deux autres copies TypeScript : `create_checkout_session/index.ts` (prix + `fixed_routes`, sans
+TVA, `safeTotal` minimum 1) et `stripe_webhook/index.ts` (recalcul + TVA). `lib/pricing.ts` reste pour l'aperçu
+client de `scripts/bookings.ts`, non contractuel. Hors périmètre de la Phase 14 : ces fonctions tournent
+légitimement en `service_role` (paiement).
+**Vecteur commun** (mêmes entrées, même sortie attendue dans les trois implémentations) : règle base 10, km 2,
+heure 50, minimum 20 ; transfert 30 km = 70 ; transfert 2 km = 20 ; hourly 2 h = 110 ; TVA 10 % sur 100 = 90.91 +
+9.09 ; TVA 20 % sur 33.33 = 27.78 + 5.55 (DECISION-ARRONDI V1).
+
+**Déclencheur pour rouvrir :** toute modification de la formule, ou la migration des Edge Functions de paiement
+vers la RPC (appel `calculate_booking_price` avec la clé service_role).
