@@ -18,7 +18,7 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 
 - Calcul de montants (`total_amount`, `minimum_fare`, TVA) côté client JS — toujours via API route ou RPC serveur.
 - `createAdminClient` en dehors d'une route API serveur.
-- UPDATE/DELETE sur `financial_movements` (ledger immuable, audit trail). INSERT réservé au `service_role`.
+- UPDATE/DELETE sur `financial_movements` (ledger immuable, audit trail). INSERT réservé au `service_role` et aux RPC de confiance (ADR-012) ; jamais d'ouverture au client des colonnes statut/montants de `bookings` sans relire ADR-012.
 - Changer `mission_status` ailleurs que via `/api/missions/terrain-transition`.
 - INSERT sur `drivers` par un rôle autre que `owner`/`manager` (policy `drivers_insert`, Phase 13). Un
   `driver` ne peut modifier que son propre `phone` sur sa fiche (trigger `drivers_self_update_guard`).
