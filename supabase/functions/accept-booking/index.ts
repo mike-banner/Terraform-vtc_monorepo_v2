@@ -34,8 +34,6 @@ serve(async (req) => {
 
     // 2. TODO send email later
 
-    console.log("BOOKING ACCEPTED", data.id);
-
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
   } catch (e) {
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), { status: 500 });

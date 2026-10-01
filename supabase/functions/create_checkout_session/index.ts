@@ -34,8 +34,6 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
 
-    console.log('BODY =', body);
-
     const customer_data = body.customer_data;
     const booking_data = body.booking_data;
 
@@ -48,11 +46,6 @@ Deno.serve(async (req) => {
     // =========================
     // CUSTOMER UPSERT
     // =========================
-
-    console.log('UPSERT CUSTOMER INPUT', {
-      tenantId,
-      email: customer_data?.email,
-    });
 
     const { data: customer, error: cErr } = await supabaseAdmin
       .from('customers')
@@ -71,15 +64,9 @@ Deno.serve(async (req) => {
       .select()
       .single();
 
-    if (cErr) {
-      console.log('CUSTOMERS ERROR =', cErr);
-      throw new Error(cErr.message);
-    }
+    if (cErr) throw new Error(cErr.message);
 
-    if (!customer) {
-      console.log('CUSTOMER NULL');
-      throw new Error('customer null');
-    }
+    if (!customer) throw new Error('customer null');
 
     // =========================
     // VEHICLE CHECK
@@ -97,10 +84,7 @@ Deno.serve(async (req) => {
       .eq('id', vehicleId)
       .single();
 
-    if (vErr) {
-      console.log('VEHICLE ERROR =', vErr);
-      throw new Error(vErr.message);
-    }
+    if (vErr) throw new Error(vErr.message);
 
     if (!vehicle) throw new Error('vehicle not found');
 
@@ -122,10 +106,7 @@ Deno.serve(async (req) => {
       .eq('id', tenantId)
       .single();
 
-    if (tErr) {
-      console.log('TENANT ERROR =', tErr);
-      throw new Error(tErr.message);
-    }
+    if (tErr) throw new Error(tErr.message);
 
     if (!tenant) throw new Error('tenant not found');
 
@@ -193,9 +174,6 @@ Deno.serve(async (req) => {
     }
 
     const safeTotal = calculatedTotal > 0 ? calculatedTotal : 1;
-
-    console.log('CALCULATED TOTAL =', calculatedTotal);
-    console.log('SAFE TOTAL =', safeTotal);
 
     // =========================
     // STRIPE SESSION
@@ -276,8 +254,8 @@ Deno.serve(async (req) => {
       },
     });
   } catch (err) {
-    console.log('FINAL ERROR =', err);
     const error = err instanceof Error ? err.message : String(err);
+    console.error('create_checkout_session:', error);
 
     return new Response(JSON.stringify({ error }), {
       headers: corsHeaders,

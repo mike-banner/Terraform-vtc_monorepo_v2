@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       Deno.env.get("STRIPE_WEBHOOK_SECRET")!,
     );
   } catch (err) {
-    console.log("SIGNATURE ERROR", err);
+    console.error("stripe_webhook: signature invalide", err instanceof Error ? err.message : err);
     return new Response("Invalid signature", { status: 400 });
   }
 
@@ -221,8 +221,6 @@ Deno.serve(async (req) => {
         vat      = Math.round((total - subtotal) * 100) / 100;
       }
 
-      console.log("INSERTING BOOKING FOR CUSTOMER", m.customer_id);
-
       const { data: booking, error } = await supabase
         .from("bookings")
         .insert({
@@ -265,7 +263,6 @@ Deno.serve(async (req) => {
       }
 
       if (booking) {
-        console.log("BOOKING CREATED SUCCESS", booking.id);
         await supabase
           .from("stripe_events")
           .update({
@@ -281,8 +278,6 @@ Deno.serve(async (req) => {
         if (invoiceRes.error) {
           // Non bloquant : le webhook a réussi, la facture peut être régénérée manuellement
           console.error("INVOICE GENERATION FAILED (non-blocking)", invoiceRes.error);
-        } else {
-          console.log("INVOICE GENERATED", invoiceRes.data?.invoice_number);
         }
       }
     }

@@ -90,7 +90,6 @@ const totalCount = count ?? 0;
 const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
 if (error) console.error("Bookings Fetch Error:", error);
-console.log(`[Bookings] page=${currentPage}/${totalPages} — ${bookings?.length || 0} bookings`);
 
 const tabs = [
     { id: 'all', label: 'Toutes' },
