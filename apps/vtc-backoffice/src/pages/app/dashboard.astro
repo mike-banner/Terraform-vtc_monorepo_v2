@@ -121,12 +121,12 @@ if (tenant && !tenant.setup_completed && profile.tenant_role === "owner") {
                         <div class="flex flex-col lg:flex-row lg:items-center">
                             <div class="flex items-center gap-4 p-5 lg:p-6 lg:border-r border-white/5 min-w-[200px]">
                                 <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex flex-col items-center justify-center text-emerald-400 shadow-lg">
-                                    <span class="text-[10px] font-black uppercase leading-none opacity-70">{new Date(immediateMission.pickup_time).toLocaleDateString('fr-FR', { month: 'short' })}</span>
-                                    <span class="text-lg font-black leading-none">{new Date(immediateMission.pickup_time).toLocaleDateString('fr-FR', { day: '2-digit' })}</span>
+                                    <span class="text-[10px] font-black uppercase leading-none opacity-70">{new Date(immediateMission.pickup_time).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', month: 'short' })}</span>
+                                    <span class="text-lg font-black leading-none">{new Date(immediateMission.pickup_time).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit' })}</span>
                                 </div>
                                 <div>
                                     <p class="text-2xl font-black text-white tracking-tighter tabular-nums leading-none mb-1">
-                                        {new Date(immediateMission.pickup_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                        {new Date(immediateMission.pickup_time).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                     <p class="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest">Démarrée</p>
                                 </div>
@@ -162,12 +162,12 @@ if (tenant && !tenant.setup_completed && profile.tenant_role === "owner") {
                         <div class="flex flex-col lg:flex-row lg:items-center">
                             <div class="flex items-center gap-4 p-5 lg:border-r border-rose-500/10 min-w-[200px]">
                                 <div class="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-500/30 flex flex-col items-center justify-center text-rose-400 shadow-lg">
-                                    <span class="text-[10px] font-black uppercase leading-none opacity-70">{new Date(overdueBooking.pickup_time).toLocaleDateString('fr-FR', { month: 'short' })}</span>
-                                    <span class="text-lg font-black leading-none">{new Date(overdueBooking.pickup_time).toLocaleDateString('fr-FR', { day: '2-digit' })}</span>
+                                    <span class="text-[10px] font-black uppercase leading-none opacity-70">{new Date(overdueBooking.pickup_time).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', month: 'short' })}</span>
+                                    <span class="text-lg font-black leading-none">{new Date(overdueBooking.pickup_time).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit' })}</span>
                                 </div>
                                 <div>
                                     <p class="text-2xl font-black text-rose-300 tracking-tighter tabular-nums leading-none mb-1">
-                                        {new Date(overdueBooking.pickup_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                        {new Date(overdueBooking.pickup_time).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                     <p class="text-[10px] font-black text-rose-400/70 uppercase tracking-widest">Heure dépassée</p>
                                 </div>
@@ -210,7 +210,7 @@ if (tenant && !tenant.setup_completed && profile.tenant_role === "owner") {
                                 <div class="flex justify-between items-center mb-3">
                                     <Badge variant="amber">Mise à Disposition</Badge>
                                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                                        {new Date(booking.pickup_time).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                                        {new Date(booking.pickup_time).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: 'short' })}
                                     </span>
                                 </div>
                                 <div class="mb-3">
@@ -248,7 +248,7 @@ if (tenant && !tenant.setup_completed && profile.tenant_role === "owner") {
                             {upcomingBookings[0].customers.first_name} {upcomingBookings[0].customers.last_name}
                         </p>
                         <span class="text-[11px] font-black tabular-nums text-primary shrink-0">
-                            {new Date(upcomingBookings[0].pickup_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(upcomingBookings[0].pickup_time).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })}
                         </span>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
@@ -286,15 +286,15 @@ if (tenant && !tenant.setup_completed && profile.tenant_role === "owner") {
                         <div class="flex-shrink-0 w-[220px] glass p-3 rounded-2xl border border-white/5 bg-white/[0.02] flex items-center gap-3 booking-row cursor-pointer active:scale-95 transition-all"
                              data-booking={JSON.stringify(booking)}>
                             <div class="w-9 h-9 bg-primary rounded-xl flex flex-col items-center justify-center shadow-lg shadow-primary/20 shrink-0">
-                                <span class="text-[9px] font-black text-white/50 uppercase leading-none mb-0.5">{new Date(booking.pickup_time).toLocaleDateString('fr-FR', { month: 'short' })}</span>
-                                <span class="text-sm font-black text-white leading-none">{new Date(booking.pickup_time).toLocaleDateString('fr-FR', { day: '2-digit' })}</span>
+                                <span class="text-[9px] font-black text-white/50 uppercase leading-none mb-0.5">{new Date(booking.pickup_time).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', month: 'short' })}</span>
+                                <span class="text-sm font-black text-white leading-none">{new Date(booking.pickup_time).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit' })}</span>
                             </div>
                             <div class="min-w-0">
                                 <p class="text-[10px] font-black text-white uppercase tracking-tighter truncate">
                                     {booking.customers.first_name} {booking.customers.last_name}
                                 </p>
                                 <p class="text-[10px] font-bold text-slate-500 uppercase tabular-nums">
-                                    {new Date(booking.pickup_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(booking.pickup_time).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             </div>
                         </div>

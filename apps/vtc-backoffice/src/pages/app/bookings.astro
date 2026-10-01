@@ -288,11 +288,11 @@ const getFilterUrl = (params: Record<string, string>) => {
                                     <div class="flex justify-between items-center">
                                         <div class="flex items-center gap-2">
                                             <span class="text-[10px] font-black text-white tabular-nums">
-                                                {new Date(booking.pickup_time).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                                                {new Date(booking.pickup_time).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "short" })}
                                             </span>
                                             <span class="w-1 h-1 rounded-full bg-white/10" />
                                             <span class="text-[10px] text-slate-500 font-bold tabular-nums">
-                                                {new Date(booking.pickup_time).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                                                {new Date(booking.pickup_time).toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" })}
                                             </span>
                                         </div>
                                     </div>
@@ -367,10 +367,10 @@ const getFilterUrl = (params: Record<string, string>) => {
                                                 <td class="px-8 py-4 font-medium">
                                                     <div class="flex flex-col">
                                                         <span class="text-sm text-white font-black tabular-nums">
-                                                            {new Date(booking.pickup_time).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                                                            {new Date(booking.pickup_time).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "short" })}
                                                         </span>
                                                         <span class="text-[11px] text-slate-500 font-bold mt-1">
-                                                            {new Date(booking.pickup_time).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                                                            {new Date(booking.pickup_time).toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" })}
                                                         </span>
                                                     </div>
                                                 </td>
