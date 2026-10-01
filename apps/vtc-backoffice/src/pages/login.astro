@@ -244,6 +244,16 @@ import "../styles/global.css";
         showMessage("Votre entreprise a été suspendue. Contactez le support.", "error");
     }
 
+    // /api/auth/login redirige ici avec ?error=<message Supabase> ; sans ce bloc l'échec était silencieux.
+    const loginError = urlParams.get('error');
+    if (loginError) {
+        const message = loginError === "Invalid login credentials"
+            ? "Email ou mot de passe incorrect."
+            : loginError;
+        showMessage(message, "error");
+        passwordInput.focus();
+    }
+
     form?.addEventListener("submit", async (e) => {
         e.preventDefault();
 
