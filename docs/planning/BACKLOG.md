@@ -82,3 +82,17 @@ mode de paiement, statut, remboursement lié, lien vers la facture ou l'avoir. �
 ci-dessus, lors de la migration de la page `ledger` (Phase 16).
 
 **Déclencheur pour rouvrir :** migration de `ledger` en React, ou demande de l'expert-comptable du premier client.
+
+## Première connexion guidée (React) : liste des éléments obligatoires, étape par étape
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1.
+**Idée :** à la première connexion, le propriétaire doit renseigner ce qui est **obligatoire pour que l'application
+tourne** (par exemple : coordonnées et mentions légales du tenant, tarifs de départ, véhicule, profil chauffeur,
+compte de paiement). On en fait une **liste** guidée, **étape par étape**, avec des animations qui mettent le focus sur
+ce qui reste à remplir.
+**À faire :** dresser d'abord la liste exacte des prérequis (à partir de l'assistant `/app/setup` actuel et de ce que
+`create_checkout_session`, les factures et le grand livre exigent), puis concevoir le parcours en React lors de la
+Phase 16 (pages en React).
+
+**Déclencheur pour rouvrir :** démarrage de la Phase 16, ou première installation d'un client réel (le script
+d'installation d'instance crée le tenant et le propriétaire, pas ces éléments).
