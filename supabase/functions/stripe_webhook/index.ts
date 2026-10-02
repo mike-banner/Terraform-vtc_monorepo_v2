@@ -370,6 +370,7 @@ Deno.serve(async (req) => {
 
           passenger_count: Number(m.passenger_count ?? 1),
           luggage_count: Number(m.luggage_count ?? 0),
+          instructions: String(m.instructions ?? "").trim().slice(0, 500) || null,
 
           booking_type: m.booking_type,
 

@@ -207,6 +207,7 @@ Deno.serve(async (req) => {
         fixed_route_id: booking_data.fixed_route_id || "",
         passenger_count: String(booking_data.passenger_count || "1"),
         luggage_count: String(booking_data.luggage_count || "0"),
+        instructions: String(booking_data.instructions ?? "").trim().slice(0, 500),
       },
 
       line_items: [

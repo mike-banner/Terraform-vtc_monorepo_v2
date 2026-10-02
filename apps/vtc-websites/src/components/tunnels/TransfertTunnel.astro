@@ -162,7 +162,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
 
     
     <!-- Étape 4: Coordonnées -->
-    <ContactStep stepNumber={4} themeColor="accent" />
+    <ContactStep stepNumber={4} themeColor="accent" withInstructions />
   </form>
 </TunnelLayout>
 
@@ -278,7 +278,8 @@ const { serviceType = 'airport', ...props } = Astro.props;
                 dropoff_address: formData.get('dropoffAddress') || dropoffZone,
                 pickup_time: scheduledDate,
                 passenger_count: 1,
-                luggage_count: 0
+                luggage_count: 0,
+                instructions: String(formData.get('instructions') ?? '').trim().slice(0, 500)
               }
             }
           });
