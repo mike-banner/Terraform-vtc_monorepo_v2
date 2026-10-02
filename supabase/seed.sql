@@ -34,9 +34,10 @@ values ('5750a0b3-4c6c-4782-b137-830a49e32249', '22222222-2222-2222-2222-2222222
 insert into public.pricing_rules (tenant_id, base_price, price_per_km, minimum_fare, active, service_category, price_per_hour)
 values ('5750a0b3-4c6c-4782-b137-830a49e32249', 10, 2, 30, true, 'berline', 60);
 
-insert into public.zones (id, tenant_id, name) values
-  ('33333333-3333-3333-3333-333333333331', '5750a0b3-4c6c-4782-b137-830a49e32249', 'Lyon centre'),
-  ('33333333-3333-3333-3333-333333333332', '5750a0b3-4c6c-4782-b137-830a49e32249', 'Aéroport Saint-Exupéry');
+insert into public.zones (id, tenant_id, name, postal_codes) values
+  ('33333333-3333-3333-3333-333333333331', '5750a0b3-4c6c-4782-b137-830a49e32249', 'Lyon centre',
+    '{69001,69002,69003,69004,69005,69006,69007,69008,69009}'),
+  ('33333333-3333-3333-3333-333333333332', '5750a0b3-4c6c-4782-b137-830a49e32249', 'Aéroport Saint-Exupéry', '{}');
 
 insert into public.fixed_routes (tenant_id, pickup_zone_id, dropoff_zone_id, vehicle_category, price, is_bidirectional, active)
 values ('5750a0b3-4c6c-4782-b137-830a49e32249', '33333333-3333-3333-3333-333333333331', '33333333-3333-3333-3333-333333333332', 'berline', 80, true, true);

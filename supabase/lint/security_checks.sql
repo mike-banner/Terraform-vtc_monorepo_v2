@@ -26,7 +26,7 @@ DECLARE
 
   -- Tables couvertes par la matrice de rôles tenant (Phase 13) : une policy par
   -- commande, jamais FOR ALL. Les policies service_role sont hors RLS (BYPASSRLS).
-  role_tables text[] := ARRAY['bookings', 'customers', 'drivers', 'vehicles', 'pricing_rules', 'financial_movements', 'cancellation_policies'];
+  role_tables text[] := ARRAY['bookings', 'customers', 'drivers', 'vehicles', 'pricing_rules', 'financial_movements', 'cancellation_policies', 'zones', 'fixed_routes'];
 
   -- Fonctions SECURITY DEFINER exécutables par anon (RPC publiques). Les deux dernières sont
   -- les RPC de notation du plan 14-07.
@@ -161,7 +161,7 @@ BEGIN
     SELECT ro.name AS role_name, c.name AS col
     FROM unnest(ARRAY['anon','authenticated']) AS ro(name),
          unnest(ARRAY['status','mission_status','total_amount','subtotal_amount','vat_amount','payment_mode',
-           'pickup_time','pickup_address','dropoff_address','rating','cancellation_policy_id','refund_amount','refund_rate']) AS c(name)
+           'pickup_time','pickup_address','dropoff_address','rating','cancellation_policy_id','refund_amount','refund_rate','address_alert']) AS c(name)
     WHERE has_column_privilege(ro.name, 'public.bookings', c.name, 'UPDATE')
   LOOP
     violations := violations || format('role %s can UPDATE bookings.%s (breaks ADR-012 invariant)', r.role_name, r.col);

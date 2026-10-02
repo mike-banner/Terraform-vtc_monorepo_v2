@@ -131,6 +131,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          address_alert: string | null
           approval_required: boolean
           booking_source: Database["public"]["Enums"]["booking_source"]
           booking_type: Database["public"]["Enums"]["booking_type_enum"]
@@ -179,6 +180,7 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          address_alert?: string | null
           approval_required?: boolean
           booking_source: Database["public"]["Enums"]["booking_source"]
           booking_type: Database["public"]["Enums"]["booking_type_enum"]
@@ -227,6 +229,7 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          address_alert?: string | null
           approval_required?: boolean
           booking_source?: Database["public"]["Enums"]["booking_source"]
           booking_type?: Database["public"]["Enums"]["booking_type_enum"]
@@ -1439,18 +1442,21 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          postal_codes: string[]
           tenant_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
+          postal_codes?: string[]
           tenant_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
+          postal_codes?: string[]
           tenant_id?: string | null
         }
         Relationships: [
@@ -2001,6 +2007,10 @@ export type Database = {
           p_stripe_refund_id: string
         }
         Returns: undefined
+      }
+      mark_address_verified: {
+        Args: { p_booking_id: string }
+        Returns: string
       }
       mark_booking_no_show: {
         Args: { p_booking_id: string; p_reason: string }
