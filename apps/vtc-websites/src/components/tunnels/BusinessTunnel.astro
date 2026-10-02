@@ -48,16 +48,16 @@ const { ...props } = Astro.props;
     
     <!-- Étape 1: Forfait -->
     <div class='step-container' data-step='1'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Forfait professionnel</h2>
-        <p class='text-ui-muted mb-8'>Choisissez la formule adaptée à vos besoins (Salons, RDV d'affaires, événements)</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Forfait professionnel</h2>
+        <p class='text-ui-muted mb-5'>Choisissez la formule adaptée à vos besoins (Salons, RDV d'affaires, événements)</p>
 
         <div class='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
           {
             businessPackages.map((pkg) => (
               <label class='relative group cursor-pointer'>
                 <input type='radio' name='packageType' value={pkg.id} class='sr-only peer' required />
-                <div class='p-6 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
+                <div class='p-4 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
                   <div class='w-12 h-12 rounded-lg bg-ui-page flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors'>
                     <Icon name='ri:briefcase-line' class='text-xl text-ui-muted group-hover:text-primary' />
                   </div>
@@ -84,8 +84,8 @@ const { ...props } = Astro.props;
           }
         </div>
 
-        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Planning d'intervention</h2>
-        <p class='text-ui-muted mb-8'>Définissez les créneaux horaires de votre service</p>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Planning d'intervention</h2>
+        <p class='text-ui-muted mb-5'>Définissez les créneaux horaires de votre service</p>
 
         <DateTimePicker
           class='mb-6'
@@ -97,12 +97,12 @@ const { ...props } = Astro.props;
 
         <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
           <div id="hoursContainer">
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Durée quotidienne (en heures)</label>
-            <input type='number' name='dailyHours' id='dailyHours' min='3' max='24' value='4' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Durée quotidienne (en heures)</label>
+            <input type='number' name='dailyHours' id='dailyHours' min='3' max='24' value='4' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
           </div>
           <div id="daysContainer">
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Nombre de jours (Si Forfait Journée)</label>
-            <input type='number' name='numberOfDays' id='numberOfDays' min='1' max='30' value='1' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Nombre de jours (Si Forfait Journée)</label>
+            <input type='number' name='numberOfDays' id='numberOfDays' min='1' max='30' value='1' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
           </div>
         </div>
       </div>
@@ -120,24 +120,24 @@ const { ...props } = Astro.props;
 
     <!-- Étape 3: Lieu d'attente -->
     <div class='step-container hidden' data-step='3'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Lieu de l'événement</h2>
-        <p class='text-ui-muted mb-8'>Indiquez le point fixe principal où le chauffeur sera à votre disposition</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Lieu de l'événement</h2>
+        <p class='text-ui-muted mb-5'>Indiquez le point fixe principal où le chauffeur sera à votre disposition</p>
 
         <div class='space-y-6'>
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Adresse principale d'attente (Requis)</label>
-            <input type='text' name='mainLocation' placeholder={site.businessPlaceholderLieu} class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Adresse principale d'attente (Requis)</label>
+            <input type='text' name='mainLocation' placeholder={site.businessPlaceholderLieu} class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
           </div>
 
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Nom de l'événement / Salon (Optionnel)</label>
-            <input type='text' name='eventName' placeholder={site.businessPlaceholderEvenement} class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' />
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Nom de l'événement / Salon (Optionnel)</label>
+            <input type='text' name='eventName' placeholder={site.businessPlaceholderEvenement} class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' />
           </div>
 
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Notes spéciales & Besoins en sécurité (Optionnel)</label>
-            <textarea name='specialNotes' rows='3' placeholder='Ex: VIP, accès spécifique, badge fourni sur place...' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'></textarea>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Notes spéciales & Besoins en sécurité (Optionnel)</label>
+            <textarea name='specialNotes' rows='3' placeholder='Ex: VIP, accès spécifique, badge fourni sur place...' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'></textarea>
           </div>
         </div>
       </div>

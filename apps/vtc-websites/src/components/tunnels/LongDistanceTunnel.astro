@@ -40,17 +40,17 @@ const { ...props } = Astro.props;
     
     <!-- Étape 1: Destination & Service -->
     <div class='step-container' data-step='1'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Destination principale</h2>
-        <p class='text-ui-muted mb-8'>Sélectionnez votre destination ou entrez une ville personnalisée</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Destination principale</h2>
+        <p class='text-ui-muted mb-5'>Sélectionnez votre destination ou entrez une ville personnalisée</p>
 
         {site.longueDistanceDestinations.length > 0 && (
-        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
+        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4'>
           {
             site.longueDistanceDestinations.map((dest) => (
               <label class='relative group cursor-pointer'>
                 <input type='radio' name='destination' value={dest.ville} data-distance={dest.distanceKm} class='sr-only peer' />
-                <div class='p-6 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
+                <div class='p-4 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
                   <div class='flex items-start justify-between mb-4'>
                     <div>
                       <div class='text-lg font-semibold text-ui-ink'>{dest.ville}</div>
@@ -74,26 +74,27 @@ const { ...props } = Astro.props;
         </div>
         )}
 
-        <div class="mb-12">
-          <label class='block text-sm font-medium text-ui-ink mb-2'>{site.longueDistanceDestinations.length > 0 ? 'Ou entrez une destination personnalisée (Prix Sur Devis)' : 'Destination (prix sur devis)'}</label>
+        <div class="mb-6">
+          <label class='block text-sm font-medium text-ui-ink mb-1.5'>{site.longueDistanceDestinations.length > 0 ? 'Ou entrez une destination personnalisée (Prix Sur Devis)' : 'Destination (prix sur devis)'}</label>
           <input
             type='text'
             name='customDestination'
             id='customDestination'
             placeholder={site.longueDistancePlaceholderDestination}
-            class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'
+            required={site.longueDistanceDestinations.length === 0}
+            class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'
           />
         </div>
 
-        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Type de service</h2>
-        <p class='text-ui-muted mb-8'>Choisissez la formule qui correspond à vos besoins</p>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Type de service</h2>
+        <p class='text-ui-muted mb-5'>Choisissez la formule qui correspond à vos besoins</p>
 
-        <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div class='grid grid-cols-1 md:grid-cols-3 gap-4'>
           {
             serviceOptions.map((option) => (
               <label class='relative group cursor-pointer'>
                 <input type='radio' name='serviceType' value={option.id} class='sr-only peer' required />
-                <div class='p-6 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
+                <div class='p-4 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
                   <div class='w-12 h-12 rounded-lg bg-ui-page flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors'>
                     <Icon name='ri:route-line' class='text-xl text-ui-muted group-hover:text-primary' />
                   </div>
@@ -120,9 +121,9 @@ const { ...props } = Astro.props;
 
     <!-- Étape 3: Dates et compléments -->
     <div class='step-container hidden' data-step='3'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Détails du trajet</h2>
-        <p class='text-ui-muted mb-8'>Précisez les dates et informations de départ</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Détails du trajet</h2>
+        <p class='text-ui-muted mb-5'>Précisez les dates et informations de départ</p>
 
         <DateTimePicker
           class='mb-8'
@@ -134,8 +135,8 @@ const { ...props } = Astro.props;
 
         <div class='space-y-6'>
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Nombre de passagers</label>
-            <select name='passengerCount' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Nombre de passagers</label>
+            <select name='passengerCount' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required>
               <option value='1'>1 passager</option>
               <option value='2'>2 passagers</option>
               <option value='3'>3 passagers</option>
@@ -145,16 +146,16 @@ const { ...props } = Astro.props;
             </select>
           </div>
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Adresse exacte de prise en charge{site.longueDistanceVilleDepart ? ` (${site.longueDistanceVilleDepart})` : ''}</label>
-            <input type='text' name='pickupAddress' placeholder={site.longueDistancePlaceholderDepart} class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Adresse exacte de prise en charge{site.longueDistanceVilleDepart ? ` (${site.longueDistanceVilleDepart})` : ''}</label>
+            <input type='text' name='pickupAddress' placeholder={site.longueDistancePlaceholderDepart} class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
           </div>
           <div id="customDropoffContainer" class="hidden">
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Adresse exacte de destination</label>
-            <input type='text' name='destinationAddress' placeholder='Ex: Adresse complète de destination' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' />
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Adresse exacte de destination</label>
+            <input type='text' name='destinationAddress' placeholder='Ex: Adresse complète de destination' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' />
           </div>
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Notes spéciales (optionnel)</label>
-            <textarea name='specialNotes' rows='3' placeholder='Ex: Arrêt prévu à mi-parcours, besoins particuliers...' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'></textarea>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Notes spéciales (optionnel)</label>
+            <textarea name='specialNotes' rows='3' placeholder='Ex: Arrêt prévu à mi-parcours, besoins particuliers...' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'></textarea>
           </div>
         </div>
       </div>
@@ -162,7 +163,6 @@ const { ...props } = Astro.props;
 
     <!-- Étape 4: Coordonnées -->
     <ContactStep stepNumber={4} />
-    <p id='tunnel-message' class='mt-6 text-sm text-on-surface' role='alert'></p>
   </form>
 </TunnelLayout>
 
@@ -262,7 +262,7 @@ const { ...props } = Astro.props;
           return;
         }
         manager.form?.replaceChildren(document.createTextNode('Demande envoyée. Vous recevrez un devis par e-mail.'));
-        manager.form?.classList.add('text-on-surface', 'text-center', 'py-12');
+        manager.form?.classList.add('text-ui-ink', 'text-center', 'py-12');
         if (manager.submitBtn) manager.submitBtn.classList.add('hidden');
       }
     });

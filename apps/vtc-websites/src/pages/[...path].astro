@@ -2,23 +2,11 @@
 // Ne sert que la landing du site choisi par domaine (D-29 c) ; tunnels et pages fonctionnelles sont des routes communes.
 import { landings } from "virtual:vtc-sites";
 import { resolveSite } from "../router/siteResolver";
-import BaseLayout from "../layouts/BaseLayout.astro";
-import StatusPage from "../components/ui/StatusPage.astro";
+import NotFound from "../components/ui/NotFound.astro";
 
 const site = resolveSite(Astro.url.host);
 const path = (Astro.params.path || "").replace(/\/$/, "");
 const Page = path === "" ? (await landings[site]?.())?.default : undefined;
-if (!Page) Astro.response.status = 404;
-const tenantData = Astro.locals.tenant;
 ---
 
-{Page ? (
-  <Page />
-) : (
-  <BaseLayout title="Page introuvable" minimal>
-    <StatusPage tone="error" title="Page introuvable" tenantName={tenantData?.name}>
-      <p>L'adresse demandée n'existe pas ou a été déplacée.</p>
-      <a slot="actions" href="/" class="inline-flex h-11 w-full items-center justify-center rounded-md bg-ui-ink px-4 text-sm font-semibold text-ui-card transition-colors hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-ink">Retour à l'accueil</a>
-    </StatusPage>
-  </BaseLayout>
-)}
+{Page ? <Page /> : <NotFound />}

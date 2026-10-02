@@ -33,10 +33,10 @@ const config = {
 };
 ---
 
-<div class='min-h-screen bg-ui-page overflow-x-hidden text-ui-ink relative'>
+<div class='min-h-screen flex flex-col bg-ui-page overflow-x-hidden text-ui-ink relative'>
   <!-- Header avec progression -->
   <header class='fixed top-0 left-0 right-0 w-full z-50 bg-ui-card border-b border-ui-line'>
-    <div class='container mx-auto px-6 py-3 md:py-4'>
+    <div class='container mx-auto px-6 py-3'>
       <div class='flex items-center justify-between'>
         <a href='/' class='text-xl font-bold text-ui-ink hover:text-primary transition-colors'>
           {tenant.name}
@@ -65,15 +65,16 @@ const config = {
       </div>
 
       <!-- Barre de progression -->
-      <div class='mt-4 md:mt-6'>
+      <div class='mt-3'>
         <TunnelProgress currentStep={currentStep} totalSteps={totalSteps} />
       </div>
     </div>
   </header>
 
   <!-- Contenu principal -->
-  <main class='container mx-auto px-6 pt-36 md:pt-40 pb-12'>
+  <main class='container mx-auto px-6 pt-36 pb-6 flex-1'>
     <slot />
+    <p id='tunnel-message' class='max-w-4xl mx-auto mt-4 rounded-lg border border-ui-bad bg-ui-bad-soft px-4 py-3 text-sm font-medium text-ui-bad empty:hidden' role='alert'></p>
   </main>
 
   <!-- Footer avec navigation (extrait dans un composant) -->

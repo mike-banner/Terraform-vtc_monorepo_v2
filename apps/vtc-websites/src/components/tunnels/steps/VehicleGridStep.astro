@@ -29,9 +29,9 @@ const checkBg = 'peer-checked:bg-primary';
 ---
 
 <div class='step-container hidden' data-step={stepNumber}>
-  <div class='mb-12'>
-    <h2 class='text-2xl font-bold text-ui-ink mb-2'>{title}</h2>
-    <p class='text-ui-muted mb-8'>{subtitle}</p>
+  <div class='mb-6'>
+    <h2 class='text-2xl font-bold text-ui-ink mb-1'>{title}</h2>
+    <p class='text-ui-muted mb-5'>{subtitle}</p>
 
     {showEstimationNote && (
       <p id="estimationNote" class="text-xs text-ui-wait font-medium mb-6 bg-ui-wait-soft p-3 rounded-lg hidden">
@@ -44,7 +44,7 @@ const checkBg = 'peer-checked:bg-primary';
         vehicleTypes.map((vehicle: any) => (
           <label class='relative group cursor-pointer'>
             <input type='radio' name='vehicle' value={vehicle.type} data-id={vehicle.id} class='sr-only peer' required />
-            <div class={`peer-focus-visible:ring-2 peer-focus-visible:ring-primary p-6 border-2 border-ui-line rounded-xl transition-all duration-300 h-full ${borderColor} ${bgColor}`}>
+            <div class={`peer-focus-visible:ring-2 peer-focus-visible:ring-primary p-4 border-2 border-ui-line rounded-xl transition-all duration-300 h-full ${borderColor} ${bgColor}`}>
               <div class={`w-12 h-12 rounded-lg bg-ui-page flex items-center justify-center mb-4 transition-colors ${iconHoverBg}`}>
                 <Icon name={vehicle.icon} class={`text-xl text-ui-muted ${iconHoverText}`} />
               </div>

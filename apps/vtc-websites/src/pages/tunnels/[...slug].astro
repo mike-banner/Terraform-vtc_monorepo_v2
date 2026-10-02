@@ -26,7 +26,7 @@ const normalizedSlug = slugMap[currentSlug as keyof typeof slugMap];
 // Vérifier si le slug est valide
 if (!normalizedSlug) {
   console.error(`[TUNNEL] Slug invalide: ${currentSlug}`);
-  return Astro.redirect('/404');
+  return Astro.rewrite('/404');
 }
 
 // Composants disponibles (mapping dynamique)
@@ -39,7 +39,7 @@ const tunnelComponents: Record<string, () => Promise<{ default: any }>> = {
 // Vérifier si le composant existe
 if (!tunnelComponents[normalizedSlug]) {
   console.error(`[TUNNEL] Composant introuvable pour: ${normalizedSlug}`);
-  return Astro.redirect('/404');
+  return Astro.rewrite('/404');
 }
 
 // Charger le composant dynamiquement
@@ -48,7 +48,7 @@ try {
   TunnelResult = await tunnelComponents[normalizedSlug]();
 } catch (error) {
   console.error(`[TUNNEL] Erreur de chargement du composant: ${error}`);
-  return Astro.redirect('/404');
+  return Astro.rewrite('/404');
 }
 
 const TunnelComponent = TunnelResult.default;

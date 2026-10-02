@@ -27,7 +27,7 @@ const vehicleTypes = availableVehicles.map((v: any) => ({
 
 const useCases = [
   { id: 'shopping', name: 'Shopping & Visites', icon: 'ri:shopping-bag-line', desc: 'Accompagnement shopping et visites' },
-  { id: 'events', name: 'Événements', icon: 'ri:calendar-event-line', desc: 'Transport pour mariages, galas, cérémonies' },
+  { id: 'events', name: 'Événements', icon: 'ri:calendar-event-line', desc: 'Mariages, galas, cérémonies' },
   { id: 'medical', name: 'Accompagnement médical', icon: 'ri:hospital-line', desc: 'Rendez-vous médicaux' },
   { id: 'family', name: 'Transport familial', icon: 'ri:team-line', desc: 'Déplacements en famille' },
   { id: 'airport', name: 'Transferts multiples', icon: 'ri:plane-line', desc: 'Plusieurs allers-retours aéroport' },
@@ -42,29 +42,24 @@ const { ...props } = Astro.props;
     
     <!-- Étape 1: Durée & Date -->
     <div class='step-container' data-step='1'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Période de mise à disposition</h2>
-        <p class='text-ui-muted mb-8'>Indiquez le début et la fin de la période. Le prix vous est communiqué par devis.</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Période de mise à disposition</h2>
+        <p class='text-ui-muted mb-5'>Indiquez le début et la fin de la période. Le prix vous est communiqué par devis.</p>
 
-        <DateTimePicker
-          class='mb-6'
-          dateName='serviceDate'
-          timeName='startTime'
-          dateLabel='Date de début'
-          timeLabel='Heure de début'
-        />
-
-        <DateTimePicker
-          class='mb-6'
-          dateName='endDate'
-          timeName='endTime'
-          dateLabel='Date de fin'
-          timeLabel='Heure de fin'
-        />
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-4'>
+          <fieldset>
+            <legend class='text-sm font-semibold text-ui-ink mb-2'>Début</legend>
+            <DateTimePicker dateName='serviceDate' timeName='startTime' dateLabel='Date' timeLabel='Heure' />
+          </fieldset>
+          <fieldset>
+            <legend class='text-sm font-semibold text-ui-ink mb-2'>Fin</legend>
+            <DateTimePicker dateName='endDate' timeName='endTime' dateLabel='Date' timeLabel='Heure' />
+          </fieldset>
+        </div>
 
         <div>
-          <label class='block text-sm font-medium text-ui-ink mb-2'>Zone de prise en charge initiale</label>
-          <input type='text' name='initialPickup' placeholder='Ex: Hôtel, domicile, gare...' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
+          <label class='block text-sm font-medium text-ui-ink mb-1.5'>Zone de prise en charge initiale</label>
+          <input type='text' name='initialPickup' placeholder='Ex: Hôtel, domicile, gare...' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
         </div>
       </div>
     </div>
@@ -79,23 +74,25 @@ const { ...props } = Astro.props;
 
     <!-- Étape 3: Type d'utilisation & Options -->
     <div class='step-container hidden' data-step='3'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Programme de l'excursion</h2>
-        <p class='text-ui-muted mb-8'>Détaillez le programme de votre journée pour que notre chauffeur s'adapte à vos besoins</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Programme de l'excursion</h2>
+        <p class='text-ui-muted mb-5'>Détaillez le programme de votre journée pour que notre chauffeur s'adapte à vos besoins</p>
 
-        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
+        <div class='grid grid-cols-1 md:grid-cols-3 gap-3 mb-4'>
           {
             useCases.map((useCase) => (
               <label class='relative group cursor-pointer'>
                 <input type='radio' name='useCase' value={useCase.id} class='sr-only peer' />
-                <div class='p-6 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
-                  <div class='w-10 h-10 rounded-lg bg-ui-page flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors'>
+                <div class='p-4 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full flex items-center gap-3'>
+                  <div class='w-9 h-9 shrink-0 rounded-lg bg-ui-page flex items-center justify-center group-hover:bg-primary/10 transition-colors'>
                     <Icon name={useCase.icon} class='text-lg text-ui-muted group-hover:text-primary' />
                   </div>
-                  <h3 class='text-lg font-semibold text-ui-ink mb-2'>{useCase.name}</h3>
-                  <p class='text-sm text-ui-muted'>{useCase.desc}</p>
+                  <div>
+                    <h3 class='text-base font-semibold text-ui-ink leading-tight'>{useCase.name}</h3>
+                    <p class='text-xs text-ui-muted'>{useCase.desc}</p>
+                  </div>
                 </div>
-                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-ui-line-strong rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                <div class='absolute top-2 right-2 w-5 h-5 border-2 border-ui-line-strong rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
                   <Icon name='ri:check-line' class='text-white text-xs' />
                 </div>
               </label>
@@ -103,10 +100,10 @@ const { ...props } = Astro.props;
           }
         </div>
 
-        <div class='space-y-6'>
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3'>
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Nombre de passagers</label>
-            <select name='passengerCount' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Nombre de passagers</label>
+            <select name='passengerCount' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required>
               <option value='1'>1 passager</option>
               <option value='2'>2 passagers</option>
               <option value='3'>3 passagers</option>
@@ -117,33 +114,27 @@ const { ...props } = Astro.props;
           </div>
 
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Itinéraire détaillé et lieux à visiter (Requis)</label>
-            <textarea name='plannedItinerary' rows='3' placeholder={site.dispoPlaceholderItineraire} class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required></textarea>
-          </div>
-
-          <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Options Touristiques Supplémentaires (Sur devis)</label>
-            <div class='flex flex-col gap-3 mt-2'>
-              <label class='flex items-center gap-3 cursor-pointer p-3 border border-ui-line rounded-lg hover:bg-ui-page transition-colors'>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Options (sur devis)</label>
+            <div class='flex flex-col gap-2'>
+              <label class='flex items-center gap-3 cursor-pointer p-2 border border-ui-line rounded-lg hover:bg-ui-page transition-colors'>
                 <input type='checkbox' name='optionTranslator' value='yes' class='w-5 h-5 text-primary rounded focus:ring-primary' />
-                <div>
-                  <span class='text-sm font-medium text-ui-ink block'>Option Traducteur / Interprète</span>
-                  <span class='text-xs text-ui-muted'>Un professionnel bilingue vous accompagne.</span>
-                </div>
+                <span class='text-sm font-medium text-ui-ink' title='Un professionnel bilingue vous accompagne.'>Traducteur / interprète</span>
               </label>
-              <label class='flex items-center gap-3 cursor-pointer p-3 border border-ui-line rounded-lg hover:bg-ui-page transition-colors'>
+              <label class='flex items-center gap-3 cursor-pointer p-2 border border-ui-line rounded-lg hover:bg-ui-page transition-colors'>
                 <input type='checkbox' name='optionTourGuide' value='yes' class='w-5 h-5 text-primary rounded focus:ring-primary' />
-                <div>
-                  <span class='text-sm font-medium text-ui-ink block'>Formule Guide Touristique</span>
-                  <span class='text-xs text-ui-muted'>Le chauffeur dispose d'une accréditation guide touristique.</span>
-                </div>
+                <span class='text-sm font-medium text-ui-ink' title='Le chauffeur dispose d&apos;une accréditation guide touristique.'>Guide touristique</span>
               </label>
             </div>
           </div>
 
           <div>
-            <label class='block text-sm font-medium text-ui-ink mb-2'>Notes spéciales (optionnel)</label>
-            <textarea name='specialNotes' rows='2' placeholder='Ex: Personne à mobilité réduite, besoins spécifiques...' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'></textarea>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Itinéraire et lieux à visiter</label>
+            <textarea name='plannedItinerary' rows='3' placeholder={site.dispoPlaceholderItineraire} class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required></textarea>
+          </div>
+
+          <div>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Notes spéciales (optionnel)</label>
+            <textarea name='specialNotes' rows='3' placeholder='Ex: Personne à mobilité réduite, besoins spécifiques...' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'></textarea>
           </div>
         </div>
       </div>
@@ -151,7 +142,6 @@ const { ...props } = Astro.props;
 
     <!-- Étape 4: Coordonnées -->
     <ContactStep stepNumber={4} />
-    <p id='tunnel-message' class='mt-6 text-sm text-on-surface' role='alert'></p>
   </form>
 </TunnelLayout>
 
@@ -231,7 +221,7 @@ const { ...props } = Astro.props;
           return;
         }
         manager.form?.replaceChildren(document.createTextNode('Demande envoyée. Vous recevrez un devis par e-mail.'));
-        manager.form?.classList.add('text-on-surface', 'text-center', 'py-12');
+        manager.form?.classList.add('text-ui-ink', 'text-center', 'py-12');
         if (manager.submitBtn) manager.submitBtn.classList.add('hidden');
       }
     });

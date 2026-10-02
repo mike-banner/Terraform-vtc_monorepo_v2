@@ -115,3 +115,8 @@ h1, h2, h3, h4, h5, h6 {
 .bg-secondary {
   background-color: var(--color-secondary) !important;
 }
+
+/* Champ refusé dans un tunnel */
+[aria-invalid='true'] {
+  border-color: var(--color-ui-bad) !important;
+}
