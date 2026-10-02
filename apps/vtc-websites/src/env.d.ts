@@ -17,3 +17,10 @@ declare namespace App {
     tenant: Tenant;
   }
 }
+
+declare module "virtual:vtc-sites" {
+  export const siteMap: Record<string, string>;
+  export const defaultSite: string;
+  export const configs: Record<string, Partial<import("./core/site-config").ConfigSite>>;
+  export const landings: Record<string, () => Promise<{ default: any }>>;
+}
