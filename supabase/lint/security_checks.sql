@@ -30,7 +30,9 @@ DECLARE
 
   -- Fonctions SECURITY DEFINER exécutables par anon (RPC publiques). Les deux dernières sont
   -- les RPC de notation du plan 14-07.
-  allowed_anon_definer text[] := ARRAY['get_public_tenant','get_available_vehicles','get_public_booking_result','get_public_payment_state','get_rating_context','submit_rating'];
+  allowed_anon_definer text[] := ARRAY['get_public_tenant','get_available_vehicles','get_public_booking_result','get_public_payment_state','get_rating_context','submit_rating',
+    -- demande de mise à disposition / longue distance depuis le site public (phase 14.1, D-13/D-21/D-34) : bornes, période et limites en base
+    'submit_booking_request'];
 BEGIN
   -- 1. Vue SECURITY DEFINER : la RLS des tables sources ne s'applique pas.
   FOR r IN

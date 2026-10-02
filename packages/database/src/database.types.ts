@@ -1840,12 +1840,20 @@ export type Database = {
         Args: { onboarding_uuid: string }
         Returns: undefined
       }
+      accept_quote_manually: {
+        Args: { p_booking_id: string; p_force?: boolean }
+        Returns: string
+      }
       assign_invoice_number: {
         Args: { p_booking_id: string }
         Returns: {
           invoice_created_at: string
           invoice_number: string
         }[]
+      }
+      authorize_quote: {
+        Args: { p_booking_id: string }
+        Returns: undefined
       }
       booking_conflicts: {
         Args: { p_booking_id?: string }
@@ -1943,6 +1951,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["tenant_role"]
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      decline_booking_request: {
+        Args: { p_booking_id: string; p_reason: string }
+        Returns: string
+      }
       delete_tenant_account: { Args: never; Returns: undefined }
       driver_cancel_booking: {
         Args: { p_booking_id: string; p_reason: string }
@@ -2064,6 +2076,25 @@ export type Database = {
         Returns: string
       }
       retry_refund: { Args: { p_booking_id: string }; Returns: Json }
+      submit_booking_request: {
+        Args: {
+          p_dropoff: string
+          p_email: string
+          p_end_time: string
+          p_first_name: string
+          p_instructions: string
+          p_last_name: string
+          p_luggage_count: number
+          p_passenger_count: number
+          p_phone: string
+          p_pickup: string
+          p_pickup_time: string
+          p_request_kind: string
+          p_tenant_id: string
+          p_vehicle_id: string
+        }
+        Returns: boolean
+      }
       submit_rating: {
         Args: { p_booking_id: string; p_comment?: string; p_rating: number }
         Returns: undefined
