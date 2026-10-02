@@ -51,6 +51,7 @@ supabase/.temp/
 
 # Instances et Terraform : valeurs propres à une instance, jamais versionnées
 terraform/*.auto.tfvars
+terraform/.terraform/
 *.instance.env
 
 # Sites vitrines : seuls le site du développeur et le modèle vide sont versionnés ;
