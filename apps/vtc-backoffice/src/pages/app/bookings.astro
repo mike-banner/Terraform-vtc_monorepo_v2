@@ -45,7 +45,6 @@ if (currentType !== "all") {
 }
 
 // Profil chauffeur de l'utilisateur (un propriétaire peut aussi conduire : il en a besoin pour « Prendre la main »).
-let driverId = null;
 const { data: driver } = await supabaseServer
     .from("drivers")
     .select("id")
@@ -53,7 +52,7 @@ const { data: driver } = await supabaseServer
     .eq("tenant_id", profile.tenant_id!)
     .limit(1)
     .maybeSingle();
-driverId = driver?.id ?? null;
+const driverId = driver?.id ?? null;
 
 // Un chauffeur ne voit que ses propres courses ; propriétaire et gérant voient tout le tenant.
 if (profile.tenant_role === "driver") {
