@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import cloudflare from "@astrojs/cloudflare";
 import tailwindcss from "@tailwindcss/vite";
@@ -9,7 +9,15 @@ import { lireSites } from "./sites.config.mjs";
 // En build, PUBLIC_SITE/SITE_MAP viennent de l'environnement seulement : le .env local ne doit pas faire compiler
 // en silence les sites d'une autre instance. En dev, le .env local suffit.
 const isBuild = process.argv.includes("build"); // ponytail: détection par argv, suffisant pour `astro build`
-if (!isBuild && !process.env.PUBLIC_SITE && existsSync(".env")) process.loadEnvFile(".env");
+// Seules ces deux clés sont lues, jamais tout le fichier : un process.loadEnvFile(".env") complet passait avant `.env.local`
+// et faisait pointer le site de développement vers les adresses Supabase du .env (la base distante).
+if (!isBuild)
+  for (const cle of ["PUBLIC_SITE", "SITE_MAP"])
+    for (const fichier of [".env.local", ".env"]) {
+      if (process.env[cle] !== undefined || !existsSync(fichier)) continue;
+      const m = readFileSync(fichier, "utf8").match(new RegExp(`^${cle}=(.*)$`, "m"));
+      if (m) process.env[cle] = m[1].trim().replace(/^["']|["']$/g, "");
+    }
 const { defaultSite, siteMap, codes } = lireSites(process.env);
 const racine = fileURLToPath(new URL("./src/sites/", import.meta.url));
 for (const code of codes)
