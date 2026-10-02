@@ -892,6 +892,23 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </div>
                         </div>
 
+                        <!-- AVOIRS (course facturée, owner/manager) -->
+                        <div id="credit-note-section" class="hidden bg-muted/10 p-4 rounded-[var(--radius)] border border-border mt-4 space-y-3">
+                            <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Avoirs</p>
+                            <div id="credit-note-list" class="space-y-1"></div>
+                            <p id="credit-note-remaining" class="text-xs font-bold text-foreground"></p>
+                            <button id="credit-note-open-btn" type="button" class="w-full py-3 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">
+                                Émettre un avoir
+                            </button>
+                            <div id="credit-note-form" class="hidden space-y-2">
+                                <input id="credit-note-amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Montant TTC (€)" class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground text-sm" />
+                                <textarea id="credit-note-reason" maxlength="500" rows="2" placeholder="Motif (obligatoire)" class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground text-sm"></textarea>
+                                <button id="credit-note-send-btn" type="button" class="w-full py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl disabled:opacity-50">
+                                    Émettre l'avoir
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="flex flex-col sm:flex-row gap-3 mt-4">
                             <button id="modal-invoice-btn" class="hidden flex-1 py-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50">
                                 Facture PDF

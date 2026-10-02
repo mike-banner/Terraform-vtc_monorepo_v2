@@ -60,6 +60,76 @@ const parseBookingFromRow = (row: Element): AnyBooking => {
   }
 };
 
+// Avoirs (14.1-04, D-31 strict fonctionnel) : le reste à créditer vient de la RPC credit_note_remaining, jamais calculé ici.
+const eurFr = (n: number | string) => Number(n).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+
+const setupCreditNotes = (booking: AnyBooking, canManage: boolean): void => {
+  const section = document.getElementById("credit-note-section");
+  if (!section) return;
+  const invoiced = String(booking.invoice_number ?? "").startsWith("FAC-");
+  section.classList.toggle("hidden", !(invoiced && canManage));
+  if (!(invoiced && canManage)) return;
+
+  const bookingId = String(booking.id);
+  const list = document.getElementById("credit-note-list")!;
+  const form = document.getElementById("credit-note-form")!;
+  const remainingEl = document.getElementById("credit-note-remaining")!;
+  const amountInput = document.getElementById("credit-note-amount") as HTMLInputElement;
+  const reasonInput = document.getElementById("credit-note-reason") as HTMLTextAreaElement;
+  const openBtn = document.getElementById("credit-note-open-btn") as HTMLButtonElement;
+  const sendBtn = document.getElementById("credit-note-send-btn") as HTMLButtonElement;
+  form.classList.add("hidden");
+  amountInput.value = "";
+  reasonInput.value = "";
+
+  const openPdf = async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke("generate-credit-note", { body });
+    if (error) throw new Error(await functionErrorMessage(error, "Erreur lors de l'émission de l'avoir."));
+    if (data?.message) alert(data.message);
+    if (data?.url) window.open(data.url, "_blank");
+  };
+
+  const refresh = async () => {
+    const { data: rem } = await supabase.rpc("credit_note_remaining", { p_booking_id: bookingId });
+    remainingEl.textContent = rem == null ? "" : `Reste à créditer : ${eurFr(rem as number)}`;
+    amountInput.max = rem == null ? "" : String(rem);
+    openBtn.classList.toggle("hidden", Number(rem) <= 0);
+    const { data: notes } = await supabase.from("credit_notes")
+      .select("id, number, amount_ttc, issued_at").eq("booking_id", bookingId).order("issued_at");
+    list.replaceChildren(...(notes ?? []).map((n) => {
+      const row = document.createElement("div");
+      row.className = "flex items-center justify-between text-xs text-muted-foreground";
+      const label = document.createElement("span");
+      label.textContent = `${n.number} - ${eurFr(n.amount_ttc)}`;
+      const pdf = document.createElement("button");
+      pdf.type = "button";
+      pdf.className = "text-primary font-bold uppercase";
+      pdf.textContent = "PDF";
+      pdf.onclick = () => openPdf({ credit_note_id: n.id }).catch((e) => alert(e.message));
+      row.append(label, pdf);
+      return row;
+    }));
+  };
+
+  openBtn.onclick = () => form.classList.remove("hidden");
+  sendBtn.onclick = async () => {
+    sendBtn.disabled = true;
+    try {
+      const amount = Number(amountInput.value.replace(",", "."));
+      await openPdf({ booking_id: bookingId, amount, reason: reasonInput.value });
+      form.classList.add("hidden");
+      amountInput.value = "";
+      reasonInput.value = "";
+      await refresh();
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      sendBtn.disabled = false;
+    }
+  };
+  void refresh();
+};
+
 const updateTerrainUI = (booking: AnyBooking): void => {
   const root = document.getElementById("mission-cockpit-root");
   if (!root) return;
@@ -492,7 +562,9 @@ const run = (): void => {
       // Bouton Facture (post-mission)
       const invoiceBtn = document.getElementById("modal-invoice-btn") as HTMLButtonElement | null;
       if (invoiceBtn) {
-        const isCompleted = booking.mission_status === "completed" || booking.status === "paid" || booking.status === "completed";
+        // D-01 : facture à la demande, sur une course terminée seulement.
+        const isCompleted = booking.mission_status === "completed"
+          && !String(booking.status ?? "").startsWith("cancel") && booking.status !== "no_show" && booking.status !== "refund_failed";
         if (isCompleted) {
           invoiceBtn.classList.remove("hidden");
           invoiceBtn.onclick = async () => {
@@ -529,6 +601,8 @@ const run = (): void => {
           invoiceBtn.classList.add("hidden");
         }
       }
+
+      setupCreditNotes(booking, canManage);
 
       // Reset panneau annulation
       document.getElementById("cancel-trigger-area")?.classList.remove("hidden");
