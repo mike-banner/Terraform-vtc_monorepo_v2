@@ -271,7 +271,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
               },
               booking_data: {
                 tenant_id: tenantId,
-                type: 'standard',
+                type: 'transfer',
                 vehicle_id: vehicleId,
                 fixed_route_id: route.id,
                 pickup_address: formData.get('pickupAddress') || pickupZone,
@@ -288,7 +288,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
           else throw new Error("Impossible de générer le lien de paiement Stripe.");
         } catch (err: any) {
           console.error("Checkout error:", err);
-          alert(err.message || "Erreur lors de la création du paiement");
+          alert("Le paiement n'a pas pu être lancé. Aucun montant n'a été débité, merci de réessayer dans un instant.");
           manager.setLoading(false);
         }
       }
