@@ -1847,6 +1847,17 @@ export type Database = {
           invoice_number: string
         }[]
       }
+      booking_conflicts: {
+        Args: { p_booking_id?: string }
+        Returns: {
+          booking_id: string
+          other_end_time: string
+          other_id: string
+          other_pickup_address: string
+          other_pickup_time: string
+          other_status: string
+        }[]
+      }
       booking_vat_split: {
         Args: { p_gross: number; p_is_exempt: boolean; p_vat_rate: number }
         Returns: {
@@ -1854,6 +1865,10 @@ export type Database = {
           net: number
           vat: number
         }[]
+      }
+      booking_window: {
+        Args: { p_hours: number; p_pickup: string }
+        Returns: unknown
       }
       calculate_booking_price: {
         Args: {

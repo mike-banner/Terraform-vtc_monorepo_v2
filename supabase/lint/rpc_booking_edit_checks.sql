@@ -82,7 +82,7 @@ SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
 SELECT pg_temp.expect_error('update: driver ne change pas le montant', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 80)$q$, '42501', 'Seuls le propriétaire et le manager peuvent modifier le montant');
 SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
 SELECT pg_temp.expect_error('update: montant 0', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 0)$q$, '22023', 'Montant invalide : 0€');
-SELECT pg_temp.expect_error('update: montant 10000', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 10000)$q$, '22023', 'Montant invalide : 10000€');
+SELECT pg_temp.expect_error('update: montant 100000', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 100000)$q$, '22023', 'Montant invalide : 100000€');
 INSERT INTO _r SELECT 'b10_prix', public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'Autre adresse', NULL, NULL, NULL, 200);
 INSERT INTO _r SELECT 'b3_prix', public.update_booking_details('b3000000-0000-4000-8000-000000000003', now() + interval '4 days', 'Nouvelle adresse', NULL, NULL, NULL, 55);
 RESET ROLE;
@@ -129,7 +129,7 @@ SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
 SELECT pg_temp.expect_error('create: email vide', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', '')$q$, '22023', 'Email client invalide');
 SELECT pg_temp.expect_error('create: email sans @', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean.rpc')$q$, '22023', 'Email client invalide');
 SELECT pg_temp.expect_sqlstate('create: type foo', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_booking_type => 'foo')$q$, '22023');
-SELECT pg_temp.expect_error('create: montant 10000', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_manual_total => 10000)$q$, '22023', 'Montant invalide : 10000€');
+SELECT pg_temp.expect_error('create: montant 100000', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_manual_total => 100000)$q$, '22023', 'Montant invalide : 100000€');
 SELECT pg_temp.expect_error('create: véhicule tenant B', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_vehicle_id => 'ee000000-0000-4000-8000-0000000000bb')$q$, '22023', 'Véhicule introuvable pour ce tenant');
 
 INSERT INTO _c SELECT 'rule', * FROM public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', '  Client.New@RPC.invalid ', p_distance_km => 30);
