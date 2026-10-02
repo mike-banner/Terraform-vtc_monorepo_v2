@@ -34,6 +34,7 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 ## Tunnels de réservation
 
 - Transfert : contrôle des deux extrémités du trajet fixe contre les codes postaux des zones du chauffeur (api-adresse.data.gouv.fr, côté navigateur, blocage avant paiement) ; le serveur ne fait que signaler (`bookings.address_alert`).
+- Transfert : une extrémité dont la zone n'a pas de codes postaux (aéroport, gare) n'a pas de saisie libre : le champ est verrouillé sur le nom de la zone ; terminal et n° de vol vont dans les instructions.
 
 - Transfert = paiement Stripe ; Mise à disposition (à l'heure, période début-fin) et Longue distance = demande, devis envoyé par le propriétaire ; Business = non exposé (D-35).
 - Tunnels implémentés : ceux présents dans `src/components/booking/`.

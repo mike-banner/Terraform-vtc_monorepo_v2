@@ -337,6 +337,25 @@ const { serviceType = 'airport', ...props } = Astro.props;
       pickupInput.placeholder = isAirportPickup ? 'Ex : terminal, n° de vol' : placeholderAdresse;
       dropoffInput.placeholder = placeholderAdresse;
 
+      // Une extrémité dont la zone n'a pas de codes postaux (aéroport, gare) n'est pas contrôlable : pas de saisie libre,
+      // le champ porte le nom de la zone. Les détails (terminal, vol) vont dans les instructions de l'étape 4.
+      const route = routes.find((r: any) => r.pickup_zone?.name === basePickup && r.dropoff_zone?.name === baseDropoff);
+      const { depart, arrivee } = route ? zonesDuSens(route, directionState.value) : { depart: null, arrivee: null };
+      const verrou = ['bg-ui-page', 'text-ui-muted', 'cursor-not-allowed'];
+      const fixer = (input: HTMLInputElement, zone: any) => {
+        if (zone && !zone.postal_codes?.length) {
+          input.value = zone.name;
+          input.readOnly = true;
+          input.classList.add(...verrou);
+        } else if (input.readOnly) {
+          input.value = '';
+          input.readOnly = false;
+          input.classList.remove(...verrou);
+        }
+      };
+      fixer(pickupInput, depart);
+      fixer(dropoffInput, arrivee);
+
       if (flightTrackingContainer) {
         if (isAirportPickup) flightTrackingContainer.classList.remove('hidden');
         else flightTrackingContainer.classList.add('hidden');
