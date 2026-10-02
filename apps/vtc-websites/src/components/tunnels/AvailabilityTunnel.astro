@@ -43,12 +43,11 @@ const { ...props } = Astro.props;
     <!-- Étape 1: Durée & Date -->
     <div class='step-container' data-step='1'>
       <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Période de mise à disposition</h2>
-        <p class='text-zinc-600 mb-8'>Indiquez le début et la fin de la période. Le prix vous est communiqué par devis.</p>
+        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Période de mise à disposition</h2>
+        <p class='text-ui-muted mb-8'>Indiquez le début et la fin de la période. Le prix vous est communiqué par devis.</p>
 
         <DateTimePicker
           class='mb-6'
-          themeColor='orange'
           dateName='serviceDate'
           timeName='startTime'
           dateLabel='Date de début'
@@ -57,7 +56,6 @@ const { ...props } = Astro.props;
 
         <DateTimePicker
           class='mb-6'
-          themeColor='orange'
           dateName='endDate'
           timeName='endTime'
           dateLabel='Date de fin'
@@ -65,8 +63,8 @@ const { ...props } = Astro.props;
         />
 
         <div>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'>Zone de prise en charge initiale</label>
-          <input type='text' name='initialPickup' placeholder='Ex: Hôtel, domicile, gare...' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required />
+          <label class='block text-sm font-medium text-ui-ink mb-2'>Zone de prise en charge initiale</label>
+          <input type='text' name='initialPickup' placeholder='Ex: Hôtel, domicile, gare...' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
         </div>
       </div>
     </div>
@@ -74,7 +72,6 @@ const { ...props } = Astro.props;
     <!-- Étape 2: Véhicule -->
     <VehicleGridStep 
       stepNumber={2} 
-      themeColor="amber" 
       vehicleTypes={vehicleTypes} 
       title="Choisissez votre véhicule"
       subtitle="Sélectionnez la gamme pour votre mise à disposition. Le prix vous est communiqué par devis."
@@ -83,22 +80,22 @@ const { ...props } = Astro.props;
     <!-- Étape 3: Type d'utilisation & Options -->
     <div class='step-container hidden' data-step='3'>
       <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Programme de l'excursion</h2>
-        <p class='text-zinc-600 mb-8'>Détaillez le programme de votre journée pour que notre chauffeur s'adapte à vos besoins</p>
+        <h2 class='text-2xl font-bold text-ui-ink mb-2'>Programme de l'excursion</h2>
+        <p class='text-ui-muted mb-8'>Détaillez le programme de votre journée pour que notre chauffeur s'adapte à vos besoins</p>
 
         <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
           {
             useCases.map((useCase) => (
               <label class='relative group cursor-pointer'>
                 <input type='radio' name='useCase' value={useCase.id} class='sr-only peer' />
-                <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-orange-500 transition-all duration-300 peer-checked:border-orange-500 peer-checked:bg-orange-500/5 h-full'>
-                  <div class='w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-orange-500/10 transition-colors'>
-                    <Icon name={useCase.icon} class='text-lg text-zinc-600 group-hover:text-orange-500' />
+                <div class='p-6 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
+                  <div class='w-10 h-10 rounded-lg bg-ui-page flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors'>
+                    <Icon name={useCase.icon} class='text-lg text-ui-muted group-hover:text-primary' />
                   </div>
-                  <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{useCase.name}</h3>
-                  <p class='text-sm text-zinc-600'>{useCase.desc}</p>
+                  <h3 class='text-lg font-semibold text-ui-ink mb-2'>{useCase.name}</h3>
+                  <p class='text-sm text-ui-muted'>{useCase.desc}</p>
                 </div>
-                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-orange-500 peer-checked:bg-orange-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-ui-line-strong rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
                   <Icon name='ri:check-line' class='text-white text-xs' />
                 </div>
               </label>
@@ -108,8 +105,8 @@ const { ...props } = Astro.props;
 
         <div class='space-y-6'>
           <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Nombre de passagers</label>
-            <select name='passengerCount' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required>
+            <label class='block text-sm font-medium text-ui-ink mb-2'>Nombre de passagers</label>
+            <select name='passengerCount' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required>
               <option value='1'>1 passager</option>
               <option value='2'>2 passagers</option>
               <option value='3'>3 passagers</option>
@@ -120,40 +117,40 @@ const { ...props } = Astro.props;
           </div>
 
           <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Itinéraire détaillé et lieux à visiter (Requis)</label>
-            <textarea name='plannedItinerary' rows='3' placeholder={site.dispoPlaceholderItineraire} class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent' required></textarea>
+            <label class='block text-sm font-medium text-ui-ink mb-2'>Itinéraire détaillé et lieux à visiter (Requis)</label>
+            <textarea name='plannedItinerary' rows='3' placeholder={site.dispoPlaceholderItineraire} class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required></textarea>
           </div>
 
           <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Options Touristiques Supplémentaires (Sur devis)</label>
+            <label class='block text-sm font-medium text-ui-ink mb-2'>Options Touristiques Supplémentaires (Sur devis)</label>
             <div class='flex flex-col gap-3 mt-2'>
-              <label class='flex items-center gap-3 cursor-pointer p-3 border border-zinc-200 rounded-lg hover:bg-orange-50/50 transition-colors'>
-                <input type='checkbox' name='optionTranslator' value='yes' class='w-5 h-5 text-orange-500 rounded focus:ring-orange-500' />
+              <label class='flex items-center gap-3 cursor-pointer p-3 border border-ui-line rounded-lg hover:bg-ui-page transition-colors'>
+                <input type='checkbox' name='optionTranslator' value='yes' class='w-5 h-5 text-primary rounded focus:ring-primary' />
                 <div>
-                  <span class='text-sm font-medium text-zinc-900 block'>Option Traducteur / Interprète</span>
-                  <span class='text-xs text-zinc-500'>Un professionnel bilingue vous accompagne.</span>
+                  <span class='text-sm font-medium text-ui-ink block'>Option Traducteur / Interprète</span>
+                  <span class='text-xs text-ui-muted'>Un professionnel bilingue vous accompagne.</span>
                 </div>
               </label>
-              <label class='flex items-center gap-3 cursor-pointer p-3 border border-zinc-200 rounded-lg hover:bg-orange-50/50 transition-colors'>
-                <input type='checkbox' name='optionTourGuide' value='yes' class='w-5 h-5 text-orange-500 rounded focus:ring-orange-500' />
+              <label class='flex items-center gap-3 cursor-pointer p-3 border border-ui-line rounded-lg hover:bg-ui-page transition-colors'>
+                <input type='checkbox' name='optionTourGuide' value='yes' class='w-5 h-5 text-primary rounded focus:ring-primary' />
                 <div>
-                  <span class='text-sm font-medium text-zinc-900 block'>Formule Guide Touristique</span>
-                  <span class='text-xs text-zinc-500'>Le chauffeur dispose d'une accréditation guide touristique.</span>
+                  <span class='text-sm font-medium text-ui-ink block'>Formule Guide Touristique</span>
+                  <span class='text-xs text-ui-muted'>Le chauffeur dispose d'une accréditation guide touristique.</span>
                 </div>
               </label>
             </div>
           </div>
 
           <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Notes spéciales (optionnel)</label>
-            <textarea name='specialNotes' rows='2' placeholder='Ex: Personne à mobilité réduite, besoins spécifiques...' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'></textarea>
+            <label class='block text-sm font-medium text-ui-ink mb-2'>Notes spéciales (optionnel)</label>
+            <textarea name='specialNotes' rows='2' placeholder='Ex: Personne à mobilité réduite, besoins spécifiques...' class='w-full px-4 py-3 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'></textarea>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Étape 4: Coordonnées -->
-    <ContactStep stepNumber={4} themeColor="amber" />
+    <ContactStep stepNumber={4} />
     <p id='tunnel-message' class='mt-6 text-sm text-on-surface' role='alert'></p>
   </form>
 </TunnelLayout>

@@ -11,19 +11,17 @@ const {
   serviceType = 'airport',
   title: propTitle,
   icon: propIcon,
-  color: propColor,
-  accentColor = '#000000',
 } = Astro.props;
 
 const tenant = Astro.locals.tenant || { name: configDuSite(Astro.url.host).nom, id: '' };
 
 // Fallback configs si les props ne sont pas fournies
 const defaultConfigs = {
-  airport: { title: 'Transfert', color: 'bg-blue-500', icon: 'ri:route-line' },
-  transfert: { title: 'Transfert', color: 'bg-blue-500', icon: 'ri:route-line' },
-  longDistance: { title: 'Longue Distance', color: 'bg-green-500', icon: 'ri:road-map-line' },
-  business: { title: 'Business & B2B', color: 'bg-purple-500', icon: 'ri:briefcase-line' },
-  availability: { title: 'Mise à Disposition', color: 'bg-orange-500', icon: 'ri:time-line' },
+  airport: { title: 'Transfert', icon: 'ri:route-line' },
+  transfert: { title: 'Transfert', icon: 'ri:route-line' },
+  longDistance: { title: 'Longue Distance', icon: 'ri:road-map-line' },
+  business: { title: 'Business & B2B', icon: 'ri:briefcase-line' },
+  availability: { title: 'Mise à Disposition', icon: 'ri:time-line' },
 };
 
 const defaultConfig =
@@ -32,59 +30,34 @@ const defaultConfig =
 const config = {
   title: propTitle || defaultConfig.title,
   icon: propIcon || defaultConfig.icon,
-  color: propColor || defaultConfig.color,
 };
 ---
 
-<style is:global define:vars={{ accentColor }}>
-  .text-accent {
-    color: var(--accentColor) !important;
-  }
-  .bg-accent {
-    background-color: var(--accentColor) !important;
-  }
-  .border-accent {
-    border-color: var(--accentColor) !important;
-  }
-  .hover\:border-accent:hover {
-    border-color: var(--accentColor) !important;
-  }
-  .peer-checked\:border-accent:checked + div {
-    border-color: var(--accentColor) !important;
-  }
-  .peer-checked\:bg-accent\/5:checked + div {
-    background-color: color-mix(in srgb, var(--accentColor), transparent 95%) !important;
-  }
-  .ring-accent\/20 {
-    --tw-ring-color: color-mix(in srgb, var(--accentColor), transparent 80%) !important;
-  }
-</style>
-
-<div class='min-h-screen bg-gradient-to-b from-zinc-50 to-white overflow-x-hidden relative'>
+<div class='min-h-screen bg-ui-page overflow-x-hidden text-ui-ink relative'>
   <!-- Header avec progression -->
-  <header class='fixed top-0 left-0 right-0 w-full z-50 bg-white/95 backdrop-blur-sm border-b border-zinc-200'>
+  <header class='fixed top-0 left-0 right-0 w-full z-50 bg-ui-card border-b border-ui-line'>
     <div class='container mx-auto px-6 py-3 md:py-4'>
       <div class='flex items-center justify-between'>
-        <a href='/' class='text-xl font-bold text-zinc-900 hover:text-zinc-700 transition-colors'>
+        <a href='/' class='text-xl font-bold text-ui-ink hover:text-primary transition-colors'>
           {tenant.name}
         </a>
         <div class='flex items-center gap-4 md:gap-6'>
           <div class="flex items-center gap-3">
-            <span class='text-sm font-medium text-zinc-600 hidden sm:inline'>
+            <span class='text-sm font-medium text-ui-muted hidden sm:inline'>
               {config.title}
             </span>
             <div
-              class={`w-8 h-8 rounded-full flex items-center justify-center text-white ${config.color}`}>
+              class={`w-8 h-8 rounded-full flex items-center justify-center bg-ui-ink text-white`}>
               <Icon name={config.icon} class='text-lg' />
             </div>
           </div>
           
-          <div class="h-6 w-px bg-zinc-200"></div>
+          <div class="h-6 w-px bg-ui-line"></div>
           
           <!-- Bouton Fermer le tunnel (retour accueil) -->
-          <a href="/" class="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-900 transition-colors group">
+          <a href="/" class="flex items-center gap-2 text-sm font-medium text-ui-muted hover:text-ui-ink transition-colors group">
             <span class="hidden sm:inline">Quitter</span>
-            <div class="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center group-hover:bg-zinc-200 transition-colors">
+            <div class="w-8 h-8 rounded-full bg-ui-page flex items-center justify-center group-hover:bg-ui-line transition-colors">
               <Icon name='ri:close-line' class='text-lg' />
             </div>
           </a>
@@ -110,10 +83,10 @@ const config = {
 <!-- Scripts & Styles de Flatpickr pour un calendrier Premium et Homogène -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style is:global>
-  /* Style sombre/premium pour Flatpickr */
+  /* Flatpickr aux couleurs des tokens du site */
   .flatpickr-calendar {
-    background: #ffffff !important;
-    border: 1px solid #e4e4e7 !important;
+    background: var(--color-ui-card) !important;
+    border: 1px solid var(--color-ui-line) !important;
     border-radius: 12px !important;
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
     font-family: inherit !important;
@@ -121,22 +94,22 @@ const config = {
   .flatpickr-day.selected, 
   .flatpickr-day.selected:hover, 
   .flatpickr-day.selected:focus {
-    background: #000000 !important;
-    border-color: #000000 !important;
-    color: #ffffff !important;
+    background: var(--color-ui-ink) !important;
+    border-color: var(--color-ui-ink) !important;
+    color: var(--color-ui-card) !important;
   }
   .flatpickr-months .flatpickr-month {
-    color: #18181b !important;
-    fill: #18181b !important;
+    color: var(--color-ui-ink) !important;
+    fill: var(--color-ui-ink) !important;
   }
   .flatpickr-current-month .numInputWrapper span.arrowUp:after {
-    border-bottom-color: #18181b !important;
+    border-bottom-color: var(--color-ui-ink) !important;
   }
   .flatpickr-current-month .numInputWrapper span.arrowDown:after {
-    border-top-color: #18181b !important;
+    border-top-color: var(--color-ui-ink) !important;
   }
   .flatpickr-calendar.hasTime .flatpickr-time {
-    border-top: 1px solid #e4e4e7 !important;
+    border-top: 1px solid var(--color-ui-line) !important;
   }
   /* Cacher l'input original alternatif généré par Flatpickr (altInput) */
   .flatpickr-input[type="hidden"] {

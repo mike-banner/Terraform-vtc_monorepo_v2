@@ -73,5 +73,5 @@ const seo = seoConfigs[normalizedSlug as keyof typeof seoConfigs] || seoConfigs.
 ---
 
 <BaseLayout title={seo.title} description={seo.description} minimal={true}>
-  <TunnelComponent serviceType={normalizedSlug} accentColor='#6185b2' />
+  <TunnelComponent serviceType={normalizedSlug} />
 </BaseLayout>

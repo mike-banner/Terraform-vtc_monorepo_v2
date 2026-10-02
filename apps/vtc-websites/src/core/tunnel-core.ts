@@ -97,7 +97,7 @@ export class TunnelManager {
     circles.forEach(circle => {
       const stepNum = parseInt(circle.getAttribute('data-step') || '1', 10);
       circle.className = `progress-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-        stepNum < stepIndex ? 'bg-black text-white' : stepNum === stepIndex ? 'bg-black text-white ring-4 ring-black/5' : 'bg-zinc-200 text-zinc-500'
+        stepNum < stepIndex ? 'bg-ui-ink text-white' : stepNum === stepIndex ? 'bg-ui-ink text-white ring-4 ring-primary/20' : 'bg-ui-line text-ui-muted'
       }`;
     });
 
@@ -105,7 +105,7 @@ export class TunnelManager {
     labels.forEach(label => {
       const stepNum = parseInt(label.getAttribute('data-step') || '1', 10);
       label.className = `progress-step-label mt-2 text-xs font-medium text-center transition-colors duration-300 ${
-        stepNum <= stepIndex ? 'text-zinc-900' : 'text-zinc-500'
+        stepNum <= stepIndex ? 'text-ui-ink' : 'text-ui-muted'
       }`;
     });
 
