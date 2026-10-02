@@ -1,6 +1,6 @@
 ---
-// src/sites/elite-lyon/pages/tunnels/[...slug].astro
-import BaseLayout from '../../../../layouts/BaseLayout.astro';
+// Route commune des tunnels (D-29 c) : la même pour tous les sites ; seuls la landing et la configuration changent par site.
+import BaseLayout from '../../layouts/BaseLayout.astro';
 
 // Désactiver le layout standard pour les tunnels (ils ont leur propre layout)
 export const partial = false;
@@ -32,10 +32,10 @@ if (!normalizedSlug) {
 
 // Composants disponibles (mapping dynamique)
 const tunnelComponents: Record<string, () => Promise<{ default: any }>> = {
-  transfert: () => import('../../../../components/tunnels/TransfertTunnel.astro'),
-  longDistance: () => import('../../../../components/tunnels/LongDistanceTunnel.astro'),
-  business: () => import('../../../../components/tunnels/BusinessTunnel.astro'),
-  availability: () => import('../../../../components/tunnels/AvailabilityTunnel.astro'),
+  transfert: () => import('../../components/tunnels/TransfertTunnel.astro'),
+  longDistance: () => import('../../components/tunnels/LongDistanceTunnel.astro'),
+  business: () => import('../../components/tunnels/BusinessTunnel.astro'),
+  availability: () => import('../../components/tunnels/AvailabilityTunnel.astro'),
 };
 
 // Vérifier si le composant existe
@@ -58,24 +58,20 @@ const TunnelComponent = TunnelResult.default;
 // Métadonnées SEO par tunnel
 const seoConfigs = {
   transfert: {
-    title: 'Transfert Privé - Elite Lyon VTC',
-    description:
-      'Réservez votre transfert privé en ligne. Trajets sur-mesure vers toutes destinations et gares.',
+    title: 'Transfert privé',
+    description: 'Réservez votre transfert privé en ligne.',
   },
   longDistance: {
-    title: 'Longue Distance - Elite Lyon VTC',
-    description:
-      'Service longue distance dans toute la France. Trajets Paris, Marseille, Nice, Bordeaux depuis Lyon.',
+    title: 'Longue distance',
+    description: 'Réservez en ligne votre trajet longue distance.',
   },
   business: {
-    title: 'Services Business & B2B - Elite Lyon VTC',
-    description:
-      'Solutions de mobilité professionnelle pour entreprises. Chauffeurs dédiés, véhicules premium.',
+    title: 'Services business',
+    description: 'Solutions de mobilité professionnelle pour entreprises.',
   },
   availability: {
-    title: 'Mise à Disposition - Elite Lyon VTC',
-    description:
-      "Chauffeur privé à votre disposition à l'heure ou à la journée. Service sur-mesure et flexible.",
+    title: 'Mise à disposition',
+    description: "Chauffeur privé à votre disposition à l'heure ou à la journée.",
   },
 };
 

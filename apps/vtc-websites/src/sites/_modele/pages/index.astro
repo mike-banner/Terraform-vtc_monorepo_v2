@@ -1,0 +1,18 @@
+---
+// Modèle de site vide : aucun nom, adresse, logo, téléphone ni texte de client.
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+const tenant = Astro.locals.tenant;
+---
+
+<BaseLayout title={tenant?.name ?? ""}>
+  <main>
+    <h1>{tenant?.name}</h1>
+    <p>Chauffeur privé : réservez votre trajet en ligne.</p>
+    <ul>
+      <li><a href="/tunnels/transfert">Transfert</a></li>
+      <li><a href="/tunnels/availability">Mise à disposition</a></li>
+      <li><a href="/tunnels/long-distance">Longue distance</a></li>
+      <li><a href="/tunnels/business">Business</a></li>
+    </ul>
+  </main>
+</BaseLayout>
