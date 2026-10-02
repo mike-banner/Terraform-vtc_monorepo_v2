@@ -6,6 +6,7 @@ interface Movement {
   id: string;
   created_at: string;
   booking_id: string;
+  movement_type?: string;
   gross_amount: number;
   net_amount: number;
   vat_amount: number;
@@ -31,6 +32,10 @@ type ModeFilter = "all" | "card" | "cash";
 const fmt = (n: number) =>
   n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+// Un remboursement vient en déduction : montants négatifs dans l'affichage et dans l'export.
+const isRefund = (mv: Movement) => !!mv.movement_type && mv.movement_type !== "payment";
+const signed = (mv: Movement, n: number | null | undefined) => (isRefund(mv) ? -1 : 1) * (n ?? 0);
+
 function clientName(mv: Movement): string {
   const c = mv.bookings?.customers;
   if (!c) return "—";
@@ -38,7 +43,7 @@ function clientName(mv: Movement): string {
 }
 
 function exportCSV(rows: Movement[], monthLabel: string) {
-  const headers = ["Date", "Heure", "Client", "Mode", "HT (€)", "TVA (€)", "ID Course"];
+  const headers = ["Date", "Heure", "Type", "Client", "Mode", "HT (€)", "TVA (€)", "ID Course"];
   const lines = rows.map((mv) => {
     const d = new Date(mv.created_at);
     const date = d.toLocaleDateString("fr-FR");
@@ -47,10 +52,11 @@ function exportCSV(rows: Movement[], monthLabel: string) {
     return [
       date,
       time,
+      isRefund(mv) ? "Remboursement" : "Paiement",
       clientName(mv),
       mode,
-      fmt(mv.net_amount ?? 0),
-      fmt(mv.vat_amount ?? 0),
+      fmt(signed(mv, mv.net_amount)),
+      fmt(signed(mv, mv.vat_amount)),
       mv.booking_id?.substring(0, 8) ?? "—",
     ]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
@@ -197,6 +203,11 @@ export const MonthDetail: React.FC<Props> = ({ movements, monthLabel }) => {
                             {lastName && <div className="text-xs font-semibold text-slate-400 leading-tight truncate">{lastName}</div>}
                           </>
                         )}
+                        {isRefund(mv) && (
+                          <span className="mt-1 inline-flex px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-destructive/10 text-destructive">
+                            Remboursement
+                          </span>
+                        )}
                       </td>
                       <td className="px-2 py-3 w-[56px]">
                         <span
@@ -210,13 +221,13 @@ export const MonthDetail: React.FC<Props> = ({ movements, monthLabel }) => {
                         </span>
                       </td>
                       <td className="px-2 py-3 text-right w-[64px]">
-                        <span className="text-xs text-slate-300 tabular-nums font-semibold whitespace-nowrap">
-                          {fmt(mv.net_amount ?? 0)} €
+                        <span className={`text-xs tabular-nums font-semibold whitespace-nowrap ${isRefund(mv) ? "text-destructive" : "text-slate-300"}`}>
+                          {fmt(signed(mv, mv.net_amount))} €
                         </span>
                       </td>
                       <td className="px-2 py-3 text-right w-[64px]">
-                        <span className={`text-xs tabular-nums font-semibold whitespace-nowrap ${(mv.vat_amount ?? 0) > 0 ? "text-emerald-400" : "text-slate-700"}`}>
-                          {fmt(mv.vat_amount ?? 0)} €
+                        <span className={`text-xs tabular-nums font-semibold whitespace-nowrap ${isRefund(mv) ? "text-destructive" : (mv.vat_amount ?? 0) > 0 ? "text-emerald-400" : "text-slate-700"}`}>
+                          {fmt(signed(mv, mv.vat_amount))} €
                         </span>
                       </td>
                     </tr>
