@@ -1,3 +1,5 @@
+Tunnels communs à tous les sites (D-29) : aucun texte, lieu ou contact d'un client ; ce qui varie se lit dans `configDuSite(Astro.url.host)` (`src/core/site-config.ts`), valeurs neutres par défaut. Route : `src/pages/tunnels/[...slug].astro`.
+
 # Architecture des Tunnels de Conversion VTC
 
 ## Structure des Tunnels
@@ -15,9 +17,9 @@
 
 ### 3. Tunnels Spécifiques
 
-#### A. Transfert (`AirportTunnel.astro`)
+#### A. Transfert (`TransfertTunnel.astro`)
 **Étapes :**
-1. Sélection de la destination / gare / aéroport (CDG, ORY, LYS, GVA, etc.)
+1. Sélection de la destination / gare / aéroport (trajets du tenant, table fixed_routes)
 2. Type de véhicule (Berline, Business, Van)
 3. Date/Heure
 4. Adresses de départ/arrivée

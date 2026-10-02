@@ -5,9 +5,11 @@ import TunnelLayout from './TunnelLayout.astro';
 import ContactStep from './steps/ContactStep.astro';
 import VehicleGridStep from './steps/VehicleGridStep.astro';
 import { supabase } from '../../core/supabase';
+import { configDuSite } from '../../core/site-config';
 import DateTimePicker from './steps/DateTimePicker.astro';
 
 const { tenant } = Astro.locals;
+const site = configDuSite(Astro.url.host);
 const tenantId = tenant?.id || "";
 
 // Récupération des données en parallèle (Option A : Véhicules et Pricing)
@@ -31,16 +33,6 @@ const vehicleTypes = availableVehicles.map((v: any) => ({
   icon: v.category.toLowerCase().includes('van') ? 'ri:bus-2-line' : (v.category.toLowerCase().includes('business') ? 'ri:briefcase-line' : 'ri:car-line')
 }));
 
-// Option A: Villes populaires avec distances fixées "en dur" depuis Lyon
-const popularDestinations = [
-  { city: 'Paris', distance: '465 km', time: '4h30', distanceKm: 465 },
-  { city: 'Marseille', distance: '315 km', time: '3h', distanceKm: 315 },
-  { city: 'Nice', distance: '470 km', time: '4h45', distanceKm: 470 },
-  { city: 'Bordeaux', distance: '550 km', time: '5h30', distanceKm: 550 },
-  { city: 'Strasbourg', distance: '490 km', time: '5h', distanceKm: 490 },
-  { city: 'Toulouse', distance: '540 km', time: '5h15', distanceKm: 540 },
-];
-
 const serviceOptions = [
   { id: 'oneway', name: 'Trajet simple', desc: 'Aller simple sans retour' },
   { id: 'roundtrip', name: 'Aller-retour', desc: 'Trajet aller et retour le même jour' },
@@ -60,24 +52,25 @@ const { ...props } = Astro.props;
         <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Destination principale</h2>
         <p class='text-zinc-600 mb-8'>Sélectionnez votre destination ou entrez une ville personnalisée</p>
 
+        {site.longueDistanceDestinations.length > 0 && (
         <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
           {
-            popularDestinations.map((dest) => (
+            site.longueDistanceDestinations.map((dest) => (
               <label class='relative group cursor-pointer'>
-                <input type='radio' name='destination' value={dest.city} data-distance={dest.distanceKm} class='sr-only peer' />
+                <input type='radio' name='destination' value={dest.ville} data-distance={dest.distanceKm} class='sr-only peer' />
                 <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-green-500 transition-all duration-300 peer-checked:border-green-500 peer-checked:bg-green-500/5 h-full'>
                   <div class='flex items-start justify-between mb-4'>
                     <div>
-                      <div class='text-lg font-semibold text-zinc-900'>{dest.city}</div>
+                      <div class='text-lg font-semibold text-zinc-900'>{dest.ville}</div>
                       <div class='text-sm text-zinc-600 mt-1'>
-                        {dest.distance} • {dest.time}
+                        {dest.distanceKm} km • {dest.duree}
                       </div>
                     </div>
                     <!-- On cache le prix ici, on l'affichera à l'étape véhicule selon la gamme choisie -->
                   </div>
                   <div class='flex items-center gap-2 text-sm text-zinc-500'>
                     <Icon name='ri:road-map-line' class='text-sm' />
-                    <span>Depuis Lyon</span>
+                    {site.longueDistanceVilleDepart && <span>Depuis {site.longueDistanceVilleDepart}</span>}
                   </div>
                 </div>
                 <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
@@ -87,14 +80,15 @@ const { ...props } = Astro.props;
             ))
           }
         </div>
+        )}
 
         <div class="mb-12">
-          <label class='block text-sm font-medium text-zinc-700 mb-2'>Ou entrez une destination personnalisée (Prix Sur Devis)</label>
+          <label class='block text-sm font-medium text-zinc-700 mb-2'>{site.longueDistanceDestinations.length > 0 ? 'Ou entrez une destination personnalisée (Prix Sur Devis)' : 'Destination (prix sur devis)'}</label>
           <input
             type='text'
             name='customDestination'
             id='customDestination'
-            placeholder='Ex: Montpellier, Lille, Genève...'
+            placeholder={site.longueDistancePlaceholderDestination}
             class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
           />
         </div>
@@ -163,8 +157,8 @@ const { ...props } = Astro.props;
             </select>
           </div>
           <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Adresse exacte de prise en charge (Lyon)</label>
-            <input type='text' name='pickupAddress' placeholder='Ex: 1 Place Bellecour, Lyon' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' required />
+            <label class='block text-sm font-medium text-zinc-700 mb-2'>Adresse exacte de prise en charge{site.longueDistanceVilleDepart ? ` (${site.longueDistanceVilleDepart})` : ''}</label>
+            <input type='text' name='pickupAddress' placeholder={site.longueDistancePlaceholderDepart} class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' required />
           </div>
           <div id="customDropoffContainer" class="hidden">
             <label class='block text-sm font-medium text-zinc-700 mb-2'>Adresse exacte de destination</label>

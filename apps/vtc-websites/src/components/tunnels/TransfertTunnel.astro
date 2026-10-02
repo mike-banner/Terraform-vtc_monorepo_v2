@@ -6,9 +6,11 @@ import InlineError from '../ui/InlineError.astro';
 import ContactStep from './steps/ContactStep.astro';
 import VehicleGridStep from './steps/VehicleGridStep.astro';
 import { supabase } from '../../core/supabase';
+import { configDuSite } from '../../core/site-config';
 import DateTimePicker from './steps/DateTimePicker.astro';
 
 const { tenant } = Astro.locals;
+const site = configDuSite(Astro.url.host);
 const tenantId = tenant?.id || "";
 
 // 1 & 2. Récupération des données en parallèle pour accélérer le chargement SSR
@@ -63,7 +65,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
 ---
 
 <TunnelLayout currentStep={1} totalSteps={4} serviceType={serviceType} {...props}>
-  <div id="tunnel-data" data-tenant-id={tenantId} data-routes={JSON.stringify(fixedRoutesData)} class="hidden"></div>
+  <div id="tunnel-data" data-tenant-id={tenantId} data-routes={JSON.stringify(fixedRoutesData)} data-codes-postaux-depart={JSON.stringify(site.transfertCodesPostauxDepart)} data-zone-message={site.transfertZoneMessage} data-placeholder-adresse={site.transfertPlaceholderAdresse} class="hidden"></div>
   <form id='tunnel-form' class='max-w-4xl mx-auto' novalidate>
     <!-- Étape 1: Sélection transfert/aéroport -->
     <div class='step-container' data-step='1'>
@@ -108,9 +110,9 @@ const { serviceType = 'airport', ...props } = Astro.props;
         </div>
 
         <div id="addressFieldsContainer" class="hidden space-y-6 p-6 bg-zinc-50 border border-zinc-200 rounded-xl">
-          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 text-sm text-blue-700 hidden" id="parisAlert">
+          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 text-sm text-blue-700 hidden" id="zoneAlert">
             <p class="font-bold">Information importante :</p>
-            <p>L'adresse dans Paris doit obligatoirement inclure un code postal valide (ex: <span class="font-bold">75001</span>).</p>
+            <p>{site.transfertZoneMessage}</p>
           </div>
           <div>
             <label id="pickupLabel" class='block text-sm font-medium text-zinc-700 mb-2'>Adresse de départ</label>
@@ -176,6 +178,12 @@ const { serviceType = 'airport', ...props } = Astro.props;
 
     const tenantId = dataDiv.dataset.tenantId;
     const routes = JSON.parse(dataDiv.dataset.routes || '[]');
+    // zone desservie (configuration du site) : [] = pas de contrôle ; contrôle navigateur seulement
+    const codesPostaux: string[] = JSON.parse(dataDiv.dataset.codesPostauxDepart || '[]');
+    const zoneMessage = dataDiv.dataset.zoneMessage || '';
+    const placeholderAdresse = dataDiv.dataset.placeholderAdresse || '';
+    const zoneRegex = codesPostaux.length ? new RegExp('\\b(?:' + codesPostaux.map((c) => c + '\\d{' + (5 - c.length) + '}').join('|') + ')\\b') : null; // code postal à 5 chiffres
+    const estAeroport = (lieu: string) => /a[ée]roport|airport|terminal/i.test(lieu);
 
     const routeSelect = document.getElementById('routeSelect') as HTMLSelectElement;
     const vehicleInputs = document.querySelectorAll('input[name="vehicle"]');
@@ -186,7 +194,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
     const flightTrackingContainer = document.getElementById('flightTrackingContainer');
     const addressFieldsContainer = document.getElementById('addressFieldsContainer');
     const directionDisplayContainer = document.getElementById('directionDisplayContainer');
-    const parisAlert = document.getElementById('parisAlert');
+    const zoneAlert = document.getElementById('zoneAlert');
     
     const swapBtn = document.getElementById('swapDirectionBtn');
     const directionState = document.getElementById('directionState') as HTMLInputElement;
@@ -214,19 +222,14 @@ const { serviceType = 'airport', ...props } = Astro.props;
           const [basePickup, baseDropoff] = routeSelect.value.split('|');
           const isForward = directionState.value === 'forward';
           const currentPickup = isForward ? basePickup : baseDropoff;
-          const currentDropoff = isForward ? baseDropoff : basePickup;
-          
-          let hasError = false;
-          const parisRegex = /75\d{3}/;
-          if (currentPickup.toLowerCase().includes('paris') && !parisRegex.test(pAddress)) {
-            if (pickupError) { pickupError.textContent = `Veuillez inclure un code postal parisien (ex: 75001).`; pickupError.classList.remove('hidden'); }
-            hasError = true;
+
+          // zone desservie : seule la prise en charge est contrôlée, hors aéroport
+          if (zoneRegex && !estAeroport(currentPickup)) {
+            if (!zoneRegex.test(pAddress)) {
+              if (pickupError) { pickupError.textContent = zoneMessage; pickupError.classList.remove('hidden'); }
+              return false;
+            }
           }
-          if (currentDropoff.toLowerCase().includes('paris') && !parisRegex.test(dAddress)) {
-            if (dropoffError) { dropoffError.textContent = `Veuillez inclure un code postal parisien (ex: 75001).`; dropoffError.classList.remove('hidden'); }
-            hasError = true;
-          }
-          if (hasError) return false;
         }
 
         if (stepIndex === 2 && !formData.get('vehicle')) { alert("Veuillez choisir un véhicule."); return false; }
@@ -319,19 +322,15 @@ const { serviceType = 'airport', ...props } = Astro.props;
       if (displayPickup) displayPickup.textContent = currentPickup;
       if (displayDropoff) displayDropoff.textContent = currentDropoff;
 
-      const isParis = currentPickup.toLowerCase().includes('paris') || currentDropoff.toLowerCase().includes('paris');
-      if (parisAlert) {
-        if (isParis) parisAlert.classList.remove('hidden');
-        else parisAlert.classList.add('hidden');
-      }
+      if (zoneAlert) zoneAlert.classList.toggle('hidden', !zoneRegex || estAeroport(currentPickup));
 
-      const isAirportPickup = currentPickup.toLowerCase().match(/aéroport|aeroport|cdg|ory|lys/);
+      const isAirportPickup = estAeroport(currentPickup);
 
       if (pickupLabel) pickupLabel.textContent = `Adresse exacte de départ (${currentPickup})`;
       if (dropoffLabel) dropoffLabel.textContent = `Adresse exacte d'arrivée (${currentDropoff})`;
-      
-      pickupInput.placeholder = isAirportPickup ? `Ex: Terminal 2E, Vol AF123` : (currentPickup.toLowerCase().includes('paris') ? 'Ex: 1 Rue de Rivoli, 75001 Paris' : 'Ex: Adresse complète');
-      dropoffInput.placeholder = currentDropoff.toLowerCase().includes('paris') ? 'Ex: 1 Rue de Rivoli, 75001 Paris' : 'Ex: Adresse complète';
+
+      pickupInput.placeholder = isAirportPickup ? 'Ex : terminal, n° de vol' : placeholderAdresse;
+      dropoffInput.placeholder = placeholderAdresse;
 
       if (flightTrackingContainer) {
         if (isAirportPickup) flightTrackingContainer.classList.remove('hidden');
