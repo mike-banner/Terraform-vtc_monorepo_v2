@@ -110,14 +110,15 @@ Deno.serve(async (req) => {
 
     if (!tenant) throw new Error('tenant not found');
 
-    if (!tenant.stripe_account_id) {
-      throw new Error('stripe not connected');
-    }
+    // Paiement direct sur la clé de l'instance (D-18) ; chemin Connect gardé tel quel, dormant (D-20).
+    const connected = !!tenant.stripe_account_id;
 
-    const account = await stripe.accounts.retrieve(tenant.stripe_account_id);
+    if (connected) {
+      const account = await stripe.accounts.retrieve(tenant.stripe_account_id);
 
-    if (!account.charges_enabled) {
-      throw new Error('stripe not ready');
+      if (!account.charges_enabled) {
+        throw new Error('stripe not ready');
+      }
     }
 
     // =========================
@@ -221,15 +222,19 @@ Deno.serve(async (req) => {
         },
       ],
 
-      payment_intent_data: {
-        application_fee_amount: feeInCents > 0 ? feeInCents : undefined,
+      ...(connected
+        ? {
+          payment_intent_data: {
+            application_fee_amount: feeInCents > 0 ? feeInCents : undefined,
 
-        transfer_data: {
-          destination: tenant.stripe_account_id,
-        },
+            transfer_data: {
+              destination: tenant.stripe_account_id,
+            },
 
-        on_behalf_of: tenant.stripe_account_id,
-      },
+            on_behalf_of: tenant.stripe_account_id,
+          },
+        }
+        : {}),
 
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/transfert`,

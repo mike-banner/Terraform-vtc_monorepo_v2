@@ -100,6 +100,35 @@ Deno.serve(async (req) => {
   }
 
   // --------------------------
+  // REMBOURSEMENTS (refund.updated / refund.failed)
+  // --------------------------
+  if (event.type === "refund.updated" || event.type === "refund.failed") {
+    const r = obj;
+    const bookingId = r?.metadata?.booking_id;
+    // Le grand livre d'un avoir est écrit par l'avoir lui-même (plan 04).
+    if (bookingId && !r.metadata?.credit_note_id) {
+      let rpcErr = null;
+      if (r.status === "succeeded") {
+        ({ error: rpcErr } = await supabase.rpc("record_booking_refund", {
+          p_booking_id: bookingId,
+          p_stripe_refund_id: r.id,
+          p_amount: r.amount / 100,
+        }));
+      } else if (r.status === "failed" || r.status === "canceled") {
+        ({ error: rpcErr } = await supabase.rpc("mark_refund_failed", {
+          p_booking_id: bookingId,
+          p_message: r.failure_reason ?? r.status,
+        }));
+      }
+      if (rpcErr) {
+        console.error("stripe_webhook: refund RPC:", rpcErr.message);
+        return new Response("Error: refund RPC", { status: 500 }); // Stripe rejoue, RPC idempotentes
+      }
+    }
+    return new Response("OK");
+  }
+
+  // --------------------------
   // CREATE BOOKING V1
   // --------------------------
   if (event.type === "checkout.session.completed") {
@@ -270,15 +299,6 @@ Deno.serve(async (req) => {
             booking_id: booking.id,
           })
           .eq("stripe_event_id", event.id);
-
-        // Cas A : génération automatique de la facture officielle Stripe
-        const invoiceRes = await supabase.functions.invoke("generate-invoice", {
-          body: { booking_id: booking.id },
-        });
-        if (invoiceRes.error) {
-          // Non bloquant : le webhook a réussi, la facture peut être régénérée manuellement
-          console.error("INVOICE GENERATION FAILED (non-blocking)", invoiceRes.error);
-        }
       }
     }
   }
