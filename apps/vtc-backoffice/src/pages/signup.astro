@@ -499,17 +499,6 @@ import MainLayout from "../layouts/MainLayout.astro";
 
 			if (res.error) throw res.error;
 
-			// 4. Welcome Email (silent)
-			try {
-				await supabase.functions.invoke("send-email", {
-					body: {
-						to: email,
-						subject: "Inscription VTC MVP Réussie ! 🚀",
-						html: `<h1>Bienvenue !</h1><p>Ton dossier est en cours de validation par nos administrateurs.</p>`
-					}
-				});
-			} catch (e) { console.error("Email fail", e); }
-
 			messageEl.textContent = "SUCCÈS ! REDIRECTION...";
 			messageEl.className = "mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-emerald-500";
 
