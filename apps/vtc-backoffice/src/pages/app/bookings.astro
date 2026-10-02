@@ -100,6 +100,21 @@ const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
 if (error) console.error("Bookings Fetch Error:", error);
 
+// Alerte de conflit (D-36) : owner/manager seulement ; une erreur ne casse jamais la page.
+const conflitsParCourse = new Map<string, any[]>();
+if (profile.tenant_role === "owner" || profile.tenant_role === "manager") {
+    try {
+        const { data: conflits, error: conflitsError } = await supabaseServer.rpc("booking_conflicts");
+        if (conflitsError) throw conflitsError;
+        for (const c of conflits ?? []) {
+            conflitsParCourse.set(c.booking_id, [...(conflitsParCourse.get(c.booking_id) ?? []), c]);
+        }
+    } catch (e) {
+        console.error("Booking conflicts Error:", e);
+    }
+}
+for (const b of (bookings ?? []) as any[]) b.conflicts = conflitsParCourse.get(b.id) ?? [];
+
 const tabs = [
     { id: 'all', label: 'Toutes' },
     { id: 'to_validate', label: 'À Valider' },
@@ -288,6 +303,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                                              booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
                                         </Badge>
                                         {adresseAVerifier(booking) && <Badge variant="amber">Adresse à vérifier</Badge>}
+{(booking as any).conflicts?.length > 0 && <Badge variant="rose">Conflit</Badge>}
                                     </div>
 
                                     <div class="space-y-1.5 pb-3 border-b border-white/5 mb-3">
@@ -412,6 +428,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                                                          booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
                                                     </Badge>
                                                     {adresseAVerifier(booking) && <Badge variant="amber">Adresse à vérifier</Badge>}
+{(booking as any).conflicts?.length > 0 && <Badge variant="rose">Conflit</Badge>}
                                                 </td>
                                                 <td class="px-8 py-4 text-right">
                                                     <div class="flex flex-col items-end">
@@ -662,7 +679,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                         </div>
                         <div id="duration-hours-container" class="hidden items-center gap-3 bg-background border border-border rounded-[var(--radius)] px-4 py-3 focus-within:border-primary/50 transition-colors">
                             <label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest whitespace-nowrap flex-shrink-0">Durée (heures)</label>
-                            <input type="number" id="duration_hours" name="duration_hours" value="1" min="1" max="24" class="flex-1 min-w-0 bg-transparent text-sm text-foreground focus:outline-none font-medium tabular-nums text-right" />
+                            <input type="number" id="duration_hours" name="duration_hours" value="1" min="1" max="8760" class="flex-1 min-w-0 bg-transparent text-sm text-foreground focus:outline-none font-medium tabular-nums text-right" />
                         </div>
                     </div>
                 </div>
@@ -743,13 +760,13 @@ const getFilterUrl = (params: Record<string, string>) => {
                 <!-- Durée (mise à disposition) -->
                 <div id="edit-duration-container" class="hidden space-y-2">
                     <label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Durée (heures)</label>
-                    <input type="number" id="edit-duration-hours" name="duration_hours" min="1" max="24" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors" />
+                    <input type="number" id="edit-duration-hours" name="duration_hours" min="1" max="8760" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors" />
                 </div>
 
                 <!-- Montant TTC -->
                 <div class="space-y-2">
                     <label for="edit-amount" class="text-[10px] font-black uppercase tracking-widest text-slate-500">Montant TTC (€)</label>
-                    <input type="number" id="edit-amount" name="manual_total" min="0.01" max="9999" step="0.01" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors read-only:opacity-60" />
+                    <input type="number" id="edit-amount" name="manual_total" min="0.01" max="99999" step="0.01" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors read-only:opacity-60" />
                     <p class="text-[9px] text-slate-600">La TVA est recalculée côté serveur à l'enregistrement.</p>
                 </div>
 
@@ -833,6 +850,22 @@ const getFilterUrl = (params: Record<string, string>) => {
                         <p id="modal-address-alert" class="text-xs text-foreground font-medium"></p>
                         <button id="modal-address-verify-btn" class="hidden py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Marquer comme vérifié</button>
                         <p id="modal-address-error" class="text-xs text-destructive"></p>
+                    </div>
+
+                    <!-- CONFLIT DE CRÉNEAU -->
+                    <p id="modal-conflicts" class="hidden text-xs text-destructive font-medium whitespace-pre-line"></p>
+
+                    <!-- DEMANDE DE DEVIS -->
+                    <div id="modal-quote-box" class="hidden bg-muted/10 p-4 rounded-[var(--radius)] border border-border space-y-3">
+                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Demande de devis</p>
+                        <p class="text-xs text-foreground font-medium">Fixez le prix, envoyez le devis, puis validez ou refusez la demande.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="quote-price-btn" class="py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Fixer le prix</button>
+                            <button id="quote-send-btn" class="py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl disabled:opacity-50">Envoyer le devis</button>
+                            <button id="quote-accept-btn" class="py-2 px-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl disabled:opacity-50">Devis accepté</button>
+                            <button id="quote-decline-btn" class="py-2 px-4 bg-background hover:bg-muted border border-border text-destructive text-[10px] font-black uppercase tracking-widest rounded-xl disabled:opacity-50">Refuser la demande</button>
+                        </div>
+                        <p id="quote-error" class="text-xs text-destructive"></p>
                     </div>
 
                     <!-- CARACTÉRISTIQUES -->

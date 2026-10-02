@@ -471,6 +471,70 @@ const run = (): void => {
         };
       }
 
+      // Conflits de créneau (D-36) : texte posé par innerText ; masqué si la course est close.
+      const conflictsEl = document.getElementById("modal-conflicts");
+      const conflicts = (Array.isArray(booking.conflicts) ? booking.conflicts : []) as Array<Record<string, string | null>>;
+      const courseClose = String(booking.status).startsWith("cancel") || booking.status === "no_show"
+        || booking.mission_status === "completed";
+      const quand = (iso: string | null | undefined) =>
+        iso ? new Date(iso).toLocaleString("fr-FR", { timeZone: "Europe/Paris", dateStyle: "short", timeStyle: "short" }) : "?";
+      const lignesConflits = conflicts.map((c) => `${quand(c.other_pickup_time)}, ${c.other_pickup_address ?? "?"}, ${STATUS_LABELS_FR[String(c.other_status)] || c.other_status}`);
+      if (conflictsEl) {
+        conflictsEl.classList.toggle("hidden", courseClose || lignesConflits.length === 0);
+        conflictsEl.innerText = `Conflit de créneau avec :\n${lignesConflits.join("\n")}`;
+      }
+
+      // Demande de devis (D-35, D-38) : owner/manager, course en attente venue d'un tunnel.
+      {
+        const box = document.getElementById("modal-quote-box");
+        const errBox = document.getElementById("quote-error");
+        const isQuote = document.getElementById("detail-booking-modal")?.dataset.canManage === "true"
+          && booking.status === "pending" && booking.booking_source === "customer";
+        box?.classList.toggle("hidden", !isQuote);
+        if (errBox) errBox.innerText = "";
+        if (isQuote) {
+          const bookingId = String(booking.id);
+          const btn = (name: string) => document.getElementById(name) as HTMLButtonElement;
+          const fail = (m: string) => { if (errBox) errBox.innerText = m; };
+          btn("quote-price-btn").onclick = () => document.getElementById("modal-edit-btn")?.click();
+          btn("quote-send-btn").onclick = async () => {
+            const b = btn("quote-send-btn");
+            b.disabled = true; fail("");
+            const { data, error } = await supabase.functions.invoke("generate-devis", { body: { booking_id: bookingId } });
+            b.disabled = false;
+            if (error) { fail(await functionErrorMessage(error, "Erreur lors de l'envoi du devis.")); return; }
+            if (data?.invoice_url) window.open(data.invoice_url, "_blank");
+          };
+          btn("quote-accept-btn").onclick = async () => {
+            const b = btn("quote-accept-btn");
+            const confirmer = () => window.confirm(`Course en conflit avec :\n${lignesConflits.join("\n")}\n\nValider quand même ?`);
+            let force = false;
+            if (lignesConflits.length > 0) { if (!confirmer()) return; force = true; }
+            b.disabled = true; fail("");
+            let { error } = await supabase.rpc("accept_quote_manually", { p_booking_id: bookingId, ...(force ? { p_force: true } : {}) });
+            if (error && !force && error.message.startsWith("Conflit de créneau")) {
+              // Conflit apparu depuis l'affichage de la liste.
+              if (window.confirm(`${error.message}\n\nValider quand même ?`)) {
+                ({ error } = await supabase.rpc("accept_quote_manually", { p_booking_id: bookingId, p_force: true }));
+              } else { b.disabled = false; return; }
+            }
+            b.disabled = false;
+            if (error) { fail(error.message); return; }
+            window.location.reload();
+          };
+          btn("quote-decline-btn").onclick = async () => {
+            const reason = (window.prompt("Motif du refus (obligatoire) :") ?? "").trim();
+            if (!reason) { fail("Motif obligatoire."); return; }
+            const b = btn("quote-decline-btn");
+            b.disabled = true; fail("");
+            const { error } = await supabase.rpc("decline_booking_request", { p_booking_id: bookingId, p_reason: reason });
+            b.disabled = false;
+            if (error) { fail(error.message); return; }
+            window.location.reload();
+          };
+        }
+      }
+
       const id = booking.id ?? "---";
       if (refEl) refEl.innerText = `REF: #${String(id).split("-")[0].toUpperCase()}`;
 
@@ -500,7 +564,7 @@ const run = (): void => {
 
         const acceptBtn = document.getElementById("modal-accept-btn") as HTMLButtonElement | null;
         if (acceptBtn) {
-          if (status === "paid" || status === "to_validate") {
+          if ((status === "paid" || status === "to_validate") && booking.status !== "pending") {
             acceptBtn.classList.remove("hidden");
             if (!driverId) {
               acceptBtn.classList.add("opacity-50");
@@ -543,7 +607,11 @@ const run = (): void => {
 
       if (typeEl) {
         const isHourly = (booking.booking_type ?? "") === "hourly";
-        typeEl.innerText = isHourly ? "MISE À DISPOSITION" : "TRANSFERT";
+        const heures = Number(booking.duration_hours ?? 0);
+        const finIso = booking.pickup_time && heures > 0 ? new Date(new Date(String(booking.pickup_time)).getTime() + heures * 3600_000) : null;
+        typeEl.innerText = isHourly
+          ? `MISE À DISPOSITION${finIso ? ` — ${heures} h, jusqu'au ${finIso.toLocaleString("fr-FR", { timeZone: "Europe/Paris", dateStyle: "short", timeStyle: "short" })}` : ""}`
+          : "TRANSFERT";
         typeEl.className = `px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${
           isHourly
             ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
