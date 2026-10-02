@@ -36,14 +36,17 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
   const remplir = async (nom: string, apply: (codes: string) => void, say: (m: string) => void) => {
     if (!nom.trim()) return say('Saisissez d\'abord le nom de la zone.');
     say('Recherche…');
-    const codes = await proposerCodesPostaux(nom);
-    if (codes === null) return say('Service indisponible : saisissez les codes à la main');
-    if (codes.length === 0)
+    const r = await proposerCodesPostaux(nom);
+    if (r === null) return say('Service indisponible : saisissez les codes à la main');
+    const proches = r.proches.length ? ` Communes proches : ${r.proches.join(' ; ')}.` : '';
+    if (r.homonymes.length)
+      return say(`Plusieurs communes portent ce nom : ${r.homonymes.join(' ; ')}. Précisez le nom, ou saisissez les codes à la main.${proches}`);
+    if (!r.commune || r.codes.length === 0)
       return say(
-        'Aucune commune à ce nom exact : saisissez les codes à la main, ou laissez vide pour ne pas contrôler cette zone',
+        `Aucune commune à ce nom exact : saisissez les codes à la main, ou laissez vide pour ne pas contrôler cette zone.${proches}`,
       );
-    apply(codes.join(', '));
-    say('');
+    apply(r.codes.join(', '));
+    say(`Commune trouvée : ${r.commune}. Vérifiez que c'est la bonne.${proches}`);
   };
 
   const saveCodes = async (z: any) => {

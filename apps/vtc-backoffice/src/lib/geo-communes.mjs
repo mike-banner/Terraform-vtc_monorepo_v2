@@ -7,12 +7,30 @@ const norm = (s) =>
     .toLowerCase()
     .replace(/[\s-]+/g, "");
 
+const libelle = (c) => `${c.nom} (${c.departement?.nom ?? "département inconnu"}, ${c.departement?.code ?? "?"})`;
+
+/**
+ * Analyse la réponse de geo.api.gouv.fr pour le nom d'une zone :
+ * - une seule commune au nom exact : ses codes et son libellé « Nom (Département, code) » à montrer au chauffeur ;
+ * - plusieurs communes au nom exact (homonymes) : aucun code proposé, la liste des libellés ;
+ * - dans tous les cas, jusqu'à 3 communes dont le nom commence par celui de la zone (ex. Évry-Courcouronnes pour « Evry »).
+ */
+export function analyserCommunes(nomZone, communes) {
+  const cible = norm(nomZone);
+  const liste = Array.isArray(communes) ? communes : [];
+  const exactes = liste.filter((x) => norm(x?.nom) === cible && x?.codesPostaux?.length);
+  const proches = liste.filter((x) => cible && norm(x?.nom) !== cible && norm(x?.nom).startsWith(cible)).slice(0, 3);
+  return {
+    codes: exactes.length === 1 ? [...exactes[0].codesPostaux] : [],
+    commune: exactes.length === 1 ? libelle(exactes[0]) : null,
+    homonymes: exactes.length > 1 ? exactes.map(libelle) : [],
+    proches: proches.map(libelle),
+  };
+}
+
 /** Codes de la commune dont le nom est exactement celui de la zone, sinon []. */
 export function choisirCodesCommune(nomZone, communes) {
-  const cible = norm(nomZone);
-  if (!cible || !Array.isArray(communes)) return [];
-  const c = communes.find((x) => norm(x?.nom) === cible);
-  return c?.codesPostaux ? [...c.codesPostaux] : [];
+  return analyserCommunes(nomZone, communes).codes;
 }
 
 /** "75001, 75002;75003 " => ["75001","75002","75003"] ; lève si un code n'a pas 5 chiffres ou si plus de 50. */

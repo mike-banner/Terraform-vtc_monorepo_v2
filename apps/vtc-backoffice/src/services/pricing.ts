@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
-import { choisirCodesCommune } from "@/lib/geo-communes.mjs";
+import { analyserCommunes, type AnalyseCommunes } from "@/lib/geo-communes.mjs";
 
 // --- ZONES ---
 export const getZones = async (tenantId: string) => {
@@ -43,15 +43,15 @@ export const updateZonePostalCodes = async (id: string, codes: string[]) => {
 // Aide à la saisie : null = service indisponible, [] = aucune commune au nom exact.
 export const proposerCodesPostaux = async (
   nomZone: string,
-): Promise<string[] | null> => {
+): Promise<AnalyseCommunes | null> => {
   try {
     const url =
       "https://geo.api.gouv.fr/communes?nom=" +
       encodeURIComponent(nomZone) +
-      "&fields=nom,codesPostaux,population&boost=population&limit=5";
+      "&fields=nom,codesPostaux,departement,population&boost=population&limit=8";
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
-    return choisirCodesCommune(nomZone, await res.json());
+    return analyserCommunes(nomZone, await res.json());
   } catch {
     return null;
   }
