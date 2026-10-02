@@ -114,10 +114,16 @@ des créneaux déjà pris directement dans le tunnel de réservation des clients
 **Idée :** un calendrier des créneaux pris (courses acceptées, mises à disposition, périodes bloquées à la main : congés,
 repos), par chauffeur ou par véhicule, qui sert de base unique au contrôle de chevauchement. La durée d'une mise à
 disposition n'est pas bornée (une semaine ou plus) : on saisit une période (début, fin) plutôt qu'un nombre d'heures.
-**Affichage :** côté chauffeur seulement, dans le backoffice (React, Phase 16). **Pas de calendrier côté client** (décision du
-2026-10-02) : un client qui voit le chauffeur toujours complet ne reviendrait pas, alors qu'une course refusée après coup peut
-être confiée à un collègue. Variante possible plus tard pour le transfert : un contrôle de disponibilité silencieux avant
-paiement (« ce créneau n'est pas disponible »), sans calendrier visible, à étudier quand il y aura des collègues.
+**Affichage :** pour le chauffeur, dans le backoffice (React, Phase 16). Pour le client, **orientation du 2026-10-02 : un
+calendrier dans le tunnel des réservations à paiement immédiat (Transfert), avec les créneaux déjà pris grisés**, parce qu'une
+course payée puis refusée est la pire expérience. Pas de calendrier pour les devis (aucun paiement, le chauffeur valide à la
+main). Réserve du chauffeur : un client qui voit le chauffeur toujours complet peut ne pas revenir.
+**Compromis à étudier :** réglage par chauffeur (afficher ou non ses disponibilités) ; ne griser que les **jours entièrement
+indisponibles** (mise à disposition longue, congés) et vérifier le créneau exact en silence au paiement ; ne jamais exposer la
+raison de l'indisponibilité ni le détail des courses.
+**Prérequis de données :** une heure de fin pour **toutes** les courses (aujourd'hui seules les mises à disposition ont
+`duration_hours` ; il faudrait une durée estimée par trajet fixe et une marge entre deux courses) ; plusieurs chauffeurs ou
+véhicules : disponible s'il en reste un de libre.
 **Dans la Phase 14.1 :** seulement le contrôle de chevauchement côté base (début + `duration_hours`, sans plafond de 24 h) et
 l'alerte de conflit. Le calendrier visuel et le blocage dans le tunnel sont reportés.
 
