@@ -29,8 +29,7 @@
   --font-body: 'Roboto', sans-serif;
   --font-label: 'Poppins', sans-serif;
 
-  /* Pages d'état communes à tous les sites (succès, attente, erreur) : sobre, neutre, sans police externe */
-  --font-ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Pages d'état communes (succès, attente, erreur) : neutres, la police suit --font-body du site */
   --color-ui-page: #f6f9fc;
   --color-ui-card: #ffffff;
   --color-ui-ink: #1a1f36;
