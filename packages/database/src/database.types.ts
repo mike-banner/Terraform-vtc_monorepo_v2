@@ -149,6 +149,7 @@ export type Database = {
           dropoff_address: string
           duration_hours: number | null
           id: string
+          instructions: string | null
           invoice_created_at: string | null
           invoice_number: string | null
           invoice_url: string | null
@@ -196,6 +197,7 @@ export type Database = {
           dropoff_address: string
           duration_hours?: number | null
           id?: string
+          instructions?: string | null
           invoice_created_at?: string | null
           invoice_number?: string | null
           invoice_url?: string | null
@@ -243,6 +245,7 @@ export type Database = {
           dropoff_address?: string
           duration_hours?: number | null
           id?: string
+          instructions?: string | null
           invoice_created_at?: string | null
           invoice_number?: string | null
           invoice_url?: string | null
@@ -1771,6 +1774,7 @@ export type Database = {
           p_distance_km?: number
           p_dropoff: string
           p_duration_hours?: number
+          p_instructions?: string
           p_luggage_count?: number
           p_manual_total?: number
           p_passenger_count?: number
@@ -1820,6 +1824,10 @@ export type Database = {
           pickup_address: string
           total_amount: number
         }[]
+      }
+      get_public_payment_state: {
+        Args: { p_session_id: string }
+        Returns: string
       }
       get_public_tenant: {
         Args: { p_host: string; p_id?: string }
@@ -1918,6 +1926,10 @@ export type Database = {
           p_pickup_time: string
         }
         Returns: number
+      }
+      update_booking_instructions: {
+        Args: { p_booking_id: string; p_instructions: string }
+        Returns: string
       }
       update_cancellation_policy: {
         Args: {
