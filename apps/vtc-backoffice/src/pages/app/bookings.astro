@@ -26,14 +26,18 @@ let query = supabaseServer
     .select("*, customers(*)", { count: "exact" })
     .eq("current_tenant_id", profile.tenant_id as string);
 
-const CANCELLED_STATUSES = ["cancelled", "cancelled_no_refund", "cancelled_pending_refund", "cancelled_refunded", "deprecated_refunded", "no_show"] as const;
+// Courses annulées : listées à part (onglet « Annulées »), sauf celles qui demandent une action
+// (remboursement en cours ou échoué), qui restent visibles dans la liste principale.
+const ACTION_STATUSES = ["cancelled_pending_refund", "refund_failed"] as const;
+const CANCELLED_STATUSES = ["cancelled", "cancelled_no_refund", "cancelled_refunded", "deprecated_refunded", "no_show"] as const;
+const HIDDEN_FROM_MAIN = `(${CANCELLED_STATUSES.join(",")})`;
 
 if (currentStatus === "cancelled") {
-    query = query.in("status", CANCELLED_STATUSES as unknown as string[]);
+    query = query.in("status", [...CANCELLED_STATUSES, ...ACTION_STATUSES]);
 } else if (currentStatus !== "all") {
-    query = query.eq("mission_status", currentStatus as any).not("status", "in", `(${CANCELLED_STATUSES.join(",")})`);
+    query = query.eq("mission_status", currentStatus as any).not("status", "in", HIDDEN_FROM_MAIN);
 } else {
-    query = query.not("status", "in", `(${CANCELLED_STATUSES.join(",")})`);
+    query = query.not("status", "in", HIDDEN_FROM_MAIN);
 }
 
 if (currentType !== "all") {
