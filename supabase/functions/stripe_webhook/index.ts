@@ -1,5 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { h } from "../_shared/html-escape.ts";
+import { getBrand } from "../_shared/email-templates/brand.ts";
+import { bookingConfirmationEmail } from "../_shared/email-templates/site/booking-confirmation.ts";
+import { paymentWithoutBookingEmail } from "../_shared/email-templates/native/payment-without-booking.ts";
+import { paymentReceivedCustomerEmail } from "../_shared/email-templates/native/payment-received-customer.ts";
 import Stripe from "https://esm.sh/stripe@12.18.0?target=deno&no-check";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -28,7 +31,7 @@ async function sendMail(to: string, subject: string, html: string) {
 async function alertBookingFailed(session: any, tenantId: string | null, reason: string) {
   if (!tenantId) return;
   const m = session.metadata ?? {};
-  const { data: tenant } = await supabase.from("tenants").select("name, email").eq("id", tenantId).maybeSingle();
+  const { data: tenant } = await supabase.from("tenants").select("name, email, logo_url, primary_color, phone").eq("id", tenantId).maybeSingle();
   const { data: cust } = m.customer_id
     ? await supabase.from("customers").select("first_name, last_name, email, phone").eq("id", m.customer_id).maybeSingle()
     : { data: null };
@@ -41,36 +44,50 @@ async function alertBookingFailed(session: any, tenantId: string | null, reason:
   }
 
   const customerEmail = cust?.email ?? session.customer_details?.email;
-  const amount = ((session.amount_total ?? 0) / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+  const amount = (session.amount_total ?? 0) / 100;
   const testMode = (Deno.env.get("STRIPE_SECRET_KEY") ?? "").startsWith("sk_test_") ? "/test" : "";
-  const stripeUrl = `https://dashboard.stripe.com${testMode}/payments/${session.payment_intent}`;
   const name = [cust?.first_name, cust?.last_name].filter(Boolean).join(" ") || session.customer_details?.name || "Client";
 
   if (to) {
-    await sendMail(to, "Action requise : paiement reçu, course non créée", `
-      <p>Un client a payé <strong>${h(amount)}</strong> mais sa course n'a pas pu être enregistrée.</p>
-      <ul>
-        <li>Client : ${h(name)}</li>
-        <li>Email : ${h(customerEmail)}</li>
-        <li>Téléphone : ${h(cust?.phone ?? session.customer_details?.phone)}</li>
-        <li>Départ : ${h(m.pickup_address)}</li>
-        <li>Arrivée : ${h(m.dropoff_address)}</li>
-        <li>Date : ${h(m.pickup_time)}</li>
-      </ul>
-      <p>Deux options : <a href="${h(stripeUrl)}">rembourser le paiement dans Stripe</a>, ou créer la course à la main
-      dans le backoffice (Nouvelle course) avec les informations ci-dessus.</p>
-      <p style="color:#666">Cause technique : ${h(reason)}</p>`);
+    await sendMail(to, "Action requise : paiement reçu, course non créée", paymentWithoutBookingEmail({
+      amount,
+      customerName: name,
+      customerEmail,
+      customerPhone: cust?.phone ?? session.customer_details?.phone,
+      pickupAddress: m.pickup_address,
+      dropoffAddress: m.dropoff_address,
+      pickupTime: m.pickup_time,
+      stripeUrl: `https://dashboard.stripe.com${testMode}/payments/${session.payment_intent}`,
+      reason,
+    }));
   } else {
     console.error("ALERT: aucun email chauffeur pour le tenant", tenantId);
   }
 
   if (customerEmail) {
-    await sendMail(customerEmail, `Votre paiement a bien été reçu${tenant?.name ? ` | ${tenant.name}` : ""}`, `
-      <p>Bonjour ${h(cust?.first_name ?? "")},</p>
-      <p>Votre paiement de ${h(amount)} a bien été reçu, mais votre réservation n'a pas pu être enregistrée automatiquement.
-      ${h(tenant?.name ?? "Votre chauffeur")} a été prévenu et vous contacte rapidement.
-      À défaut, vous serez remboursé.</p>`);
+    await sendMail(customerEmail, `Votre paiement a bien été reçu${tenant?.name ? ` | ${tenant.name}` : ""}`,
+      paymentReceivedCustomerEmail({ brand: getBrand(tenant), firstName: cust?.first_name, amount }));
   }
+}
+
+// Course créée : confirmation au client, aux couleurs du chauffeur. Un échec d'envoi ne bloque jamais le webhook.
+async function sendBookingConfirmation(session: any, tenantId: string, booking: any) {
+  const m = session.metadata ?? {};
+  const { data: tenant } = await supabase.from("tenants").select("name, email, logo_url, primary_color, phone").eq("id", tenantId).maybeSingle();
+  const { data: cust } = m.customer_id
+    ? await supabase.from("customers").select("first_name, email").eq("id", m.customer_id).maybeSingle()
+    : { data: null };
+  const to = cust?.email ?? session.customer_details?.email;
+  if (!to) return;
+  await sendMail(to, `Votre réservation est confirmée${tenant?.name ? ` | ${tenant.name}` : ""}`, bookingConfirmationEmail({
+    brand: getBrand(tenant),
+    firstName: cust?.first_name,
+    reference: String(booking.id).slice(0, 8).toUpperCase(),
+    pickupAddress: booking.pickup_address,
+    dropoffAddress: booking.dropoff_address,
+    pickupTime: booking.pickup_time,
+    total: Number(booking.total_amount),
+  }));
 }
 
 Deno.serve(async (req) => {
@@ -389,6 +406,7 @@ Deno.serve(async (req) => {
             booking_id: booking.id,
           })
           .eq("stripe_event_id", event.id);
+        await sendBookingConfirmation(session, tenantId, booking).catch((e) => console.error("CONFIRMATION EMAIL ERROR", e));
       }
     }
   }
