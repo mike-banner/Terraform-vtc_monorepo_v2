@@ -141,3 +141,22 @@ exposé aux clients.
 facture électronique conforme.
 
 **Déclencheur pour rouvrir :** mise en place de la facture électronique, ou première demande d'une entreprise.
+
+## Simplification des rôles : retirer `manager`, garder `owner` et `driver`
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1. Moment non fixé.
+**Constat :** le rôle `manager` est déjà **inatteignable** : la Phase 9 a retenu le mode solo comme chemin nominal (`approve_onboarding_tx`
+crée le tenant et le profil `owner`), le multi-chauffeurs et `manager` sont renvoyés à un milestone dédié, et aucun écran
+n'attribue ce rôle. Les profils locaux ne contiennent que des `owner`.
+**Étendue d'un retrait propre :** l'énumération `tenant_role` contient `manager` ; environ 42 lignes dans 13 migrations
+(politiques RLS, RPC), 2 Edge Functions, 8 suites SQL, 9 fichiers du backoffice (`guards.ts`, `AppLayout`, `env.d.ts`, `bookings`,
+etc.). Postgres ne sait pas retirer une valeur d'une énumération : il faut recréer le type et réécrire les objets qui en dépendent.
+**Plan en 4 temps :** (1) interdire l'attribution de `manager` ; (2) réécrire politiques et RPC sur `owner` et `driver` (les
+vérifications « owner ou manager » des plans 02, 03, 04 et 05 deviennent « owner ») ; (3) recréer l'énumération sans `manager` ;
+(4) aligner types, backoffice et suites SQL. Un plan, après la Phase 14.1, avant la Phase 15.
+**Pas dans la 14.1 :** le rôle est inoffensif aujourd'hui, et le retirer maintenant invaliderait les suites SQL tout juste
+validées pour un gain nul auprès du premier client.
+**Question produit à garder en tête :** sans `manager`, un assistant ou un régulateur d'agence ne peut pas avoir de compte
+distinct du propriétaire. Le premier client est un chauffeur : pas de conflit.
+
+**Déclencheur pour rouvrir :** fin de la Phase 14.1, ou première demande d'un compte non-chauffeur.
