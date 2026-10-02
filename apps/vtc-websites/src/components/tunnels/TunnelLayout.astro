@@ -1,5 +1,6 @@
 ---
 // src/components/tunnels/TunnelLayout.astro
+import { configDuSite } from '../../core/site-config';
 import TunnelProgress from './TunnelProgress.astro';
 import TunnelFooter from './TunnelFooter.astro';
 import { Icon } from 'astro-icon/components';
@@ -14,7 +15,7 @@ const {
   accentColor = '#000000',
 } = Astro.props;
 
-const tenant = Astro.locals.tenant || { name: 'Elite Lyon', id: 'default' };
+const tenant = Astro.locals.tenant || { name: configDuSite(Astro.url.host).nom, id: '' };
 
 // Fallback configs si les props ne sont pas fournies
 const defaultConfigs = {
