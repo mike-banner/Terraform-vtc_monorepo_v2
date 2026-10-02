@@ -299,6 +299,9 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
               <input
                 value={newZoneName}
                 onChange={(e) => setNewZoneName(e.target.value)}
+                onBlur={() => {
+                  if (newZoneName.trim() && !newZoneCodes.trim()) remplir(newZoneName, setNewZoneCodes, setZoneError);
+                }}
                 placeholder='Nom de la zone (ex: Orly)'
                 className='w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-foreground font-semibold text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all uppercase'
               />
