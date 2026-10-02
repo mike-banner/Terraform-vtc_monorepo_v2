@@ -439,6 +439,38 @@ const run = (): void => {
         };
       }
 
+      // Signalement d'adresse (D-33) : visible tant que la course n'est ni terminée ni annulée.
+      {
+        const box = document.getElementById("modal-address-alert-box");
+        const txt = document.getElementById("modal-address-alert");
+        const verifyBtn = document.getElementById("modal-address-verify-btn") as HTMLButtonElement | null;
+        const errBox = document.getElementById("modal-address-error");
+        const ALERT_TEXTS: Record<string, string> = {
+          hors_zone_depart: "Adresse de départ hors de la zone du trajet choisi",
+          hors_zone_arrivee: "Adresse d'arrivée hors de la zone du trajet choisi",
+          hors_zone: "Départ et arrivée hors de la zone du trajet choisi",
+          a_verifier: "Adresse à vérifier : le code postal n'a pas pu être contrôlé",
+          verifie: "Adresse vérifiée",
+        };
+        const closed = String(booking.status).startsWith("cancel") || booking.status === "no_show"
+          || booking.mission_status === "completed";
+        const alertKey = String(booking.address_alert ?? "");
+        const shown = !closed && alertKey in ALERT_TEXTS;
+        box?.classList.toggle("hidden", !shown);
+        if (errBox) errBox.innerText = "";
+        if (shown && txt) txt.innerText = ALERT_TEXTS[alertKey];
+        verifyBtn?.classList.toggle("hidden", !shown || alertKey === "verifie");
+        if (verifyBtn) verifyBtn.onclick = async () => {
+          verifyBtn.disabled = true;
+          const { error } = await supabase.rpc("mark_address_verified", { p_booking_id: String(booking.id) });
+          verifyBtn.disabled = false;
+          if (error) { if (errBox) errBox.innerText = error.message; return; }
+          booking.address_alert = "verifie";
+          if (txt) txt.innerText = ALERT_TEXTS.verifie;
+          verifyBtn.classList.add("hidden");
+        };
+      }
+
       const id = booking.id ?? "---";
       if (refEl) refEl.innerText = `REF: #${String(id).split("-")[0].toUpperCase()}`;
 

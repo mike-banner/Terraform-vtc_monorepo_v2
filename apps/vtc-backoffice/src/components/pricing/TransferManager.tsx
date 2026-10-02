@@ -5,8 +5,11 @@ import {
   deleteFixedRoute,
   getFixedRoutes,
   getZones,
+  proposerCodesPostaux,
   updateFixedRoute,
+  updateZonePostalCodes,
 } from '@/services/pricing';
+import { analyserCodes } from '@/lib/geo-communes.mjs';
 import { ArrowRightLeft, Edit, Loader2, MapPin, Plus, Trash2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
@@ -20,7 +23,39 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [editingRoute, setEditingRoute] = useState<any>(null);
   const [newZoneName, setNewZoneName] = useState('');
+  const [newZoneCodes, setNewZoneCodes] = useState('');
+  const [zoneError, setZoneError] = useState('');
+  const [routeError, setRouteError] = useState('');
+  const [codesDraft, setCodesDraft] = useState<Record<string, string>>({});
+  const [zoneMsg, setZoneMsg] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const msgOf = (err: any) => err?.message || 'Erreur inattendue';
+
+  // Remplit le champ sans enregistrer ; la règle de couverture reste côté serveur.
+  const remplir = async (nom: string, apply: (codes: string) => void, say: (m: string) => void) => {
+    if (!nom.trim()) return say('Saisissez d\'abord le nom de la zone.');
+    say('Recherche…');
+    const codes = await proposerCodesPostaux(nom);
+    if (codes === null) return say('Service indisponible : saisissez les codes à la main');
+    if (codes.length === 0)
+      return say(
+        'Aucune commune à ce nom exact : saisissez les codes à la main, ou laissez vide pour ne pas contrôler cette zone',
+      );
+    apply(codes.join(', '));
+    say('');
+  };
+
+  const saveCodes = async (z: any) => {
+    try {
+      const codes = analyserCodes(codesDraft[z.id] ?? (z.postal_codes ?? []).join(', '));
+      await updateZonePostalCodes(z.id, codes);
+      setZoneMsg((m) => ({ ...m, [z.id]: 'Enregistré' }));
+      fetchData();
+    } catch (err) {
+      setZoneMsg((m) => ({ ...m, [z.id]: msgOf(err) }));
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -44,12 +79,14 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
     if (!newZoneName) return;
     try {
       setSubmitting(true);
-      await createZone(tenantId, newZoneName);
+      setZoneError('');
+      await createZone(tenantId, newZoneName, analyserCodes(newZoneCodes));
       setNewZoneName('');
+      setNewZoneCodes('');
       setShowZoneModal(false);
       fetchData();
-    } catch {
-      alert('Erreur lors de la création de la zone');
+    } catch (err) {
+      setZoneError(msgOf(err));
     } finally {
       setSubmitting(false);
     }
@@ -59,8 +96,14 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
+    if (formData.get('pickup') === formData.get('dropoff')) {
+      setRouteError('Le départ et l\'arrivée doivent être deux zones différentes.');
+      return;
+    }
+
     try {
       setSubmitting(true);
+      setRouteError('');
 
       const payload = {
         tenant_id: tenantId,
@@ -82,7 +125,7 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
       fetchData();
     } catch (err: any) {
       console.error(err);
-      alert('Erreur lors de la sauvegarde du forfait.');
+      setRouteError(msgOf(err));
     } finally {
       setSubmitting(false);
     }
@@ -98,6 +141,7 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
   useEffect(() => {
     const openTransferModal = () => {
       setEditingRoute(null);
+      setRouteError('');
       setShowRouteModal(true);
     };
     const openZoneModal = () => setShowZoneModal(true);
@@ -206,14 +250,47 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
               {zones.map((z) => (
                 <div
                   key={z.id}
-                  className='flex justify-between items-center px-4 py-3 bg-background border border-border rounded-[var(--radius)] uppercase font-semibold text-xs text-foreground'>
-                  {z.name}
+                  className='px-4 py-3 bg-background border border-border rounded-[var(--radius)] space-y-2'>
+                  <p className='uppercase font-semibold text-xs text-foreground'>{z.name}</p>
+                  <input
+                    value={codesDraft[z.id] ?? (z.postal_codes ?? []).join(', ')}
+                    onChange={(e) => setCodesDraft((d) => ({ ...d, [z.id]: e.target.value }))}
+                    placeholder='Codes postaux (ex: 75001, 75002)'
+                    className='w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground text-xs'
+                  />
+                  <div className='flex gap-2'>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        remplir(
+                          z.name,
+                          (c) => setCodesDraft((d) => ({ ...d, [z.id]: c })),
+                          (m) => setZoneMsg((x) => ({ ...x, [z.id]: m })),
+                        )
+                      }
+                      className='py-1.5 px-3 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-bold uppercase tracking-wider rounded-[var(--radius)]'>
+                      Remplir
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => saveCodes(z)}
+                      className='py-1.5 px-3 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider rounded-[var(--radius)]'>
+                      Enregistrer
+                    </button>
+                  </div>
+                  {zoneMsg[z.id] && <p className='text-xs text-muted-foreground'>{zoneMsg[z.id]}</p>}
                 </div>
               ))}
               {zones.length === 0 && (
                 <p className='text-xs text-muted-foreground text-center py-4'>Aucune zone existante.</p>
               )}
             </div>
+
+            <p className='text-xs text-muted-foreground mb-1'>Vide = zone jamais contrôlée (aéroport, parc).</p>
+            <p className='text-xs text-muted-foreground mb-4'>
+              Le bouton Remplir ne trouve que les communes au nom exact : « Paris » oui, « Lyon centre » non ; dans ce
+              cas saisissez les codes à la main (ex. 69001, 69002).
+            </p>
 
             <form onSubmit={handleCreateZone} className='space-y-4'>
               <input
@@ -222,6 +299,19 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
                 placeholder='Nom de la zone (ex: Orly)'
                 className='w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-foreground font-semibold text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all uppercase'
               />
+              <input
+                value={newZoneCodes}
+                onChange={(e) => setNewZoneCodes(e.target.value)}
+                placeholder='Codes postaux (ex: 75001, 75002)'
+                className='w-full bg-background border border-border rounded-[var(--radius)] px-4 py-3 text-foreground text-sm'
+              />
+              <button
+                type='button'
+                onClick={() => remplir(newZoneName, setNewZoneCodes, setZoneError)}
+                className='w-full py-2 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-bold uppercase tracking-wider rounded-[var(--radius)]'>
+                Remplir
+              </button>
+              {zoneError && <p className='text-xs text-destructive'>{zoneError}</p>}
               <button
                 disabled={submitting}
                 className='w-full py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[var(--radius)] font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm shadow-primary/20'>
@@ -359,6 +449,7 @@ export const TransferManager: React.FC<{ tenantId: string }> = ({ tenantId }) =>
                 </span>
               </div>
 
+              {routeError && <p className='text-xs text-destructive'>{routeError}</p>}
               <button
                 disabled={submitting}
                 className='w-full py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[var(--radius)] font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm shadow-primary/20 active:scale-95 mt-4'>

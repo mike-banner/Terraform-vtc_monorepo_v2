@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
+import { choisirCodesCommune } from "@/lib/geo-communes.mjs";
 
 // --- ZONES ---
 export const getZones = async (tenantId: string) => {
@@ -11,15 +12,49 @@ export const getZones = async (tenantId: string) => {
   return data;
 };
 
-export const createZone = async (tenantId: string, name: string) => {
+export const createZone = async (
+  tenantId: string,
+  name: string,
+  postalCodes: string[] = [],
+) => {
   const { data, error } = await supabase
     .from("zones")
-    .insert([{ tenant_id: tenantId, name }])
+    .insert([{ tenant_id: tenantId, name, postal_codes: postalCodes }])
     .select()
     .limit(1)
     .maybeSingle();
   if (error) throw error;
   return data;
+};
+
+export const updateZonePostalCodes = async (id: string, codes: string[]) => {
+  const { data, error } = await supabase
+    .from("zones")
+    .update({ postal_codes: codes })
+    .eq("id", id)
+    .select();
+  if (error) throw error;
+  if (!data || data.length !== 1) {
+    throw new Error("Modification refusée : vous n'avez pas le droit de modifier cette zone.");
+  }
+  return data[0];
+};
+
+// Aide à la saisie : null = service indisponible, [] = aucune commune au nom exact.
+export const proposerCodesPostaux = async (
+  nomZone: string,
+): Promise<string[] | null> => {
+  try {
+    const url =
+      "https://geo.api.gouv.fr/communes?nom=" +
+      encodeURIComponent(nomZone) +
+      "&fields=nom,codesPostaux,population&boost=population&limit=5";
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    return choisirCodesCommune(nomZone, await res.json());
+  } catch {
+    return null;
+  }
 };
 
 // --- FIXED ROUTES ---

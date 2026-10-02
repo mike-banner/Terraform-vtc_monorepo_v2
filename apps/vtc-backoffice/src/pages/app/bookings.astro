@@ -1,6 +1,10 @@
 ---
 // src/pages/app/bookings.astro
 import Badge from "../../components/ui/Badge.astro";
+const ADRESSE_A_VERIFIER = ["hors_zone_depart", "hors_zone_arrivee", "hors_zone", "a_verifier"];
+const adresseAVerifier = (b: any) =>
+  ADRESSE_A_VERIFIER.includes(b.address_alert) &&
+  !String(b.status).startsWith("cancel") && b.status !== "no_show" && b.mission_status !== "completed";
 import Button from "../../components/ui/Button.astro";
 import Card from "../../components/ui/Card.astro";
 import AppLayout from "../../layouts/AppLayout.astro";
@@ -283,6 +287,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                                              booking.mission_status === 'not_started' ? 'Non Démarré' :
                                              booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
                                         </Badge>
+                                        {adresseAVerifier(booking) && <Badge variant="amber">Adresse à vérifier</Badge>}
                                     </div>
 
                                     <div class="space-y-1.5 pb-3 border-b border-white/5 mb-3">
@@ -406,6 +411,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                                                          booking.mission_status === 'not_started' ? 'Non Démarré' :
                                                          booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
                                                     </Badge>
+                                                    {adresseAVerifier(booking) && <Badge variant="amber">Adresse à vérifier</Badge>}
                                                 </td>
                                                 <td class="px-8 py-4 text-right">
                                                     <div class="flex flex-col items-end">
@@ -820,6 +826,13 @@ const getFilterUrl = (params: Record<string, string>) => {
                             <h4 id="modal-time" class="text-3xl font-heading font-black text-foreground tracking-tighter leading-none mb-2 tabular-nums">---</h4>
                             <p id="modal-date" class="text-[10px] font-black uppercase text-muted-foreground tracking-widest underline decoration-primary/30 underline-offset-4">---</p>
                         </div>
+                    </div>
+
+                    <!-- SIGNALEMENT D'ADRESSE -->
+                    <div id="modal-address-alert-box" class="hidden bg-muted/10 p-4 rounded-[var(--radius)] border border-border space-y-3">
+                        <p id="modal-address-alert" class="text-xs text-foreground font-medium"></p>
+                        <button id="modal-address-verify-btn" class="hidden py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Marquer comme vérifié</button>
+                        <p id="modal-address-error" class="text-xs text-destructive"></p>
                     </div>
 
                     <!-- CARACTÉRISTIQUES -->
