@@ -107,3 +107,17 @@ transfert arrive pendant ce créneau, le chauffeur doit soit l'annuler (rembours
 des créneaux déjà pris directement dans le tunnel de réservation des clients.
 
 **Déclencheur pour rouvrir :** premier chauffeur avec plusieurs véhicules ou collègues, ou premier conflit réel de créneau.
+
+## Calendrier de disponibilités (créneaux pris) pour la mise à disposition et les transferts
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1 (plan 05). Remplace l'idée d'une durée plafonnée.
+**Idée :** un calendrier des créneaux pris (courses acceptées, mises à disposition, périodes bloquées à la main : congés,
+repos), par chauffeur ou par véhicule, qui sert de base unique au contrôle de chevauchement. La durée d'une mise à
+disposition n'est pas bornée (une semaine ou plus) : on saisit une période (début, fin) plutôt qu'un nombre d'heures.
+**Affichage :** côté chauffeur dans le backoffice (React, Phase 16) ; côté client dans le tunnel, au choix de la date, où les
+jours indisponibles sont grisés (de préférence au tunnel plutôt qu'à la page d'accueil : on n'y expose que « occupé »,
+jamais le détail des courses ni les clients).
+**Dans la Phase 14.1 :** seulement le contrôle de chevauchement côté base (début + `duration_hours`, sans plafond de 24 h) et
+l'alerte de conflit. Le calendrier visuel et le blocage dans le tunnel sont reportés.
+
+**Déclencheur pour rouvrir :** démarrage de la Phase 16 (pages en React), ou premier conflit réel de créneau.
