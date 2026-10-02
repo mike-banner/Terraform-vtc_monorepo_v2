@@ -673,9 +673,9 @@ if (tenant && !tenant.setup_completed && profile.tenant_role === "owner") {
                                     acceptBtn.innerText = "Traitement...";
                                     acceptBtn.setAttribute('disabled', 'true');
 
-                                    // Appel de la fonction Edge Supabase accept-booking
-                                    const { error } = await supabase.functions.invoke('accept-booking', {
-                                        body: { booking_id: booking.id, driver_id: driverId }
+                                    // RPC gardée par rôle (le statut payé est conservé)
+                                    const { error } = await supabase.rpc('accept_paid_booking', {
+                                        p_booking_id: booking.id, p_driver_id: driverId
                                     });
 
                                     if (error) throw error;

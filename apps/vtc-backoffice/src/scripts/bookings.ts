@@ -355,13 +355,14 @@ const run = (): void => {
                   const bookingId = booking.id;
                   if (!bookingId) throw new Error("Missing booking id");
 
-                  const { error } = await supabase.functions.invoke("accept-booking", {
-                    body: { booking_id: bookingId, driver_id: driverId },
+                  const { error } = await supabase.rpc("accept_paid_booking", {
+                    p_booking_id: bookingId,
+                    p_driver_id: driverId,
                   });
                   if (error) throw error;
                   window.location.reload();
-                } catch {
-                  alert("Erreur lors de l'acceptation.");
+                } catch (e) {
+                  alert((e as { message?: string })?.message || "Erreur lors de l'acceptation.");
                   acceptBtn.innerText = "Accepter la course";
                   acceptBtn.disabled = false;
                 }

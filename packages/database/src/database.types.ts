@@ -1703,6 +1703,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_paid_booking: {
+        Args: { p_booking_id: string; p_driver_id: string }
+        Returns: string
+      }
       approve_onboarding_tx: {
         Args: { onboarding_uuid: string }
         Returns: undefined

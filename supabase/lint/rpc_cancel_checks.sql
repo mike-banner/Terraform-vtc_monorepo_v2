@@ -207,6 +207,40 @@ SELECT pg_temp.expect_count('policy: nouvelle course -> v2',
   $q$select count(*) from public.bookings b join public.cancellation_policies p on p.id = b.cancellation_policy_id
      where b.id = 'b9000000-0000-4000-8000-000000000009' and p.version = 2$q$, 1);
 
+-- ===== accept_paid_booking ======================================================================
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
+INSERT INTO public.bookings (id, original_tenant_id, current_tenant_id, customer_id, vehicle_id, driver_id, status,
+  payment_mode, stripe_payment_intent_id, pickup_time, mission_status, pickup_address, dropoff_address, total_amount,
+  subtotal_amount, vat_amount, booking_type, booking_source, pricing_mode)
+SELECT v.id::uuid, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'c1000000-0000-4000-8000-00000000000a', 'ee000000-0000-4000-8000-00000000000a', NULL, 'paid', 'stripe', v.pi,
+  now() + interval '3 days', v.ms::public.mission_status_enum, 'A', 'B', 100, 90.91, 9.09, 'transfer', 'customer', 'direct'
+FROM (VALUES
+  ('a0000000-0000-4000-8000-0000000000a1', 'pi_test_ap1', 'to_validate'),
+  ('a0000000-0000-4000-8000-0000000000a2', 'pi_test_ap2', 'to_validate'),
+  ('a0000000-0000-4000-8000-0000000000a3', 'pi_test_ap3', 'in_progress')
+) AS v(id, pi, ms);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
+SELECT pg_temp.expect_ok('accept: owner prend a1 pour d1', $q$select public.accept_paid_booking('a0000000-0000-4000-8000-0000000000a1', 'd1000000-0000-4000-8000-000000000001')$q$);
+SELECT pg_temp.expect_ok('accept: rejeu', $q$select public.accept_paid_booking('a0000000-0000-4000-8000-0000000000a1', 'd1000000-0000-4000-8000-000000000001')$q$);
+SELECT pg_temp.expect_count('accept: a1 not_started, d1, statut paid',
+  $q$select count(*) from public.bookings where id = 'a0000000-0000-4000-8000-0000000000a1' and status = 'paid'
+     and mission_status = 'not_started' and driver_id = 'd1000000-0000-4000-8000-000000000001'$q$, 1);
+SELECT pg_temp.expect_sqlstate('accept: course non payée', $q$select public.accept_paid_booking('b3000000-0000-4000-8000-000000000003', 'd1000000-0000-4000-8000-000000000001')$q$, '22023');
+SELECT pg_temp.expect_sqlstate('accept: mission démarrée', $q$select public.accept_paid_booking('a0000000-0000-4000-8000-0000000000a3', 'd1000000-0000-4000-8000-000000000001')$q$, '22023');
+SELECT pg_temp.expect_error('accept: chauffeur inconnu', $q$select public.accept_paid_booking('a0000000-0000-4000-8000-0000000000a2', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd')$q$, '22023', 'Chauffeur inconnu');
+SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
+SELECT pg_temp.expect_sqlstate('accept: driver1 pour d2', $q$select public.accept_paid_booking('a0000000-0000-4000-8000-0000000000a2', 'd2000000-0000-4000-8000-000000000002')$q$, '42501');
+SELECT pg_temp.expect_ok('accept: driver1 pour d1', $q$select public.accept_paid_booking('a0000000-0000-4000-8000-0000000000a2', 'd1000000-0000-4000-8000-000000000001')$q$);
+SELECT pg_temp.login('55555555-5555-4555-8555-555555555555');
+SELECT pg_temp.expect_sqlstate('accept: owner B', $q$select public.accept_paid_booking('a0000000-0000-4000-8000-0000000000a1', 'd1000000-0000-4000-8000-000000000001')$q$, 'P0002');
+RESET ROLE;
+SET LOCAL ROLE anon;
+SELECT set_config('request.jwt.claims', '{"role":"anon"}', true);
+SELECT pg_temp.expect_denied('accept: anon', $q$select public.accept_paid_booking('a0000000-0000-4000-8000-0000000000a1', 'd1000000-0000-4000-8000-000000000001')$q$);
+RESET ROLE;
+
 DO $$ BEGIN RAISE NOTICE 'RPC cancel checks passed.'; END $$;
 
 ROLLBACK;
