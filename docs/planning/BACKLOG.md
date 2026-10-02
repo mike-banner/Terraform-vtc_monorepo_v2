@@ -114,10 +114,24 @@ des créneaux déjà pris directement dans le tunnel de réservation des clients
 **Idée :** un calendrier des créneaux pris (courses acceptées, mises à disposition, périodes bloquées à la main : congés,
 repos), par chauffeur ou par véhicule, qui sert de base unique au contrôle de chevauchement. La durée d'une mise à
 disposition n'est pas bornée (une semaine ou plus) : on saisit une période (début, fin) plutôt qu'un nombre d'heures.
-**Affichage :** côté chauffeur dans le backoffice (React, Phase 16) ; côté client dans le tunnel, au choix de la date, où les
-jours indisponibles sont grisés (de préférence au tunnel plutôt qu'à la page d'accueil : on n'y expose que « occupé »,
-jamais le détail des courses ni les clients).
+**Affichage :** côté chauffeur seulement, dans le backoffice (React, Phase 16). **Pas de calendrier côté client** (décision du
+2026-10-02) : un client qui voit le chauffeur toujours complet ne reviendrait pas, alors qu'une course refusée après coup peut
+être confiée à un collègue. Variante possible plus tard pour le transfert : un contrôle de disponibilité silencieux avant
+paiement (« ce créneau n'est pas disponible »), sans calendrier visible, à étudier quand il y aura des collègues.
 **Dans la Phase 14.1 :** seulement le contrôle de chevauchement côté base (début + `duration_hours`, sans plafond de 24 h) et
 l'alerte de conflit. Le calendrier visuel et le blocage dans le tunnel sont reportés.
 
 **Déclencheur pour rouvrir :** démarrage de la Phase 16 (pages en React), ou premier conflit réel de créneau.
+
+## Business (B2B) : demi-journée, journée, semaine, mois, avec facture électronique
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1 (plan 05).
+**Idée :** le tunnel Business fonctionne comme la mise à disposition, avec des forfaits entreprise : demi-journée, journée,
+semaine, mois. Il s'adresse à des entreprises et suppose la **facture électronique** (réforme française de la facturation
+électronique, calendrier et obligations à faire confirmer par l'expert-comptable).
+**Décision :** on le met de côté tant que la facture électronique n'existe pas. Dans la 14.1, le tunnel Business n'est pas
+exposé aux clients.
+**À faire :** forfaits (demi-journée, journée, semaine, mois) avec kilométrage inclus éventuel, devis, puis émission d'une
+facture électronique conforme.
+
+**Déclencheur pour rouvrir :** mise en place de la facture électronique, ou première demande d'une entreprise.
