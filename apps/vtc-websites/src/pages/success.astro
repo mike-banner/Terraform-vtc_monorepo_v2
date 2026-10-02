@@ -40,8 +40,11 @@ if (sessionId) {
 // Sans session Stripe, la page n'a pas de sens : retour à l'accueil.
 if (!sessionId) return Astro.redirect("/");
 
+let paymentState = "pending";
 if (!booking) {
   error = true;
+  const { data: state } = await supabase.rpc("get_public_payment_state", { p_session_id: sessionId });
+  if (state === "failed") paymentState = "failed";
 }
 const { tenant } = Astro.locals;
 const buttonClass = "inline-flex h-11 w-full items-center justify-center rounded-md bg-ui-ink px-4 text-sm font-semibold text-ui-card transition-colors hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-ink";
@@ -49,11 +52,19 @@ const buttonClass = "inline-flex h-11 w-full items-center justify-center rounded
 
 <BaseLayout title="Réservation" minimal>
   {error || !booking ? (
-    <StatusPage tone="pending" title="Confirmation en cours" tenantName={tenant?.name}>
-      <p>Votre réservation n'est pas encore confirmée. Si votre paiement a été débité, elle le sera dans quelques minutes et vous recevrez un email.</p>
-      <p>Sans nouvelle de notre part, contactez-nous{(tenant?.phone || tenant?.email) && ` : ${[tenant?.phone, tenant?.email].filter(Boolean).join(' · ')}`}.</p>
-      <a slot="actions" href="/" class={buttonClass}>Retour à l'accueil</a>
-    </StatusPage>
+    paymentState === "failed" ? (
+      <StatusPage tone="error" title="Paiement reçu, réservation à confirmer" tenantName={tenant?.name}>
+        <p>Votre paiement a bien été reçu, mais votre réservation n'a pas pu être enregistrée automatiquement. {tenant?.name ?? "Votre chauffeur"} a été prévenu et vous contacte rapidement. À défaut, vous serez remboursé.</p>
+        {(tenant?.phone || tenant?.email) && <p>Pour aller plus vite : {[tenant?.phone, tenant?.email].filter(Boolean).join(' · ')}.</p>}
+        <a slot="actions" href="/" class={buttonClass}>Retour à l'accueil</a>
+      </StatusPage>
+    ) : (
+      <StatusPage tone="pending" title="Confirmation en cours" tenantName={tenant?.name}>
+        <p>Votre réservation n'est pas encore confirmée. Si votre paiement a été débité, elle le sera dans quelques minutes et vous recevrez un email.</p>
+        <p>Sans nouvelle de notre part, contactez-nous{(tenant?.phone || tenant?.email) && ` : ${[tenant?.phone, tenant?.email].filter(Boolean).join(' · ')}`}.</p>
+        <a slot="actions" href="/" class={buttonClass}>Retour à l'accueil</a>
+      </StatusPage>
+    )
   ) : (
     <StatusPage tone="success" title={`Merci ${booking.customer_first_name || ''}, votre course est réservée`.replace(' ,', ',')} tenantName={tenant?.name}>
       <dl class="divide-y divide-ui-line rounded-md border border-ui-line">
