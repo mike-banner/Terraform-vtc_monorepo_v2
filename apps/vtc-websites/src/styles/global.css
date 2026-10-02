@@ -28,6 +28,20 @@
   --font-headline: 'Poppins', sans-serif;
   --font-body: 'Roboto', sans-serif;
   --font-label: 'Poppins', sans-serif;
+
+  /* Pages d'état communes à tous les sites (succès, attente, erreur) : sobre, neutre, sans police externe */
+  --font-ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --color-ui-page: #f6f9fc;
+  --color-ui-card: #ffffff;
+  --color-ui-ink: #1a1f36;
+  --color-ui-muted: #4f566b;
+  --color-ui-line: #e3e8ee;
+  --color-ui-ok: #137752;
+  --color-ui-ok-soft: #e6f4ee;
+  --color-ui-wait: #8a5a00;
+  --color-ui-wait-soft: #fdf3dc;
+  --color-ui-bad: #b3261e;
+  --color-ui-bad-soft: #fbe9e7;
 }
 
 @layer utilities {

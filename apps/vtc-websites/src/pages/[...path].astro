@@ -1,6 +1,8 @@
 ---
 // src/pages/[...path].astro
 import { resolveSite } from "../router/siteResolver";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StatusPage from "../components/ui/StatusPage.astro";
 
 const host = Astro.url.host;
 const site = resolveSite(host);
@@ -36,6 +38,7 @@ if (sitePages[targetFile]) {
     Page = (module as any).default;
 } else {
     console.warn(`[ROUTER] File not found in glob: ${targetFile}`);
+    Astro.response.status = 404;
     // Si pas trouvé, on peut essayer tunnels sans le catch-all si c'est juste /tunnels
     if (targetPath === "tunnels") {
         const fallback = `../sites/${site}/pages/tunnels/index.astro`;
@@ -50,12 +53,10 @@ if (sitePages[targetFile]) {
 {Page ? (
   <Page />
 ) : (
-  <main class="min-h-screen flex items-center justify-center bg-zinc-50 p-8 font-sans">
-    <div class="max-w-md w-full text-center">
-      <h1 class="text-9xl font-semibold text-zinc-200 tracking-tighter">404</h1>
-      <p class="text-zinc-500 uppercase tracking-[0.2em] text-[10px] font-bold mt-4">Page introuvable chez {tenantData?.name || 'VTC HUB'}</p>
-      <p class="text-[8px] text-zinc-300 mt-2">ID Site: {site} | Path: {path}</p>
-      <a href="/" class="inline-block mt-12 px-10 py-4 bg-black text-white text-[11px] font-bold uppercase tracking-widest shadow-xl hover:bg-zinc-800 transition-all">Retour à l'accueil</a>
-    </div>
-  </main>
+  <BaseLayout title="Page introuvable" minimal>
+    <StatusPage tone="error" title="Page introuvable" tenantName={tenantData?.name}>
+      <p>L'adresse demandée n'existe pas ou a été déplacée.</p>
+      <a slot="actions" href="/" class="inline-flex h-11 w-full items-center justify-center rounded-md bg-ui-ink px-4 text-sm font-semibold text-ui-card transition-colors hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-ink">Retour à l'accueil</a>
+    </StatusPage>
+  </BaseLayout>
 )}
