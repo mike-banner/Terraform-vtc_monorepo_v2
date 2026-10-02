@@ -31,6 +31,16 @@ export default [
     },
   },
   {
+    // Logique pure partagée navigateur / Node (zone-check) : globals web standard.
+    files: ['apps/vtc-websites/src/core/*.mjs'],
+    languageOptions: {
+      globals: {
+        fetch: 'readonly', Response: 'readonly', URL: 'readonly', AbortController: 'readonly',
+        setTimeout: 'readonly', clearTimeout: 'readonly',
+      },
+    },
+  },
+  {
     rules: {
       // Le code existant utilise `any` massivement sur les retours Supabase.
       // À resserrer quand les types générés seront branchés partout.

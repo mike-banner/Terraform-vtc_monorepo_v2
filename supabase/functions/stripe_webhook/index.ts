@@ -4,6 +4,7 @@ import { bookingConfirmationEmail } from "../_shared/email-templates/site/bookin
 import { paymentWithoutBookingEmail } from "../_shared/email-templates/native/payment-without-booking.ts";
 import { paymentReceivedCustomerEmail } from "../_shared/email-templates/native/payment-received-customer.ts";
 import { sendEmailLog } from "../_shared/send-email-log.ts";
+import { ALERTES_ADRESSE } from "../_shared/zone-check.ts";
 import Stripe from "https://esm.sh/stripe@12.18.0?target=deno&no-check";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -374,6 +375,7 @@ Deno.serve(async (req) => {
           passenger_count: Number(m.passenger_count ?? 1),
           luggage_count: Number(m.luggage_count ?? 0),
           instructions: String(m.instructions ?? "").trim().slice(0, 500) || null,
+          address_alert: (ALERTES_ADRESSE as readonly string[]).includes(m.address_alert) ? m.address_alert : null,
 
           booking_type: m.booking_type,
 
