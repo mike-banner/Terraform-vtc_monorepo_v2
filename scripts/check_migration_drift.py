@@ -8,6 +8,7 @@ appliquées, dont le Kill Switch tenant : le correctif était en fichier, marqu�
 Utilise l'API Management (un simple Personal Access Token suffit, pas besoin du
 mot de passe de la base).
 """
+import argparse
 import json
 import os
 import sys
@@ -47,10 +48,18 @@ def remote_versions(ref: str, token: str) -> dict[str, str]:
 
 
 def main() -> int:
-    ref = os.environ.get("SUPABASE_PROJECT_REF")
+    parser = argparse.ArgumentParser(
+        description="Compare les migrations du dépôt à celles appliquées sur un projet Supabase."
+    )
+    parser.add_argument(
+        "--ref",
+        help="ref du projet à contrôler (prioritaire sur SUPABASE_PROJECT_REF)",
+    )
+    args = parser.parse_args()
+    ref = args.ref or os.environ.get("SUPABASE_PROJECT_REF")
     token = os.environ.get("SUPABASE_ACCESS_TOKEN")
     if not ref or not token:
-        sys.exit("SUPABASE_PROJECT_REF et SUPABASE_ACCESS_TOKEN sont requis")
+        sys.exit("--ref (ou SUPABASE_PROJECT_REF) et SUPABASE_ACCESS_TOKEN sont requis")
 
     local = local_versions()
     remote = remote_versions(ref, token)
