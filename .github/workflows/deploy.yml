@@ -139,6 +139,13 @@ jobs:
           # vit sur vtc-websites depuis la Phase 14 (D-10). Sans cette variable, le lien
           # retombait sur l'origine du backoffice, qui n'a plus cette page.
           PUBLIC_SITE_URL: https://vtc-drivers-front-${{ env.ENVIRONMENT }}.pages.dev
+          # Instance du développeur : site par défaut = démonstration elite-lyon, sans domaine (ADR 0003, D-29 a).
+          # Toute valeur identifiant un client ou un domaine passe par un secret (masqué), jamais par une
+          # variable `vars.` (affichée en clair dans les journaux d'un dépôt public, D-27 d). Les instances
+          # clientes ne sont jamais construites ici : elles se déploient depuis la machine du développeur
+          # (docs/INSTANCES.md).
+          PUBLIC_SITE: elite-lyon
+          SITE_MAP: ${{ secrets.SITE_MAP }}
         run: pnpm build
 
       - name: Deploy Backoffice
@@ -154,6 +161,7 @@ jobs:
         run: npx wrangler@latest pages deploy apps/vtc-websites/dist --project-name=vtc-drivers-front-${{ env.ENVIRONMENT }} --branch main
 
       - name: Deploy Superadmin
+        if: vars.DEPLOY_SUPERADMIN != 'false'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

@@ -1,7 +1,7 @@
 # 1. Backoffice App
 resource "cloudflare_pages_project" "backoffice" {
   account_id        = var.cloudflare_account_id
-  name              = "vtc-backoffice-${var.environment}"
+  name              = "${var.project_prefix}-backoffice-${var.environment}"
   production_branch = "main"
 
 
@@ -21,7 +21,7 @@ resource "cloudflare_pages_project" "backoffice" {
 # 2. Drivers Front App (Multi-Tenant via Cloudflare for SaaS)
 resource "cloudflare_pages_project" "drivers_front" {
   account_id        = var.cloudflare_account_id
-  name              = "vtc-drivers-front-${var.environment}"
+  name              = "${var.project_prefix}-drivers-front-${var.environment}"
   production_branch = "main"
 
 
@@ -39,9 +39,15 @@ resource "cloudflare_pages_project" "drivers_front" {
 }
 
 # 3. Superadmin App
+moved {
+  from = cloudflare_pages_project.superadmin
+  to   = cloudflare_pages_project.superadmin[0]
+}
+
 resource "cloudflare_pages_project" "superadmin" {
+  count             = var.enable_superadmin ? 1 : 0
   account_id        = var.cloudflare_account_id
-  name              = "vtc-superadmin-${var.environment}"
+  name              = "${var.project_prefix}-superadmin-${var.environment}"
   production_branch = "main"
 
 

@@ -53,3 +53,19 @@ variable "resend_api_key" {
   default     = "re_placeholder"
 }
 
+
+variable "enable_superadmin" {
+  type        = bool
+  description = "Crée le projet superadmin (instance de la plateforme uniquement). Sans défaut : chaque workspace choisit."
+}
+
+variable "project_prefix" {
+  type        = string
+  default     = "vtc"
+  description = "Préfixe neutre des projets Pages (code d'instance, jamais un nom de client)."
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]{2,20}$", var.project_prefix))
+    error_message = "project_prefix : 2 à 20 caractères parmi a-z, 0-9 et tiret."
+  }
+}

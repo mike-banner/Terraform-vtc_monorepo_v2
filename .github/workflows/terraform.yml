@@ -33,6 +33,9 @@ jobs:
       TF_VAR_resend_api_key: ${{ secrets.RESEND_API_KEY }}
       # Selon la branche, on déploie sur l'environnement correspondant
       TF_VAR_environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'dev' }}
+      # Organisation de l'instance du développeur ; le workspace suit la branche.
+      TF_CLOUD_ORGANIZATION: mike-banner_inc
+      TF_WORKSPACE: ${{ github.ref == 'refs/heads/main' && 'vtc_prod' || 'vtc_dev' }}
 
     steps:
       - name: Checkout
@@ -43,13 +46,9 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - name: Dynamic HCP Workspace Selection
-        run: |
-          WORKSPACE="vtc_dev"
-          if [ "${{ env.TF_VAR_environment }}" == "production" ]; then
-            WORKSPACE="vtc_prod"
-          fi
-          sed -i "s/name = \"vtc_prod\"/name = \"$WORKSPACE\"/g" main.tf
+      # Instance de la plateforme : seule à porter le superadmin.
+      - name: Superadmin de l'instance
+        run: echo 'enable_superadmin = true' > ci.auto.tfvars
 
       - name: Terraform Init
         run: terraform init

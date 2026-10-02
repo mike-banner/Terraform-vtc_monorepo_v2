@@ -48,3 +48,13 @@ test-results/
 
 # cache local de la CLI Supabase
 supabase/.temp/
+
+# Instances et Terraform : valeurs propres à une instance, jamais versionnées
+terraform/*.auto.tfvars
+*.instance.env
+
+# Sites vitrines : seuls le site du développeur et le modèle vide sont versionnés ;
+# les sites clients sont récupérés depuis le bucket R2 privé avant la compilation (docs/INSTANCES.md).
+apps/vtc-websites/src/sites/*
+!apps/vtc-websites/src/sites/elite-lyon/
+!apps/vtc-websites/src/sites/_modele/
