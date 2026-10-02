@@ -26,7 +26,7 @@ DECLARE
 
   -- Tables couvertes par la matrice de rôles tenant (Phase 13) : une policy par
   -- commande, jamais FOR ALL. Les policies service_role sont hors RLS (BYPASSRLS).
-  role_tables text[] := ARRAY['bookings', 'customers', 'drivers', 'vehicles', 'pricing_rules', 'financial_movements'];
+  role_tables text[] := ARRAY['bookings', 'customers', 'drivers', 'vehicles', 'pricing_rules', 'financial_movements', 'cancellation_policies'];
 
   -- Fonctions SECURITY DEFINER exécutables par anon (RPC publiques). Les deux dernières sont
   -- les RPC de notation du plan 14-07.
@@ -120,10 +120,9 @@ BEGIN
     violations := violations || format('table %I has several %s policies (%s)', r.tablename, r.cmd, r.names);
   END LOOP;
 
-  -- 7. Trigger de garde de bookings absent ou désactivé. Dérive constatée en prod le 2026-09-29
-  --    (trois triggers en tgenabled='D'). Exception assumée : trg_prevent_late_cancellation reste désactivé en
-  --    production (plan 14-13, 2026-10-01) tant que la « non réalisée » d'une course payée n'est pas conçue ; il est
-  --    donc absent de cette liste. À réintégrer dès qu'il est réactivé.
+  -- 7. Liste des triggers de garde actifs de bookings (D-05, phase 14.1 : trg_prevent_late_cancellation retiré,
+  --    la règle d'annulation vit dans la politique du tenant). Dérive constatée en prod le 2026-09-29
+  --    (trois triggers en tgenabled='D').
   FOR r IN
     SELECT t.name
     FROM unnest(ARRAY['trg_prevent_booking_delete',
@@ -162,7 +161,7 @@ BEGIN
     SELECT ro.name AS role_name, c.name AS col
     FROM unnest(ARRAY['anon','authenticated']) AS ro(name),
          unnest(ARRAY['status','mission_status','total_amount','subtotal_amount','vat_amount','payment_mode',
-           'pickup_time','pickup_address','dropoff_address','rating','cancellation_policy_id']) AS c(name)
+           'pickup_time','pickup_address','dropoff_address','rating','cancellation_policy_id','refund_amount','refund_rate']) AS c(name)
     WHERE has_column_privilege(ro.name, 'public.bookings', c.name, 'UPDATE')
   LOOP
     violations := violations || format('role %s can UPDATE bookings.%s (breaks ADR-012 invariant)', r.role_name, r.col);
