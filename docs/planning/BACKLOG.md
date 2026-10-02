@@ -96,3 +96,14 @@ Phase 16 (pages en React).
 
 **Déclencheur pour rouvrir :** démarrage de la Phase 16, ou première installation d'un client réel (le script
 d'installation d'instance crée le tenant et le propriétaire, pas ces éléments).
+
+## Mise à disposition longue : conflits de créneaux et transfert à un collègue
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1 (plan 05).
+**Contexte :** une mise à disposition peut durer une semaine (le plan 05 plafonne aujourd'hui `duration_hours` à 24 h). Si un
+transfert arrive pendant ce créneau, le chauffeur doit soit l'annuler (remboursement existant), soit l'envoyer à un collègue.
+**Dans la Phase 14.1 :** contrôle de chevauchement à la validation d'un devis et alerte de conflit dans le backoffice (voir plan 05).
+**Reporté :** « transférer la course à un collègue » (flux d'affectation à un autre chauffeur, avec acceptation), et le blocage
+des créneaux déjà pris directement dans le tunnel de réservation des clients.
+
+**Déclencheur pour rouvrir :** premier chauffeur avec plusieurs véhicules ou collègues, ou premier conflit réel de créneau.
