@@ -25,9 +25,9 @@ export default [
   ...astro.configs.recommended,
   {
     // Scripts de build/CI : Node, pas navigateur — `console` et `process` existent.
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'apps/vtc-websites/*.mjs'],
     languageOptions: {
-      globals: { console: 'readonly', process: 'readonly' },
+      globals: { console: 'readonly', process: 'readonly', URL: 'readonly' },
     },
   },
   {
