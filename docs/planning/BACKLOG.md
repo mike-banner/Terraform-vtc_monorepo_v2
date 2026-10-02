@@ -118,8 +118,8 @@ disposition n'est pas bornée (une semaine ou plus) : on saisit une période (d�
 calendrier dans le tunnel des réservations à paiement immédiat (Transfert), avec les créneaux déjà pris grisés**, parce qu'une
 course payée puis refusée est la pire expérience. Pas de calendrier pour les devis (aucun paiement, le chauffeur valide à la
 main). Réserve du chauffeur : un client qui voit le chauffeur toujours complet peut ne pas revenir.
-**Compromis à étudier :** réglage par chauffeur (afficher ou non ses disponibilités) ; ne griser que les **jours entièrement
-indisponibles** (mise à disposition longue, congés) et vérifier le créneau exact en silence au paiement ; ne jamais exposer la
+**Compromis à étudier :** réglage par chauffeur (afficher ou non ses disponibilités) ; **compromis n°2 retenu le 2026-10-02** : ne griser que les **jours ou demi-journées
+entièrement indisponibles** (mise à disposition longue, congés) et vérifier le créneau exact en silence au paiement ; ne jamais exposer la
 raison de l'indisponibilité ni le détail des courses.
 **Prérequis de données :** une heure de fin pour **toutes** les courses (aujourd'hui seules les mises à disposition ont
 `duration_hours` ; il faudrait une durée estimée par trajet fixe et une marge entre deux courses) ; plusieurs chauffeurs ou
