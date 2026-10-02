@@ -1,7 +1,7 @@
 // src/pages/api/tenant/booking-actions.ts
-// Proxy vers les RPC driver_cancel_booking / update_booking_details (Phase 14) : garde de rôle,
-// états autorisés et recalcul du prix vivent en base. La Edge Function cancel-booking gère
-// le remboursement Stripe côté admin/plateforme.
+// Proxy vers les RPC mark_booking_no_show / update_booking_details : garde de rôle, états autorisés
+// et recalcul du prix vivent en base. L'annulation passe par l'Edge Function cancel-booking
+// (RPC cancel_booking avec le JWT de l'appelant, puis remboursement Stripe).
 import type { APIRoute } from "astro";
 import { rpcErrorStatus } from "@/lib/rpc-error";
 
@@ -15,15 +15,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const body = await request.json().catch(() => ({}));
   const { action, booking_id } = body;
   if (!booking_id || !action) return json({ error: "Paramètres manquants" }, 400);
-
-  if (action === "cancel") {
-    const { data, error } = await locals.supabase.rpc("driver_cancel_booking", {
-      p_booking_id: booking_id,
-      p_reason: body.reason ?? "",
-    });
-    if (error) return json({ error: error.message }, rpcErrorStatus(error.code));
-    return json({ success: true, new_status: data }, 200);
-  }
 
   if (action === "no_show") {
     const { data, error } = await locals.supabase.rpc("mark_booking_no_show", {

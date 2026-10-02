@@ -29,6 +29,19 @@ type AnyBooking = Record<string, unknown> & {
 let currentDetailBooking: AnyBooking | null = null;
 let cancelMode: "cancel" | "no_show" = "cancel";
 
+type PreviewRow = { case_code: string; rate: number | null; amount: number | null; paid: boolean };
+const CASE_LABELS: Record<string, string> = {
+  client: "Client, dans les délais",
+  no_show: "Client absent",
+  driver_fault: "Faute du chauffeur",
+  other: "Autre motif",
+};
+const REFUND_STATUS_MSG: Record<string, string> = {
+  succeeded: "Remboursement envoyé",
+  pending: "Remboursement en cours",
+  failed: "Échec du remboursement : relancez-le",
+};
+
 const parseBookingFromRow = (row: Element): AnyBooking => {
   const encodedData = row.getAttribute("data-booking") ?? "";
   if (!encodedData) return {};
@@ -287,6 +300,9 @@ const run = (): void => {
         paid: "Payée",
         completed: "Terminée",
         cancelled: "Annulée",
+        cancelled_pending_refund: "Remboursement en cours",
+        cancelled_refunded: "Annulée, remboursée",
+        refund_failed: "Remboursement échoué",
         no_show: "Non réalisée",
       };
 
@@ -321,8 +337,10 @@ const run = (): void => {
 
       if (statusEl) {
         // Course annulée ou non réalisée : le statut de la course prime sur l'état de la mission (« À venir »).
-        const closed = String(booking.status ?? "").startsWith("cancel") || booking.status === "no_show";
-        const status = closed ? "cancelled" : String(booking.mission_status ?? booking.status ?? "");
+        const closed = String(booking.status ?? "").startsWith("cancel") || booking.status === "no_show" || booking.status === "refund_failed";
+        const status = closed
+          ? (["cancelled_pending_refund", "cancelled_refunded", "refund_failed"].includes(String(booking.status)) ? String(booking.status) : "cancelled")
+          : String(booking.mission_status ?? booking.status ?? "");
         statusEl.innerText = booking.status === "no_show" ? "Non réalisée" : (STATUS_LABELS_FR[status] || status);
 
         const statusColors: Record<string, string> = {
@@ -333,7 +351,10 @@ const run = (): void => {
           pending: "bg-amber-500/10 text-amber-500 border-amber-500/20",
           accepted: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
           paid: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
-          cancelled: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+          cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+          cancelled_pending_refund: "bg-destructive/10 text-destructive border-destructive/20",
+          cancelled_refunded: "bg-destructive/10 text-destructive border-destructive/20",
+          refund_failed: "bg-destructive/10 text-destructive border-destructive/20",
         };
         const colorClass = statusColors[status] || "bg-white/10 text-white border-white/10";
         statusEl.className = `px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest text-center ${colorClass}`;
@@ -407,20 +428,26 @@ const run = (): void => {
       const editBtn = document.getElementById("modal-edit-btn");
       if (editBtn) editBtn.classList.toggle("hidden", !preMission);
 
-      // Heure de prise en charge passée : l'annulation est impossible, seule la « non réalisée » (client absent)
-      // reste, réservée à owner/manager et aux courses acceptées.
+      // Course payée ou non payée avant l'heure : menu à 4 cas. Après l'heure : owner/manager seulement si payée ;
+      // course acceptée (cash) après l'heure : « non réalisée » (client absent).
       const isPast = !!booking.pickup_time && new Date(booking.pickup_time as string).getTime() <= Date.now();
       const canManage = document.getElementById("detail-booking-modal")?.dataset.canManage === "true";
-      cancelMode = preMission && isPast ? "no_show" : "cancel";
+      const isPaid = booking.status === "paid";
+      cancelMode = preMission && isPast && !isPaid ? "no_show" : "cancel";
       const cancelSection = document.getElementById("cancel-section");
       if (cancelSection) {
         const noShowAllowed = canManage && booking.status === "accepted";
-        cancelSection.classList.toggle("hidden", !preMission || (cancelMode === "no_show" && !noShowAllowed));
+        const cancelAllowed = !isPast || (isPaid && canManage);
+        cancelSection.classList.toggle("hidden", !preMission || (cancelMode === "no_show" ? !noShowAllowed : !cancelAllowed));
       }
+      document.getElementById("refund-retry-btn")?.classList.toggle("hidden", !(booking.status === "refund_failed" && canManage));
       const isNoShow = cancelMode === "no_show";
       const setCancelText = (id: string, text: string) => { const el = document.getElementById(id); if (el) el.textContent = text; };
       setCancelText("cancel-booking-btn", isNoShow ? "Non réalisée (client absent)" : "Annuler la course");
       setCancelText("cancel-confirm-btn", isNoShow ? "Confirmer : non réalisée" : "Confirmer l'annulation");
+      document.getElementById("cancel-case")?.classList.toggle("hidden", isNoShow);
+      document.getElementById("cancel-summary")?.classList.toggle("hidden", isNoShow);
+      document.getElementById("cancel-rate")?.classList.add("hidden");
       setCancelText("cancel-hint", isNoShow
         ? "La prise en charge est passée : la course est clôturée comme non réalisée, sans encaissement. Un motif est obligatoire."
         : "Convention VTC — un motif d'annulation est obligatoire et sera conservé dans le dossier.");
@@ -960,9 +987,55 @@ const run = (): void => {
 
   const cancelLabel = () => cancelMode === "no_show" ? "Confirmer : non réalisée" : "Confirmer l'annulation";
 
+  const caseEl = document.getElementById("cancel-case") as HTMLSelectElement | null;
+  const rateEl = document.getElementById("cancel-rate") as HTMLInputElement | null;
+  const summaryEl = document.getElementById("cancel-summary");
+  const euro = (n: number) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+  const rateEditable = () => caseEl?.value === "no_show" || caseEl?.value === "other";
+
+  // Taux et montant viennent de cancellation_preview (SQL) : rien n'est calculé ici.
+  const loadPreview = async (rate?: number) => {
+    const bookingId = currentDetailBooking?.id;
+    if (!bookingId || !caseEl) return;
+    const { data, error } = await supabase.rpc("cancellation_preview", rate === undefined
+      ? { p_booking_id: bookingId }
+      : { p_booking_id: bookingId, p_rate: rate });
+    if (error) { if (summaryEl) summaryEl.textContent = error.message; return; }
+    const rows = (data ?? []) as PreviewRow[];
+    const keep = caseEl.value;
+    caseEl.innerHTML = "";
+    for (const r of rows) {
+      const o = document.createElement("option");
+      o.value = r.case_code;
+      const tail = !r.paid ? "aucun paiement à rembourser"
+        : r.rate === null ? "remboursement au taux choisi"
+        : `remboursement ${Math.round(r.rate * 100)} % (${euro(Number(r.amount))})`;
+      o.textContent = `${CASE_LABELS[r.case_code] ?? r.case_code} — ${tail}`;
+      caseEl.appendChild(o);
+    }
+    if (keep) caseEl.value = keep;
+    const cur = rows.find((r) => r.case_code === caseEl.value);
+    if (summaryEl) summaryEl.textContent = cur && cur.paid && cur.amount !== null ? `Montant remboursé : ${euro(Number(cur.amount))}` : "";
+    rateEl?.classList.toggle("hidden", !rateEditable());
+  };
+
+  let previewTimer: number | undefined;
+  rateEl?.addEventListener("input", () => {
+    window.clearTimeout(previewTimer);
+    previewTimer = window.setTimeout(() => {
+      const v = Number(rateEl.value);
+      if (rateEl.value !== "" && v >= 0 && v <= 100) void loadPreview(v / 100);
+    }, 300);
+  });
+  caseEl?.addEventListener("change", () => {
+    if (rateEl) rateEl.value = "";
+    void loadPreview();
+  });
+
   cancelBookingBtn?.addEventListener("click", () => {
     cancelTriggerArea?.classList.add("hidden");
     cancelFormArea?.classList.remove("hidden");
+    if (cancelMode === "cancel") void loadPreview();
   });
 
   cancelBackBtn?.addEventListener("click", () => {
@@ -977,10 +1050,10 @@ const run = (): void => {
     const reason = reasonEl?.value.trim() ?? "";
     if (!reason) {
       reasonEl?.focus();
-      reasonEl?.classList.add("border-rose-500");
+      reasonEl?.classList.add("border-destructive");
       return;
     }
-    reasonEl?.classList.remove("border-rose-500");
+    reasonEl?.classList.remove("border-destructive");
 
     const bookingId = currentDetailBooking?.id;
     if (!bookingId) return;
@@ -989,23 +1062,48 @@ const run = (): void => {
     (cancelConfirmBtn as HTMLButtonElement).disabled = true;
 
     try {
-      const res = await fetch("/api/tenant/booking-actions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: cancelMode, booking_id: bookingId, reason }),
-      });
-      const data = await res.json() as { success?: boolean; error?: string };
-      if (data.success) {
+      if (cancelMode === "no_show") {
+        const res = await fetch("/api/tenant/booking-actions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "no_show", booking_id: bookingId, reason }),
+        });
+        const data = await res.json() as { success?: boolean; error?: string };
+        if (!data.success) throw new Error(data.error ?? "Erreur lors de l'annulation.");
         window.location.reload();
-      } else {
-        alert(data.error ?? "Erreur lors de l'annulation.");
-        cancelConfirmBtn.textContent = cancelLabel();
-        (cancelConfirmBtn as HTMLButtonElement).disabled = false;
+        return;
       }
-    } catch {
-      alert("Erreur réseau.");
+      const rate = rateEditable() && rateEl?.value !== "" ? Number(rateEl?.value) / 100 : undefined;
+      const { data, error } = await supabase.functions.invoke("cancel-booking", {
+        body: { booking_id: bookingId, case: caseEl?.value, rate, note: reason },
+      });
+      if (error) throw new Error(await functionErrorMessage(error, "Erreur lors de l'annulation."));
+      const st = (data as { refund_status?: string | null })?.refund_status;
+      if (st) alert(REFUND_STATUS_MSG[st] ?? st);
+      window.location.reload();
+    } catch (e) {
+      alert((e as Error).message || "Erreur lors de l'annulation.");
       cancelConfirmBtn.textContent = cancelLabel();
       (cancelConfirmBtn as HTMLButtonElement).disabled = false;
+    }
+  });
+
+  const refundRetryBtn = document.getElementById("refund-retry-btn") as HTMLButtonElement | null;
+  refundRetryBtn?.addEventListener("click", async () => {
+    const bookingId = currentDetailBooking?.id;
+    if (!bookingId) return;
+    refundRetryBtn.disabled = true;
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-booking", {
+        body: { booking_id: bookingId, retry: true },
+      });
+      if (error) throw new Error(await functionErrorMessage(error, "Erreur lors de la relance."));
+      const st = (data as { refund_status?: string | null })?.refund_status;
+      if (st) alert(REFUND_STATUS_MSG[st] ?? st);
+      window.location.reload();
+    } catch (e) {
+      alert((e as Error).message);
+      refundRetryBtn.disabled = false;
     }
   });
 
