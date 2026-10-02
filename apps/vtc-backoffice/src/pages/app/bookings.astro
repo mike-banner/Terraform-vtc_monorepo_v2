@@ -118,6 +118,14 @@ const STATUS_LABELS_FR: Record<string, string> = {
     refund_failed: "Échec remboursement"
 };
 
+// « Remboursée » sans montant prête à confusion avec le total de la course : on affiche le montant réellement remboursé.
+const statusText = (b: any): string => {
+    const label = STATUS_LABELS_FR[b.status] || b.status;
+    return b.status === "cancelled_refunded" && b.refund_amount != null
+        ? `${label} ${Number(b.refund_amount).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+        : label;
+};
+
 const typeFilters = [
     { id: 'all', label: 'Tous les bookings' },
     { id: 'transfer', label: 'Transferts' },
@@ -407,7 +415,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                                                             booking.status === "pending" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
                                                             "bg-primary/10 text-primary border-primary/20"
                                                         }`}>
-                                                            {STATUS_LABELS_FR[booking.status] || booking.status}
+                                                            {statusText(booking)}
                                                         </div>
                                                     </div>
                                                 </td>
