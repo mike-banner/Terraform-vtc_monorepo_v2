@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
-import { generateDevisEmail } from "../_shared/email-templates/devis.ts";
+import { generateDevisEmail } from "../_shared/email-templates/native/devis.ts";
 import { sendEmailLog } from "../_shared/send-email-log.ts";
 
 const corsHeaders = {

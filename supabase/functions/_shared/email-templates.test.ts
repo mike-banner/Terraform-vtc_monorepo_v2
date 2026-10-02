@@ -4,6 +4,7 @@ import { bookingConfirmationEmail } from "./email-templates/site/booking-confirm
 import { bookingCancelledEmail } from "./email-templates/site/booking-cancelled.ts";
 import { refundConfirmationEmail } from "./email-templates/native/refund-confirmation.ts";
 import { paymentWithoutBookingEmail } from "./email-templates/native/payment-without-booking.ts";
+import { creditNoteEmail } from "./email-templates/native/credit-note.ts";
 import { paymentReceivedCustomerEmail } from "./email-templates/native/payment-received-customer.ts";
 
 const brand = getBrand({ name: "Elite <Lyon>", logo_url: "https://x.test/l.png", primary_color: "#112233", email: "a@b.fr", phone: "0400" });
@@ -34,6 +35,7 @@ Deno.test("chaque modèle se rend avec les données minimales", () => {
     refundConfirmationEmail({ brand, reference: "R", refundAmount: 5 }),
     paymentWithoutBookingEmail({ amount: 80, customerName: "N", stripeUrl: "https://dashboard.stripe.com/x", reason: "r" }),
     paymentReceivedCustomerEmail({ brand, amount: 80 }),
+    creditNoteEmail({ brand, number: "AV-2026-0001", invoiceNumber: "FAC-2026-0001", amount: 30, url: "https://x.test/a.pdf" }),
   ];
   for (const html of out) assertStringIncludes(html, "</html>");
   assertStringIncludes(out[3], "dashboard.stripe.com");

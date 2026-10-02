@@ -7,7 +7,7 @@ const supabase = createClient(
 
 export async function sendEmailLog(params: {
   bookingId: string;
-  emailType: "devis" | "invoice";
+  emailType: "devis" | "invoice" | "credit_note" | "booking_confirmation";
   recipientEmail: string;
   html: string;
   subject: string;

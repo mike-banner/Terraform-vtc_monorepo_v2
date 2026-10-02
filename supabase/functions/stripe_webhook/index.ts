@@ -3,6 +3,7 @@ import { getBrand } from "../_shared/email-templates/brand.ts";
 import { bookingConfirmationEmail } from "../_shared/email-templates/site/booking-confirmation.ts";
 import { paymentWithoutBookingEmail } from "../_shared/email-templates/native/payment-without-booking.ts";
 import { paymentReceivedCustomerEmail } from "../_shared/email-templates/native/payment-received-customer.ts";
+import { sendEmailLog } from "../_shared/send-email-log.ts";
 import Stripe from "https://esm.sh/stripe@12.18.0?target=deno&no-check";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -79,7 +80,9 @@ async function sendBookingConfirmation(session: any, tenantId: string, booking: 
     : { data: null };
   const to = cust?.email ?? session.customer_details?.email;
   if (!to) return;
-  await sendMail(to, `Votre réservation est confirmée${tenant?.name ? ` | ${tenant.name}` : ""}`, bookingConfirmationEmail({
+  // Journalisé dans email_logs ; sendEmailLog ne lève pas sur un refus du service d'envoi.
+  await sendEmailLog({ bookingId: booking.id, emailType: "booking_confirmation", recipientEmail: to,
+    subject: `Votre réservation est confirmée${tenant?.name ? ` | ${tenant.name}` : ""}`, html: bookingConfirmationEmail({
     brand: getBrand(tenant),
     firstName: cust?.first_name,
     reference: String(booking.id).slice(0, 8).toUpperCase(),
@@ -87,7 +90,7 @@ async function sendBookingConfirmation(session: any, tenantId: string, booking: 
     dropoffAddress: booking.dropoff_address,
     pickupTime: booking.pickup_time,
     total: Number(booking.total_amount),
-  }));
+  }) });
 }
 
 Deno.serve(async (req) => {

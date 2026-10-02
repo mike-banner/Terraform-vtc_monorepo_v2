@@ -1,9 +1,9 @@
-import { tokens } from "../email-tokens.ts";
-import { h } from "../html-escape.ts";
+import { tokens } from "../../email-tokens.ts";
+import { h } from "../../html-escape.ts";
 
-export interface DevisEmailData {
+export interface InvoiceEmailData {
   invoiceNumber: string;
-  pdfUrl: string;
+  invoiceUrl: string;
   tenant: {
     name: string;
     email?: string | null;
@@ -30,11 +30,12 @@ export interface DevisEmailData {
     total_amount?: number | null;
     passenger_count?: number | null;
     luggage_count?: number | null;
+    payment_mode?: string | null;
   };
 }
 
-export function generateDevisEmail(data: DevisEmailData): string {
-  const { tenant, customer, booking, invoiceNumber, pdfUrl } = data;
+export function generateInvoiceEmail(data: InvoiceEmailData): string {
+  const { tenant, customer, booking, invoiceNumber, invoiceUrl } = data;
   const { colors, fonts, spacing } = tokens;
 
   const customerName = customer
@@ -52,11 +53,12 @@ export function generateDevisEmail(data: DevisEmailData): string {
   const isExempt = tenant.is_vat_exempt === true;
   const vatRate = Number(tenant.vat_rate ?? 0);
 
+  const paymentLabel = booking.payment_mode === "cash" ? "Espèces" : "Paiement en ligne";
+
   // Validation schéma URL pour éviter javascript:/data: dans les href (CR-01)
-  const safePdfUrl = pdfUrl.startsWith("https://") ? pdfUrl : "";
+  const safeInvoiceUrl = invoiceUrl.startsWith("https://") ? invoiceUrl : "";
 
   const legalLines: string[] = [
-    "Ce document est un devis sans valeur fiscale.",
     isExempt ? "TVA non applicable, art. 293 B du CGI." : `TVA au taux de ${vatRate}%.`,
     tenant.siret ? `SIRET : ${h(tenant.siret)}` : null,
     tenant.vat_number ? `N° TVA : ${h(tenant.vat_number)}` : null,
@@ -78,7 +80,7 @@ export function generateDevisEmail(data: DevisEmailData): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Devis ${h(invoiceNumber)}</title>
+<title>Facture ${h(invoiceNumber)}</title>
 </head>
 <body style="margin:0;padding:0;background-color:${colors.section};font-family:${fonts.stack};">
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${colors.section};">
@@ -97,12 +99,18 @@ export function generateDevisEmail(data: DevisEmailData): string {
                   ${tenant.phone ? `<p style="margin:2px 0 0;font-size:13px;color:${colors.textSecondary};">${h(tenant.phone)}</p>` : ""}
                 </td>
                 <td align="right">
-                  <p style="margin:0;font-size:22px;font-weight:700;color:${colors.accent};letter-spacing:2px;">DEVIS</p>
+                  <p style="margin:0;font-size:22px;font-weight:700;color:${colors.accent};letter-spacing:2px;">FACTURE</p>
                   <p style="margin:6px 0 0;font-size:12px;color:${colors.textSecondary};">N° ${h(invoiceNumber)}</p>
-                  <p style="margin:2px 0 0;font-size:12px;color:${colors.textSecondary};">Valable 30 jours</p>
                 </td>
               </tr>
             </table>
+          </td>
+        </tr>
+
+        <!-- Mention paiement reçu -->
+        <tr>
+          <td style="padding:12px ${spacing.container};background-color:#F0FDF4;border-bottom:1px solid #BBF7D0;">
+            <p style="margin:0;font-size:13px;font-weight:600;color:#166534;">Paiement reçu — ${paymentLabel}</p>
           </td>
         </tr>
 
@@ -166,7 +174,7 @@ export function generateDevisEmail(data: DevisEmailData): string {
         <!-- CTA -->
         <tr>
           <td align="center" style="padding:${spacing.section} ${spacing.container};">
-            <a href="${safePdfUrl}" style="display:inline-block;background-color:${colors.accent};color:#FFFFFF;font-family:${fonts.stack};font-size:14px;font-weight:600;text-decoration:none;padding:${spacing.button};border-radius:3px;">Télécharger le devis</a>
+            <a href="${safeInvoiceUrl}" style="display:inline-block;background-color:${colors.accent};color:#FFFFFF;font-family:${fonts.stack};font-size:14px;font-weight:600;text-decoration:none;padding:${spacing.button};border-radius:3px;">Télécharger la facture</a>
           </td>
         </tr>
 
