@@ -12,6 +12,7 @@ type AnyBooking = Record<string, unknown> & {
   passenger_count?: number;
   luggage_count?: number;
   total_amount?: number | string;
+  refund_amount?: number | string | null;
   status?: string;
   mission_status?: string;
   booking_type?: string;
@@ -25,6 +26,12 @@ type AnyBooking = Record<string, unknown> & {
     phone?: string;
   };
 };
+
+// Montant réellement remboursé, ajouté à l'étiquette (le total de la course prête à confusion).
+const refundedSuffix = (b: { status?: unknown; refund_amount?: unknown }): string =>
+  b.status === "cancelled_refunded" && b.refund_amount != null
+    ? ` ${Number(b.refund_amount).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+    : "";
 
 let currentDetailBooking: AnyBooking | null = null;
 let cancelMode: "cancel" | "no_show" = "cancel";
@@ -341,7 +348,7 @@ const run = (): void => {
         const status = closed
           ? (["cancelled_pending_refund", "cancelled_refunded", "refund_failed"].includes(String(booking.status)) ? String(booking.status) : "cancelled")
           : String(booking.mission_status ?? booking.status ?? "");
-        statusEl.innerText = booking.status === "no_show" ? "Non réalisée" : (STATUS_LABELS_FR[status] || status);
+        statusEl.innerText = booking.status === "no_show" ? "Non réalisée" : (STATUS_LABELS_FR[status] || status) + refundedSuffix(booking);
 
         const statusColors: Record<string, string> = {
           to_validate: "bg-amber-500/10 text-amber-500 border-amber-500/20",
@@ -554,7 +561,7 @@ const run = (): void => {
     const isCancelled = String(booking.status ?? "").startsWith("cancel") || isNoShow;
     const status = String(booking.mission_status ?? "");
     const statusBadge = isCancelled ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" : (STATUS_BADGE[status] ?? "bg-white/10 text-white border border-white/10");
-    const statusLabel = isNoShow ? "Non réalisée" : isCancelled ? "Annulée" : (STATUS_LABEL[status] ?? "Terminée");
+    const statusLabel = isNoShow ? "Non réalisée" : isCancelled ? (booking.status === "cancelled_refunded" ? `Remboursée${refundedSuffix(booking)}` : "Annulée") : (STATUS_LABEL[status] ?? "Terminée");
     const type = String(booking.booking_type ?? "transfer");
     const pickupTime = booking.pickup_time ? new Date(booking.pickup_time) : null;
     const dateStr = pickupTime && !Number.isNaN(pickupTime.getTime())
