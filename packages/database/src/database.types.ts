@@ -475,6 +475,117 @@ export type Database = {
           },
         ]
       }
+      credit_note_sequences: {
+        Row: {
+          last_seq: number
+          tenant_id: string
+          year: number
+        }
+        Insert: {
+          last_seq: number
+          tenant_id: string
+          year: number
+        }
+        Update: {
+          last_seq?: number
+          tenant_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_note_sequences_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "admin_tenants_overview"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_note_sequences_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_notes: {
+        Row: {
+          amount_ht: number
+          amount_ttc: number
+          booking_id: string
+          created_by: string
+          id: string
+          invoice_number: string
+          issued_at: string
+          number: string
+          reason: string
+          tenant_id: string
+          vat_amount: number
+        }
+        Insert: {
+          amount_ht: number
+          amount_ttc: number
+          booking_id: string
+          created_by: string
+          id?: string
+          invoice_number: string
+          issued_at?: string
+          number: string
+          reason: string
+          tenant_id: string
+          vat_amount: number
+        }
+        Update: {
+          amount_ht?: number
+          amount_ttc?: number
+          booking_id?: string
+          created_by?: string
+          id?: string
+          invoice_number?: string
+          issued_at?: string
+          number?: string
+          reason?: string
+          tenant_id?: string
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "admin_bookings_full_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_stuck_pending_refund"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "admin_tenants_overview"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_notes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           billing_address: string | null
@@ -1162,7 +1273,9 @@ export type Database = {
       }
       tenants: {
         Row: {
+          address_line: string | null
           capital_social: number | null
+          city: string | null
           company_type: Database["public"]["Enums"]["company_type_enum"] | null
           created_at: string | null
           deleted_at: string | null
@@ -1177,6 +1290,7 @@ export type Database = {
           name: string
           phone: string | null
           platform_fee_rate: number | null
+          postal_code: string | null
           primary_color: string | null
           primary_domain: string
           rcs_number: string | null
@@ -1191,7 +1305,9 @@ export type Database = {
           vat_rate: number | null
         }
         Insert: {
+          address_line?: string | null
           capital_social?: number | null
+          city?: string | null
           company_type?: Database["public"]["Enums"]["company_type_enum"] | null
           created_at?: string | null
           deleted_at?: string | null
@@ -1206,6 +1322,7 @@ export type Database = {
           name: string
           phone?: string | null
           platform_fee_rate?: number | null
+          postal_code?: string | null
           primary_color?: string | null
           primary_domain: string
           rcs_number?: string | null
@@ -1220,7 +1337,9 @@ export type Database = {
           vat_rate?: number | null
         }
         Update: {
+          address_line?: string | null
           capital_social?: number | null
+          city?: string | null
           company_type?: Database["public"]["Enums"]["company_type_enum"] | null
           created_at?: string | null
           deleted_at?: string | null
@@ -1235,6 +1354,7 @@ export type Database = {
           name?: string
           phone?: string | null
           platform_fee_rate?: number | null
+          postal_code?: string | null
           primary_color?: string | null
           primary_domain?: string
           rcs_number?: string | null
@@ -1714,6 +1834,13 @@ export type Database = {
         Args: { onboarding_uuid: string }
         Returns: undefined
       }
+      assign_invoice_number: {
+        Args: { p_booking_id: string }
+        Returns: {
+          invoice_created_at: string
+          invoice_number: string
+        }[]
+      }
       booking_vat_split: {
         Args: { p_gross: number; p_is_exempt: boolean; p_vat_rate: number }
         Returns: {
@@ -1788,6 +1915,7 @@ export type Database = {
           total_price: number
         }[]
       }
+      credit_note_remaining: { Args: { p_booking_id: string }; Returns: number }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_role: {
         Args: never
@@ -1854,6 +1982,14 @@ export type Database = {
         Returns: {
           payment_intent_id: string
           refund_allowed: boolean
+        }[]
+      }
+      issue_credit_note: {
+        Args: { p_amount_ttc: number; p_booking_id: string; p_reason: string }
+        Returns: {
+          credit_note_id: string
+          number: string
+          payment_intent_id: string
         }[]
       }
       ledger_insert_refund: {
@@ -1940,6 +2076,10 @@ export type Database = {
           p_partial_rate: number
         }
         Returns: string
+      }
+      update_tenant_address: {
+        Args: { p_address_line: string; p_city: string; p_postal_code: string }
+        Returns: undefined
       }
       update_tenant_logo: { Args: { p_url: string }; Returns: string }
       update_tenant_settings: {

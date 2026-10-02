@@ -170,7 +170,7 @@ BEGIN
     SELECT pol.tablename, pol.policyname
     FROM pg_policies pol
     WHERE pol.schemaname = 'public'
-      AND pol.tablename IN ('bookings', 'financial_movements')
+      AND pol.tablename IN ('bookings', 'financial_movements', 'credit_notes')
       AND pol.cmd IN ('INSERT', 'ALL')
       AND pol.roles && ARRAY['public', 'anon', 'authenticated']::name[]
   LOOP
