@@ -121,6 +121,8 @@ main). Réserve du chauffeur : un client qui voit le chauffeur toujours complet 
 **Compromis à étudier :** réglage par chauffeur (afficher ou non ses disponibilités) ; **compromis n°2 retenu le 2026-10-02** : ne griser que les **jours ou demi-journées
 entièrement indisponibles** (mise à disposition longue, congés) et vérifier le créneau exact en silence au paiement ; ne jamais exposer la
 raison de l'indisponibilité ni le détail des courses.
+**Frontières (2026-10-02) :** matin avant midi, après-midi après midi ; la nuit se traite comme une mise à disposition. Un
+transfert occupe une demi-journée (route, repos, embouteillages : toujours anticiper).
 **Prérequis de données :** une heure de fin pour **toutes** les courses (aujourd'hui seules les mises à disposition ont
 `duration_hours` ; il faudrait une durée estimée par trajet fixe et une marge entre deux courses) ; plusieurs chauffeurs ou
 véhicules : disponible s'il en reste un de libre.
@@ -160,3 +162,11 @@ validées pour un gain nul auprès du premier client.
 distinct du propriétaire. Le premier client est un chauffeur : pas de conflit.
 
 **Déclencheur pour rouvrir :** fin de la Phase 14.1, ou première demande d'un compte non-chauffeur.
+
+## Politique de confidentialité du client : adresses envoyées à un service public
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1 (plans 13 et 14).
+**À faire :** le contrôle de zone envoie l'adresse saisie par le client à `api-adresse.data.gouv.fr` (service public français,
+sans clé) pour en tirer le code postal. La politique de confidentialité de chaque client (le chauffeur) doit le mentionner :
+finalité (vérifier la zone du trajet), destinataire (service public de l'État), aucune conservation par nous.
+**Déclencheur pour rouvrir :** rédaction de la politique de confidentialité du premier client, ou mise en ligne de son site.
