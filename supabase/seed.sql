@@ -41,3 +41,27 @@ insert into public.zones (id, tenant_id, name, postal_codes) values
 
 insert into public.fixed_routes (tenant_id, pickup_zone_id, dropoff_zone_id, vehicle_category, price, is_bidirectional, active)
 values ('5750a0b3-4c6c-4782-b137-830a49e32249', '33333333-3333-3333-3333-333333333331', '33333333-3333-3333-3333-333333333332', 'berline', 80, true, true);
+
+-- Compte chauffeur de test (rôle driver) : driver@local.test / local-test-1234
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change, email_change_token_new, email_change_token_current,
+  phone_change, phone_change_token, reauthentication_token
+) values (
+  '00000000-0000-0000-0000-000000000000', '44444444-4444-4444-4444-444444444444', 'authenticated', 'authenticated',
+  'driver@local.test', crypt('local-test-1234', gen_salt('bf')), now(),
+  '{"provider":"email","providers":["email"]}', '{}', now(), now(),
+  '', '', '', '', '', '', '', ''
+);
+
+insert into auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
+values (gen_random_uuid(), '44444444-4444-4444-4444-444444444444', '44444444-4444-4444-4444-444444444444', 'email',
+  '{"sub":"44444444-4444-4444-4444-444444444444","email":"driver@local.test","email_verified":true}', now(), now(), now());
+
+update public.profiles
+set tenant_id = '5750a0b3-4c6c-4782-b137-830a49e32249', tenant_role = 'driver', first_name = 'Test', last_name = 'Chauffeur'
+where id = '44444444-4444-4444-4444-444444444444';
+
+insert into public.drivers (id, tenant_id, first_name, last_name, phone, license_number, user_id)
+values ('55555555-5555-5555-5555-555555555555', '5750a0b3-4c6c-4782-b137-830a49e32249', 'Test', 'Chauffeur', '0600000001', 'LOCAL-002', '44444444-4444-4444-4444-444444444444');
