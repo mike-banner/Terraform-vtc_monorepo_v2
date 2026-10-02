@@ -17,6 +17,7 @@ type AnyBooking = Record<string, unknown> & {
   mission_status?: string;
   booking_type?: string;
   mission_note?: string;
+  instructions?: string | null;
   notes?: string;
   rating?: number | null;
   rating_comment?: string | null;
@@ -206,16 +207,14 @@ const updateRatingUI = (booking: AnyBooking): void => {
 };
 
 
-// mission_note mélange le texte libre (instructions du client ou du chauffeur : n° de vol, accès...) et des balises
-// techniques ([terrain], [annulation], [non réalisée]). On les affiche séparément : instructions d'un côté,
-// historique en phrases lisibles (heure de Paris) de l'autre.
-const splitMissionNote = (raw: string): { instructions: string; history: string } => {
+// mission_note : journal de la course (balises techniques) en phrases lisibles (heure de Paris).
+// Les instructions du client vivent dans bookings.instructions ; les anciennes lignes libres restent ici sous « Note ».
+const splitMissionNote = (raw: string): string => {
   const when = (iso: string): string => {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleString("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   };
-  const instructions: string[] = [];
   const history: string[] = [];
   for (const line of raw.split("\n").map((l) => l.trim()).filter(Boolean)) {
     let m: RegExpMatchArray | null;
@@ -225,9 +224,10 @@ const splitMissionNote = (raw: string): { instructions: string; history: string 
     else if (line.startsWith("[terrain] completed_at_was_corrected")) history.push("Heure de fin corrigée manuellement");
     else if ((m = line.match(/^\[annulation\] initiateur=(\S+)\s*\|\s*motif=(.*)$/))) history.push(`Annulée (${m[1]}) : ${m[2]}`);
     else if ((m = line.match(/^\[non réalisée\] motif=(.*)$/))) history.push(`Non réalisée, client absent : ${m[1]}`);
-    else instructions.push(line);
+    else if ((m = line.match(/^\[remboursement\] échec : (.*)$/))) history.push(`Échec du remboursement : ${m[1]}`);
+    else history.push(`Note : ${line}`);
   }
-  return { instructions: instructions.join("\n"), history: history.join("\n") };
+  return history.join("\n");
 };
 
 const run = (): void => {
@@ -332,11 +332,41 @@ const run = (): void => {
       if (passengersEl) passengersEl.innerText = String(booking.passenger_count ?? 1);
       if (luggageEl) luggageEl.innerText = String(booking.luggage_count ?? 0);
       if (notesEl) {
-        const { instructions, history } = splitMissionNote(String(booking.mission_note ?? ""));
-        notesEl.innerText = instructions || "Aucune instruction particulière.";
+        const history = splitMissionNote(String(booking.mission_note ?? ""));
+        notesEl.innerText = booking.instructions || "Aucune instruction";
         const historyEl = document.getElementById("modal-history");
         historyEl?.parentElement?.classList.toggle("hidden", !history);
         if (historyEl) historyEl.innerText = history;
+
+        // Modification avant la mission (RPC gardée par rôle et état).
+        const editBtn = document.getElementById("instr-edit-btn");
+        const editArea = document.getElementById("instr-edit-area");
+        const input = document.getElementById("instr-input") as HTMLTextAreaElement | null;
+        const saveBtn = document.getElementById("instr-save-btn") as HTMLButtonElement | null;
+        const errEl = document.getElementById("instr-error");
+        const editable = ["pending", "accepted", "accepted_pending_payment", "paid"].includes(String(booking.status))
+          && ["to_validate", "not_started"].includes(String(booking.mission_status));
+        editArea?.classList.add("hidden");
+        if (errEl) errEl.innerText = "";
+        editBtn?.classList.toggle("hidden", !editable);
+        if (editBtn) editBtn.onclick = () => {
+          if (input) input.value = booking.instructions ?? "";
+          editArea?.classList.remove("hidden");
+          editBtn.classList.add("hidden");
+        };
+        if (saveBtn) saveBtn.onclick = async () => {
+          saveBtn.disabled = true;
+          const { data, error } = await supabase.rpc("update_booking_instructions", {
+            p_booking_id: String(booking.id),
+            p_instructions: input?.value ?? "",
+          });
+          saveBtn.disabled = false;
+          if (error) { if (errEl) errEl.innerText = error.message; return; }
+          booking.instructions = data;
+          notesEl.innerText = data || "Aucune instruction";
+          editArea?.classList.add("hidden");
+          editBtn?.classList.remove("hidden");
+        };
       }
 
       const id = booking.id ?? "---";

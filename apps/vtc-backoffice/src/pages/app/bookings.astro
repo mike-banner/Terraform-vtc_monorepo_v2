@@ -648,6 +648,8 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </div>
                         </div>
 
+                        <textarea name="instructions" maxlength="500" rows="2" placeholder="N° de vol, panneau d'accueil, bagages…" class="w-full bg-background border border-border rounded-[var(--radius)] py-3 px-4 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium placeholder:text-muted-foreground"></textarea>
+
                         <!-- KM / HEURES — visibles seulement pour mise à dispo après sélection du mode -->
                         <div id="distance-km-container" class="hidden items-center gap-3 bg-background border border-border rounded-[var(--radius)] px-4 py-3 focus-within:border-primary/50 transition-colors">
                             <label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest whitespace-nowrap flex-shrink-0">Distance (km)</label>
@@ -846,16 +848,16 @@ const getFilterUrl = (params: Record<string, string>) => {
                     <!-- 🕹️ MISSION COCKPIT CONTAINER -->
                     <div id="mission-cockpit-root"></div>
 
-                    <!-- NOTES -->
+                    <!-- NOTES / INSTRUCTIONS (bloc principal) -->
                     <div class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
                         <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Notes / Instructions</p>
                         <p id="modal-notes" class="text-xs text-foreground font-medium leading-relaxed whitespace-pre-line">---</p>
-                    </div>
-
-                    <!-- HISTORIQUE (événements de la course, masqué s'il est vide) -->
-                    <div class="hidden bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
-                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Historique de la course</p>
-                        <p id="modal-history" class="text-xs text-foreground font-medium leading-relaxed whitespace-pre-line"></p>
+                        <div id="instr-edit-area" class="hidden mt-3 space-y-3">
+                            <textarea id="instr-input" maxlength="500" rows="3" placeholder="N° de vol, panneau d'accueil, bagages…" class="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground"></textarea>
+                            <button id="instr-save-btn" class="w-full py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Enregistrer</button>
+                            <p id="instr-error" class="text-xs text-destructive"></p>
+                        </div>
+                        <button id="instr-edit-btn" class="hidden mt-3 py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Modifier</button>
                     </div>
 
                     <!-- AVIS & QR CODE -->
@@ -932,6 +934,12 @@ const getFilterUrl = (params: Record<string, string>) => {
                         <button id="refund-retry-btn" class="hidden w-full mt-2 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95 disabled:opacity-50">
                             Relancer le remboursement
                         </button>
+
+                    <!-- HISTORIQUE (événements de la course, replié, masqué s'il est vide) -->
+                    <details class="hidden bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
+                        <summary class="text-[10px] font-black uppercase text-muted-foreground tracking-widest cursor-pointer">Historique de la course</summary>
+                        <p id="modal-history" class="mt-3 text-xs text-foreground font-medium leading-relaxed whitespace-pre-line"></p>
+                    </details>
                     </div>
                 </div>
             </div>
