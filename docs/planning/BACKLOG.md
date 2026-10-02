@@ -59,3 +59,26 @@ heure 50, minimum 20 ; transfert 30 km = 70 ; transfert 2 km = 20 ; hourly 2 h =
 
 **Déclencheur pour rouvrir :** toute modification de la formule, ou la migration des Edge Functions de paiement
 vers la RPC (appel `calculate_booking_price` avec la clé service_role).
+
+## Modals génériques du backoffice (remplacer alert, confirm, prompt du navigateur)
+
+**Reporté depuis :** Phase 14.1 (2026-10-02), décision utilisateur après test du parcours d'annulation : les fenêtres
+`alert`, `confirm` et `prompt` du navigateur ne sont pas celles de l'application.
+**État actuel :** environ 23 appels, dans `scripts/bookings.ts` (13), `pricing.astro` (3), `settings.astro` (4),
+`setup.astro` (2) et `profile.astro` (1).
+**À faire :** un modal générique centré (titre, message, champs variables, boutons) avec une API d'appel
+unique, utilisé partout. Version bureau en React lors de la Phase 16 (pages en React). Version mobile avec la
+Phase 18 (notifications), pas avant.
+
+**Déclencheur pour rouvrir :** démarrage de la Phase 16, ou un retour utilisateur sur ces fenêtres.
+
+## Fiscal : fiche de course cliquable dans le détail du mois
+
+**Reporté depuis :** Phase 14.1 (2026-10-02), décision utilisateur.
+**État actuel :** la ligne du détail du mois montre la date, le client, le mode, HT et TVA. Les remboursements sont
+distingués (libellé, montants négatifs, export CSV typé et signé) depuis la 14.1.
+**À faire :** rendre la ligne cliquable, avec une fiche en modal : trajet, horaires, montants (HT, TVA, TTC),
+mode de paiement, statut, remboursement lié, lien vers la facture ou l'avoir. À faire avec le modal générique
+ci-dessus, lors de la migration de la page `ledger` (Phase 16).
+
+**Déclencheur pour rouvrir :** migration de `ledger` en React, ou demande de l'expert-comptable du premier client.
