@@ -37,8 +37,8 @@ export async function resolveTenant(host: string) {
 * **Thème Visuel & Tarifs** : Chargés à la volée depuis la configuration du tenant en base.
 
 ### 3. Connexion aux 4 Tunnels de Réservation
-Le widget de réservation du Hero permet d'orienter le client vers 4 tunnels spécialisés :
+Le widget de réservation du Hero permet d'orienter le client vers les tunnels spécialisés :
 1. **Transfert A ➔ B** (`/tunnels/transfert`) : Estimation kilométrique fixe.
-2. **Mise à Disposition** (`/tunnels/availability`) : Réservation forfaitaire par heures (2h, 4h, 8h, 12h).
-3. **Longue Distance** (`/tunnels/long-distance`) : Interurbain et trajets régionaux.
-4. **Business & VIP** (`/tunnels/business`) : Demandes d'événements et séminaires.
+2. **Mise à Disposition** (`/tunnels/availability`) : À l'heure, période début-fin, sur devis (demande enregistrée, prix fixé par le chauffeur).
+3. **Longue Distance** (`/tunnels/long-distance`) : Interurbain et trajets régionaux, sur devis.
+4. **Business & VIP** : mis de côté (D-35), non exposé.
