@@ -285,9 +285,27 @@ Deno.serve(async (req) => {
         .select()
         .single();
 
+      if (error?.code === "23505") {
+        // Événement rejoué ou livré en double : la course existe déjà pour ce paiement.
+        const { data: already } = await supabase
+          .from("bookings")
+          .select("id")
+          .eq("stripe_payment_intent_id", session.payment_intent)
+          .maybeSingle();
+        await supabase
+          .from("stripe_events")
+          .update({ status: "booking_created", booking_id: already?.id ?? null })
+          .eq("stripe_event_id", event.id);
+        return new Response("OK (course déjà créée)");
+      }
+
       if (error) {
         console.error("CRITICAL: BOOKING INSERTION FAILED", error);
-        // On retourne une 500 pour que Stripe retente le webhook plus tard
+        await supabase
+          .from("stripe_events")
+          .update({ status: "booking_failed", error: error.message })
+          .eq("stripe_event_id", event.id);
+        // On retourne une 500 pour que Stripe retente le webhook plus tard (sans risque de doublon)
         return new Response(`Error: ${error.message}`, { status: 500 });
       }
 
