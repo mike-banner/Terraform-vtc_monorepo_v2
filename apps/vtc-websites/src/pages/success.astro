@@ -75,7 +75,6 @@ const buttonClass = "inline-flex h-11 w-full items-center justify-center rounded
         )}
         <div class="flex justify-between gap-4 px-4 py-3"><dt>Total payé</dt><dd class="font-semibold text-ui-ink">{Number(booking.total_amount).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</dd></div>
       </dl>
-      {booking.customer_email && <p>Un email de confirmation est envoyé à {booking.customer_email}.</p>}
       <a slot="actions" href="/" class={buttonClass}>Retour à l'accueil</a>
     </StatusPage>
   )}
