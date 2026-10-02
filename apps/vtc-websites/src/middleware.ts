@@ -4,8 +4,8 @@ import { resolveTenant } from "./core/tenant";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
-  const host = url.host; // ex: "elite-lyon.fr" ou "localhost:4321"
-  const hostname = url.hostname; // ex: "elite-lyon.fr" ou "localhost"
+  const host = url.host; // ex: "exemple.invalid" ou "localhost:4321"
+  const hostname = url.hostname; // ex: "exemple.invalid" ou "localhost"
   const tenantId = import.meta.env.PUBLIC_TENANT_ID;
 
   if (!context.locals.tenant) {

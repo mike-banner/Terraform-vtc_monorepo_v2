@@ -7,7 +7,8 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 ## Résolution du tenant
 
 - `resolveTenant(host)` mappe le `Host` HTTP → RPC `get_public_tenant` → champs publics du tenant (middleware, requête Supabase unique par requête SSR).
-- Dev local : variable `PUBLIC_SITE` pour forcer le site testé. Preview Cloudflare : alias ou sous-domaine `*.pages.dev`.
+- Sites (ADR 0003) : une instance compile un ou plusieurs sites, un tenant et un domaine par site ; `PUBLIC_SITE` (site par défaut) est obligatoire à la compilation, `SITE_MAP` (`domaine=code,…`, un-pour-un) choisit le site par domaine ; en dev, le `.env` local suffit. Un site (`src/sites/<code>/`) ne contient que sa landing (`pages/index.astro`), sa configuration (`config.ts`, champs de `src/core/site-config.ts`), ses assets et styles ; tunnels et pages fonctionnelles sont communs (`src/pages/`) et ne contiennent aucun texte, lieu ou contact d'un client : tout ce qui varie se lit dans `configDuSite()`. Seuls `elite-lyon` (démonstration, sans domaine) et `_modele` sont versionnés ; un site client vit hors dépôt (`docs/INSTANCES.md`), jamais commité.
+- Preview Cloudflare : alias ou sous-domaine `*.pages.dev` (site par défaut).
 - Toute requête de lecture doit filtrer par le `tenant_id` résolu — pas d'exception.
 
 ## Accès Supabase

@@ -1,7 +1,7 @@
 # ADR 0002 : Résolution de Domaine Multi-Tenant Dynamique à Grande Échelle
 
 - **Date** : 2026-05-23
-- **Statut** : Proposé
+- **Statut** : Remplacé par l'ADR 0003 (2026-10-02) pour le choix du site ; la résolution du tenant par domaine reste en vigueur
 - **Auteur** : Mike & Antigravity
 
 ## Contexte

@@ -28,7 +28,7 @@
 ## 🌟 Points Forts d'Ingénierie & Architecture
 
 ### 1. Multi-Tenancy & Multi-Sites Vitrines (`apps/vtc-websites`)
-- **Résolution d'hôte dynamique (`resolveTenant`)** : Une seule instance SSR Cloudflare Pages sert une infinité de sites vitrines personnalisés (ex: `elite-lyon.fr`, `vtc-prestige-paris.fr`).
+- **Résolution d'hôte dynamique (`resolveTenant`)** : Chaque instance sert les sites vitrines de ses tenants (un site par tenant), choisis par domaine et fixés à la compilation (ADR 0003).
 - **Branding Sur-Mesure** : Chargement automatique des logos depuis Supabase Storage (`tenant.logo_url`), du nom de société et des grilles tarifaires spécifiques à chaque chauffeur ou groupement d'agences.
 - **4 Tunnels de Réservation Connectés** : Transfert A ➔ B, Mise à disposition horaire, Longue Distance interurbaine, et Devis Business VIP.
 

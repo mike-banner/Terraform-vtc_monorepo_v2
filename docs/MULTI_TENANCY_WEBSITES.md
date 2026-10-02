@@ -15,7 +15,9 @@ L'application `apps/vtc-websites` permet à la plateforme de déployer et person
 ## 🛠️ Mécanisme Technique
 
 ### 1. Résolution Dynamique du Tenant (`resolveTenant`)
-Lorsqu'un client visite un domaine (ex: `elite-lyon.fr` ou `mon-vtc-paris.fr`), le middleware Astro identifie le domaine dans la table `tenants` de Supabase :
+Sites d'une instance (ADR 0003) : le domaine choisit le site dans `SITE_MAP`, fournie à la compilation (un domaine par site, un tenant par site) ; seuls les sites listés sont compilés ; les tunnels sont communs.
+
+Lorsqu'un client visite un domaine (ex: `exemple.invalid`), le middleware Astro identifie le domaine dans la table `tenants` de Supabase :
 
 ```ts
 // src/core/tenant.ts
