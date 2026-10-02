@@ -46,7 +46,8 @@ client vit dans son fichier d'environnement et dans le registre, hors dépôt.
 
 - [ ] `<code>.instance.env` créé **hors dépôt**, droits `600`, jamais dans R2, jamais dans GitHub. Liste des variables dans
       `INSTANCES.md`. Ne pas oublier **`EMAIL_FROM`** (adresse du domaine vérifié chez Resend) et `RESEND_API_KEY` : sans
-      `EMAIL_FROM`, la fonction d'envoi ne démarre plus.
+      `EMAIL_FROM`, la fonction d'envoi ne démarre plus. **L'adresse de test du développeur ne doit jamais rester** : `EMAIL_FROM`
+      est celle du domaine du client, et aucune adresse personnelle n'est écrite dans le code.
 - [ ] Fichier R2 chargé (`~/.config/<dossier privé>/r2.env`), accès au bucket privé vérifié.
 - [ ] Code d'instance **neutre** (jamais le nom du client) et préfixe de projet choisis.
 - [ ] Site du client créé : copie de `sites/_modele`, `config.ts` renseigné, `tsc --noEmit`, archive envoyée dans R2.
