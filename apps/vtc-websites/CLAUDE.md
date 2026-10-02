@@ -16,7 +16,7 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 | Table | Accès front | Canal |
 |---|---|---|
 | `tenants` | Champs publics uniquement (`id`, `name`, `logo_url`, `primary_domain`, `phone`, `email`) | RPC `get_public_tenant` — **pas de lecture directe** |
-| `vehicles`, `pricing_rules` | Lecture publique | SDK direct |
+| `vehicles`, `pricing_rules`, `zones`, `fixed_routes` | Lecture publique (`zones.postal_codes` inclus) | SDK direct |
 | `bookings` | Aucune lecture directe. Résultat d'une réservation payée : RPC `get_public_booking_result(session_id)` | RPC / Edge Function backoffice. Notation : RPC `get_rating_context(booking_id)` (nom, logo, avis Google du tenant, déjà-noté) et `submit_rating(booking_id, rating, comment)` — seules écritures autorisées depuis le site, validées côté base (Phase 14, D-09). |
 | `customers`, `stripe_events` | Interdit total | — |
 
@@ -32,6 +32,8 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 - Date picker : dates passées bloquées + délai de prévenance minimal (ex: pas de réservation à moins de 2h).
 
 ## Tunnels de réservation
+
+- Transfert : contrôle des deux extrémités du trajet fixe contre les codes postaux des zones du chauffeur (api-adresse.data.gouv.fr, côté navigateur, blocage avant paiement) ; le serveur ne fait que signaler (`bookings.address_alert`).
 
 - Types prévus : transfert A→B, mise à disposition (forfait horaire), longue distance, business/event (devis libre).
 - Tunnels implémentés : ceux présents dans `src/components/booking/`.

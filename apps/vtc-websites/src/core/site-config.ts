@@ -10,8 +10,6 @@ export const CONFIG_NEUTRE = {
   email: "", // contact de repli si le tenant n'en a pas ; "" = masqué
   telephone: "",
   transfertPlaceholderAdresse: "Ex : adresse complète",
-  transfertCodesPostauxDepart: [] as string[], // préfixes de code postal autorisés pour la prise en charge d'un transfert (ex. ["75"]) ; [] = aucune restriction, alerte masquée
-  transfertZoneMessage: "La prise en charge est limitée à la zone desservie.",
   longueDistanceVilleDepart: "", // "" = pas de « Depuis … » ni de ville dans les libellés
   longueDistanceDestinations: [] as { ville: string; distanceKm: number; duree: string }[], // [] = saisie libre seulement
   longueDistancePlaceholderDestination: "Ex : ville de destination",

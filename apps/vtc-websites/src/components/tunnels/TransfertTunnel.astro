@@ -21,7 +21,7 @@ const [
   supabase.rpc('get_available_vehicles', { p_tenant_id: tenantId }),
   supabase
     .from('fixed_routes')
-    .select('*, pickup_zone:pickup_zone_id(name), dropoff_zone:dropoff_zone_id(name)')
+    .select('*, pickup_zone:pickup_zone_id(name, postal_codes), dropoff_zone:dropoff_zone_id(name, postal_codes)')
     .eq('tenant_id', tenantId)
     .eq('active', true)
 ]);
@@ -65,7 +65,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
 ---
 
 <TunnelLayout currentStep={1} totalSteps={4} serviceType={serviceType} {...props}>
-  <div id="tunnel-data" data-tenant-id={tenantId} data-routes={JSON.stringify(fixedRoutesData)} data-codes-postaux-depart={JSON.stringify(site.transfertCodesPostauxDepart)} data-zone-message={site.transfertZoneMessage} data-placeholder-adresse={site.transfertPlaceholderAdresse} class="hidden"></div>
+  <div id="tunnel-data" data-tenant-id={tenantId} data-routes={JSON.stringify(fixedRoutesData)} data-placeholder-adresse={site.transfertPlaceholderAdresse} class="hidden"></div>
   <form id='tunnel-form' class='max-w-4xl mx-auto' novalidate>
     <!-- Étape 1: Sélection transfert/aéroport -->
     <div class='step-container' data-step='1'>
@@ -110,10 +110,6 @@ const { serviceType = 'airport', ...props } = Astro.props;
         </div>
 
         <div id="addressFieldsContainer" class="hidden space-y-6 p-6 bg-zinc-50 border border-zinc-200 rounded-xl">
-          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 text-sm text-blue-700 hidden" id="zoneAlert">
-            <p class="font-bold">Information importante :</p>
-            <p>{site.transfertZoneMessage}</p>
-          </div>
           <div>
             <label id="pickupLabel" class='block text-sm font-medium text-zinc-700 mb-2'>Adresse de départ</label>
             <input type='text' name='pickupAddress' id='pickupAddress' class='w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent' required />
@@ -171,6 +167,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
 <script>
   import { supabase } from '../../core/supabase';
   import { TunnelManager } from '../../core/tunnel-core';
+  import { codePostalAdresse, statutExtremite, zonesDuSens } from '../../core/zone-check.mjs';
   
   function initTunnel() {
     const dataDiv = document.getElementById('tunnel-data');
@@ -178,11 +175,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
 
     const tenantId = dataDiv.dataset.tenantId;
     const routes = JSON.parse(dataDiv.dataset.routes || '[]');
-    // zone desservie (configuration du site) : [] = pas de contrôle ; contrôle navigateur seulement
-    const codesPostaux: string[] = JSON.parse(dataDiv.dataset.codesPostauxDepart || '[]');
-    const zoneMessage = dataDiv.dataset.zoneMessage || '';
     const placeholderAdresse = dataDiv.dataset.placeholderAdresse || '';
-    const zoneRegex = codesPostaux.length ? new RegExp('\\b(?:' + codesPostaux.map((c) => c + '\\d{' + (5 - c.length) + '}').join('|') + ')\\b') : null; // code postal à 5 chiffres
     const estAeroport = (lieu: string) => /a[ée]roport|airport|terminal/i.test(lieu);
 
     const routeSelect = document.getElementById('routeSelect') as HTMLSelectElement;
@@ -194,7 +187,6 @@ const { serviceType = 'airport', ...props } = Astro.props;
     const flightTrackingContainer = document.getElementById('flightTrackingContainer');
     const addressFieldsContainer = document.getElementById('addressFieldsContainer');
     const directionDisplayContainer = document.getElementById('directionDisplayContainer');
-    const zoneAlert = document.getElementById('zoneAlert');
     
     const swapBtn = document.getElementById('swapDirectionBtn');
     const directionState = document.getElementById('directionState') as HTMLInputElement;
@@ -219,15 +211,28 @@ const { serviceType = 'airport', ...props } = Astro.props;
           const dAddress = formData.get('dropoffAddress') as string;
           if (!pAddress || !dAddress) { alert("Veuillez indiquer les adresses de départ et d'arrivée."); return false; }
 
+          // Contrôle des deux extrémités contre les codes postaux des zones du chauffeur (D-33).
+          // Zone sans code, adresse introuvable ou service muet : on laisse passer, le serveur signale.
           const [basePickup, baseDropoff] = routeSelect.value.split('|');
-          const isForward = directionState.value === 'forward';
-          const currentPickup = isForward ? basePickup : baseDropoff;
-
-          // zone desservie : seule la prise en charge est contrôlée, hors aéroport
-          if (zoneRegex && !estAeroport(currentPickup)) {
-            if (!zoneRegex.test(pAddress)) {
-              if (pickupError) { pickupError.textContent = zoneMessage; pickupError.classList.remove('hidden'); }
-              return false;
+          const route = routes.find((r: any) => r.pickup_zone?.name === basePickup && r.dropoff_zone?.name === baseDropoff);
+          if (route) {
+            const { depart, arrivee } = zonesDuSens(route, directionState.value);
+            manager.setLoading(true, "Vérification de l'adresse…");
+            try {
+              const [cpDepart, cpArrivee] = await Promise.all([
+                depart?.postal_codes?.length ? codePostalAdresse(pAddress) : null,
+                arrivee?.postal_codes?.length ? codePostalAdresse(dAddress) : null,
+              ]);
+              const horsZone = (cp: string | null, z: any, el: HTMLElement | null) => {
+                if (statutExtremite(cp, z?.postal_codes) !== 'hors_zone') return false;
+                if (el) { el.textContent = `Cette adresse n'est pas dans la zone « ${z?.name} ».`; el.classList.remove('hidden'); }
+                return true;
+              };
+              const d = horsZone(cpDepart, depart, pickupError);
+              const a = horsZone(cpArrivee, arrivee, dropoffError);
+              if (d || a) return false;
+            } finally {
+              manager.setLoading(false);
             }
           }
         }
@@ -277,6 +282,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
                 type: 'transfer',
                 vehicle_id: vehicleId,
                 fixed_route_id: route.id,
+                direction: directionState.value,
                 pickup_address: formData.get('pickupAddress') || pickupZone,
                 dropoff_address: formData.get('dropoffAddress') || dropoffZone,
                 pickup_time: scheduledDate,
@@ -321,8 +327,6 @@ const { serviceType = 'airport', ...props } = Astro.props;
 
       if (displayPickup) displayPickup.textContent = currentPickup;
       if (displayDropoff) displayDropoff.textContent = currentDropoff;
-
-      if (zoneAlert) zoneAlert.classList.toggle('hidden', !zoneRegex || estAeroport(currentPickup));
 
       const isAirportPickup = estAeroport(currentPickup);
 
