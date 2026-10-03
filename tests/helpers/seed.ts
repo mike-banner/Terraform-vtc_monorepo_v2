@@ -14,13 +14,13 @@ const admin = () =>
 
 type Row = Record<string, unknown>;
 
-/** Course + client `e2e-<tag>` dans le tenant du seed. Éviter paid/completed (ledger). */
-export async function seedBooking(p: Row & { tag: string }): Promise<{ id: string }> {
-  const { tag, ...overrides } = p;
+/** Course + client `e2e-<tag>` (nom surchargeable par `lastName`, à garder préfixé `e2e-<tag>`) dans le tenant du seed. Éviter paid/completed (ledger). */
+export async function seedBooking(p: Row & { tag: string; lastName?: string; phone?: string }): Promise<{ id: string }> {
+  const { tag, lastName, phone, ...overrides } = p;
   const db = admin();
   const { data: customer, error: ce } = await db
     .from('customers')
-    .insert({ tenant_id: TENANT_ID, email: `e2e-${tag}@local.test`, first_name: 'E2E', last_name: `e2e-${tag}` })
+    .insert({ tenant_id: TENANT_ID, email: `e2e-${tag}@local.test`, first_name: 'E2E', last_name: lastName ?? `e2e-${tag}`, phone: phone ?? null })
     .select('id')
     .single();
   if (ce) throw new Error(`seedBooking client : ${ce.message}`);

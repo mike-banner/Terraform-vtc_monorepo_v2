@@ -9,28 +9,31 @@ export function DataTable<T>({
   rowKey,
   onRowClick,
   mobileCard,
+  rowClassName,
 }: {
   rows: T[];
   columns: Column<T>[];
   rowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
   mobileCard: (row: T) => ReactNode;
+  /** Classe de bordure de la ligne (ex. `border-destructive`) ; `border-border` par défaut. */
+  rowClassName?: (row: T) => string | undefined;
 }) {
   return (
     <>
       <ul className="space-y-(--gap-grid) md:hidden">
         {rows.map((r) => (
-          <li key={rowKey(r)}>
+          <li key={rowKey(r)} data-row={rowKey(r)}>
             {onRowClick ? (
               <button
                 type="button"
                 onClick={() => onRowClick(r)}
-                className="block min-h-11 w-full rounded-(--radius-card) border border-border bg-card p-4 text-left text-card-foreground"
+                className={`block min-h-11 w-full rounded-(--radius-card) border bg-card p-4 text-left text-card-foreground ${rowClassName?.(r) ?? "border-border"}`}
               >
                 {mobileCard(r)}
               </button>
             ) : (
-              <div className="rounded-(--radius-card) border border-border bg-card p-4 text-card-foreground">{mobileCard(r)}</div>
+              <div className={`rounded-(--radius-card) border bg-card p-4 text-card-foreground ${rowClassName?.(r) ?? "border-border"}`}>{mobileCard(r)}</div>
             )}
           </li>
         ))}
@@ -47,7 +50,7 @@ export function DataTable<T>({
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={rowKey(r)} className="border-b border-border">
+            <tr key={rowKey(r)} data-row={rowKey(r)} className={`border-b ${rowClassName?.(r) ?? "border-border"}`}>
               {columns.map((c, i) => (
                 <td key={c.key} className="px-3 py-2">
                   {onRowClick && i === 0 ? (

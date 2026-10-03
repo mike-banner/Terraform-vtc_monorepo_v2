@@ -40,6 +40,8 @@ export function Sheet({
         e.preventDefault();
         onClose();
       }}
+      // Le fond (::backdrop) est cliquable : le clic a alors le <dialog> lui-même pour cible.
+      onClick={(e) => e.target === e.currentTarget && onClose()}
       className="m-0 h-dvh max-h-dvh w-full max-w-none bg-card p-0 text-card-foreground backdrop:bg-background/70 md:ml-auto md:max-w-xl"
     >
       <div className="flex h-dvh flex-col pb-[env(safe-area-inset-bottom)]">
