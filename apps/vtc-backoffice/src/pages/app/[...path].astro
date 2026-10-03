@@ -1,0 +1,9 @@
+---
+import App from "@/app/App";
+import AppDocument from "@/layouts/AppDocument.astro";
+---
+
+<AppDocument>
+  <div data-shell-skeleton class="fixed inset-0 bg-background"></div>
+  <App client:only="react" />
+</AppDocument>

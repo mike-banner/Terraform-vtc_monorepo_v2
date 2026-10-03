@@ -17,8 +17,15 @@ const routesFrom = (dir, prefix, exts) =>
     .filter((e) => e.isFile() && exts.some((x) => e.name.endsWith(x)))
     .map((e) => `${prefix}/${e.name.replace(/\.(astro|ts)$/, "")}`);
 
+// Pages React de la coque : src/app/pages/XPage.tsx -> /app/x (kebab-case). Les fichiers
+// Astro à crochets ([...path].astro, l'attrape-tout) ne sont pas des routes déclarables.
+const reactPages = readdirSync(join(root, "app/pages"))
+  .filter((f) => f.endsWith("Page.tsx"))
+  .map((f) => "/app/" + f.replace(/Page\.tsx$/, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase());
+
 const expected = [
-  ...routesFrom("pages/app", "/app", [".astro"]),
+  ...routesFrom("pages/app", "/app", [".astro"]).filter((r) => !r.includes("[")),
+  ...reactPages,
   ...routesFrom("pages/api/tenant", "/api/tenant", [".ts"]),
 ];
 
