@@ -13,7 +13,7 @@ export default function WaitingApprovalPage() {
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-8 text-foreground">
       <Card className="w-full max-w-lg space-y-6 p-8 text-center">
         <Clock aria-hidden="true" className="mx-auto size-12 text-primary" />
-        <h1 className="text-2xl font-black uppercase tracking-tight">Dossier en cours d'examen</h1>
+        <h1 className="text-2xl font-bold">Dossier en cours d'examen</h1>
         <div className="space-y-4 leading-relaxed text-muted-foreground">
           <p>Merci d'avoir complété votre inscription. Nos équipes vérifient actuellement vos documents et les informations de votre véhicule.</p>
           <p className="border-t border-border pt-4 text-sm">
@@ -28,7 +28,7 @@ export default function WaitingApprovalPage() {
             Déconnexion
           </Button>
         </div>
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">VTC HUB &bull; Service Qualité</p>
+        <p className="text-sm text-muted-foreground">VTC HUB &bull; Service Qualité</p>
       </Card>
     </main>
   );

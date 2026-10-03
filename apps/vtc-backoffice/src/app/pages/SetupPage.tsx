@@ -19,8 +19,8 @@ export default function SetupPage() {
   const qc = useQueryClient();
   const [chosen, setChosen] = useState<PrerequisiteId | null>(null);
 
-  if (loading || !profile) return <div className="p-4 md:p-8"><Skeleton /></div>;
-  if (!data) return <div className="p-4 md:p-8"><ErrorState message="Impossible de charger la configuration." onRetry={() => void qc.invalidateQueries()} /></div>;
+  if (loading || !profile) return <div className="page"><Skeleton /></div>;
+  if (!data) return <div className="page"><ErrorState message="Impossible de charger la configuration." onRetry={() => void qc.invalidateQueries()} /></div>;
 
   const items = prerequisiteStatus(data);
   const current = chosen ?? items.find((i) => !i.done)?.id ?? "legal";
@@ -32,7 +32,7 @@ export default function SetupPage() {
   const isDone = items.find((i) => i.id === current)?.done ?? false;
 
   return (
-    <div className="space-y-4 p-4 md:p-8">
+    <div className="space-y-4 page">
       <PageHeader title="Première connexion" />
       <p className="text-sm text-muted-foreground">Renseignez ces éléments pour recevoir et facturer vos premières courses.</p>
       <SetupChecklist items={items} onSelect={setChosen} />

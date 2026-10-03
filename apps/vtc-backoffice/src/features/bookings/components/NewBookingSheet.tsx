@@ -97,9 +97,9 @@ export function NewBookingSheet({ open, onClose, onCreated }: { open: boolean; o
       onClose={onClose}
       title="Nouvelle course"
       footer={
-        <div className="space-y-2">
+        <div className="space-y-2 lg:flex lg:flex-col lg:items-end">
           {canWrite ? null : <p className="text-xs text-muted-foreground">{offlineMessage}</p>}
-          <Button type="submit" form="new-booking-form" className="w-full" loading={create.isPending} disabled={!canWrite}>
+          <Button type="submit" form="new-booking-form" className="w-full lg:w-auto" loading={create.isPending} disabled={!canWrite}>
             Confirmer la réservation
           </Button>
         </div>
@@ -118,7 +118,7 @@ export function NewBookingSheet({ open, onClose, onCreated }: { open: boolean; o
             <Select {...register("vehicle_id")}>
               <option value="">Sélectionner</option>
               {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>{`${v.brand} ${v.model} — ${v.plate_number}`}</option>
+                <option key={v.id} value={v.id}>{`${v.brand} ${v.model} · ${v.plate_number}`}</option>
               ))}
             </Select>
           </Field>

@@ -56,9 +56,9 @@ export function EditBookingSheet({ booking: b, open, onClose }: { booking: Booki
       onClose={onClose}
       title="Modifier la course"
       footer={
-        <div className="space-y-2">
+        <div className="space-y-2 lg:flex lg:flex-col lg:items-end">
           {canWrite ? null : <p className="text-xs text-muted-foreground">{offlineMessage}</p>}
-          <Button type="submit" form="edit-booking-form" className="w-full" loading={update.isPending} disabled={!canWrite}>
+          <Button type="submit" form="edit-booking-form" className="w-full lg:w-auto" loading={update.isPending} disabled={!canWrite}>
             Enregistrer les modifications
           </Button>
         </div>

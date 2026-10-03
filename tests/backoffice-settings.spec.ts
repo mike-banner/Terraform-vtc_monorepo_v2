@@ -27,7 +27,7 @@ test.describe('paramètres propriétaire', () => {
     await expect(page.getByText('Paramètres enregistrés.')).toBeVisible();
     const db = await tenantSettingsRow();
     expect(db).toMatchObject({ legal_form: 'sasu', is_vat_exempt: false, vat_number: 'FR12345678901' });
-    await expect(page.getByTestId('vat-status')).toContainText(`Assujetti — ${db.vat_rate} %`);
+    await expect(page.getByTestId('vat-status')).toContainText(`Assujetti, ${db.vat_rate} %`);
 
     await page.getByLabel('Forme juridique').selectOption('auto_entrepreneur');
     await page.getByRole('button', { name: 'Enregistrer', exact: true }).click();

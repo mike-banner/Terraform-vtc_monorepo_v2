@@ -50,14 +50,14 @@ test.afterAll(async () => {
 test.afterEach(() => updateBooking(ids.up, { mission_status: 'not_started', mission_note: null }));
 
 test.describe('owner', () => {
-  test('KPI, Stripe, aucune erreur console, pas de défilement horizontal, cibles de 44 px', async ({ page }) => {
+  test('KPI, Stripe, aucune erreur console, pas de défilement horizontal, cibles de 44 px', async ({ page }, info) => {
     const errors = collectConsoleErrors(page);
     await gotoDashboard(page);
     const kpi = page.getByRole('group', { name: 'Indicateurs' });
     for (const label of ['Balance', 'Missions', 'Note']) await expect(kpi).toContainText(label);
     await expect(kpi).not.toContainText('–'); // les valeurs sont chargées
     await expect(page.getByRole('button', { name: /Dashboard Stripe/ })).toBeEnabled({ timeout: 15_000 }); // le bouton n'existe qu'après la réponse de l'info Stripe (squelette avant)
-    await expectTouchTargets(page, 'main button');
+    if (info.project.name === 'backoffice-mobile') await expectTouchTargets(page, 'main button'); // la souris en desktop a des contrôles de 40 px
     expect(errors()).toEqual([]);
   });
 

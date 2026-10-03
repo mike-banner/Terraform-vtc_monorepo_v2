@@ -112,12 +112,12 @@ function Box({ req, close }: { req: Req; close: () => void }) {
       }}
       className="m-auto w-[calc(100%-2rem)] max-w-md rounded-(--radius-card) border border-border bg-card p-0 text-card-foreground backdrop:bg-background/70"
     >
-      <div className="space-y-4 p-4">
+      <div className="space-y-4 p-4 lg:p-5">
         <div className="flex items-start justify-between gap-2">
           <h2 id={titleId} className="text-lg font-bold">
             {o.title}
           </h2>
-          <button type="button" aria-label="Fermer" onClick={cancel} className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-muted">
+          <button type="button" aria-label="Fermer" onClick={cancel} className="inline-flex size-11 lg:pointer-fine:size-9 shrink-0 items-center justify-center rounded-xl hover:bg-muted">
             <X aria-hidden="true" className="size-5" />
           </button>
         </div>

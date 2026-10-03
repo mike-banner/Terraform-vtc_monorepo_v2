@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/auth';
 import './e2e-env';
 import { collectConsoleErrors, expectNoHorizontalScroll } from './helpers/page-checks';
 
@@ -88,7 +88,7 @@ test.describe('connexion et pages publiques React', () => {
     await page.goto('/');
     await expect(page.getByRole('link', { name: 'Démarrer maintenant' })).toBeVisible();
     await page.getByRole('button', { name: 'En savoir plus' }).click();
-    await expect(page.getByText('Finance & Ledger')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Comptabilité' })).toBeVisible();
     await expectNoHorizontalScroll(page);
     await page.goto('/chemin-inconnu');
     await expect(page.getByText('Page introuvable')).toBeVisible();

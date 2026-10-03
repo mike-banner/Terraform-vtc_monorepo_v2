@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const failed = [ongoing, overdue, upcoming, validate].find((q) => q.isError && !q.data);
 
   return (
-    <div className="space-y-4 p-4 md:p-8">
+    <div className="space-y-4 page">
       <PageHeader title="Tableau de bord" />
 
       {failed ? (

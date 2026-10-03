@@ -26,7 +26,7 @@ export default function PricingPage() {
   const tenantId = profile?.tenantId;
 
   return (
-    <div className="space-y-4 p-4 md:p-8">
+    <div className="space-y-4 page">
       <PageHeader title="Tarifs" />
       <div role="tablist" aria-label="Sections des tarifs" className="flex gap-1 rounded-xl border border-border bg-card p-1">
         {TABS.map((t) => (

@@ -4,9 +4,9 @@ const fr = (n: number, o?: Intl.NumberFormatOptions) => n.toLocaleString("fr-FR"
 
 function Kpi({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
-    <div className="flex flex-col items-center rounded-xl p-2 text-center">
-      <p className="mb-1 text-xs font-bold uppercase text-muted-foreground">{label}</p>
-      <p className="text-xl font-bold tabular-nums">
+    <div className="flex flex-col items-center rounded-xl p-2 text-center lg:p-4">
+      <p className="mb-1 text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="text-xl font-bold tabular-nums lg:text-3xl">
         {value}
         {unit ? <span className="ml-0.5 text-primary">{unit}</span> : null}
       </p>

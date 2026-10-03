@@ -10,7 +10,7 @@ export default function VehiclesPage() {
   const { canWrite } = useOnline();
   const [creating, setCreating] = useState(false);
   return (
-    <div className="p-4 md:p-8">
+    <div className="page">
       <PageHeader
         title="Véhicules"
         action={

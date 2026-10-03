@@ -42,7 +42,7 @@ export function DataTable<T>({
         <thead className="text-xs text-muted-foreground">
           <tr>
             {columns.map((c) => (
-              <th key={c.key} scope="col" className="border-b border-border px-3 py-2 font-bold">
+              <th key={c.key} scope="col" className="border-b border-border px-3 py-2 font-bold lg:px-4 lg:py-3">
                 {c.header}
               </th>
             ))}
@@ -52,7 +52,7 @@ export function DataTable<T>({
           {rows.map((r) => (
             <tr key={rowKey(r)} data-row={rowKey(r)} className={`border-b ${rowClassName?.(r) ?? "border-border"}`}>
               {columns.map((c, i) => (
-                <td key={c.key} className="px-3 py-2">
+                <td key={c.key} className="px-3 py-2 lg:px-4 lg:py-3">
                   {onRowClick && i === 0 ? (
                     <button type="button" onClick={() => onRowClick(r)} className="min-h-11 text-left font-bold text-foreground underline-offset-2 hover:underline">
                       {c.cell(r)}

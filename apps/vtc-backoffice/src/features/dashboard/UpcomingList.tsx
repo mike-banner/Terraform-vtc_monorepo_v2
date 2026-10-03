@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Badge, Card } from "@/ui";
+import { Badge } from "@/ui";
 import { customerName, formatDate, formatEur, formatTime } from "@/features/bookings/format";
 import type { BookingRow } from "@/features/bookings/types";
 
@@ -7,7 +7,7 @@ import type { BookingRow } from "@/features/bookings/types";
 export function BookingCard({ b, onOpen, tone, children }: { b: BookingRow; onOpen: (id: string) => void; tone?: "success" | "danger" | "warning"; children?: ReactNode }) {
   const border = tone === "success" ? "border-success" : tone === "danger" ? "border-destructive" : tone === "warning" ? "border-warning" : "";
   return (
-    <button type="button" onClick={() => onOpen(b.id)} className={`block min-h-11 w-full rounded-(--radius-card) border border-border bg-card p-3 text-left text-card-foreground ${border}`}>
+    <button type="button" onClick={() => onOpen(b.id)} className={`block min-h-11 w-full rounded-(--radius-card) border border-border bg-card p-3 text-left lg:p-4 text-card-foreground ${border}`}>
       <span className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate font-bold">{customerName(b.customers)}</span>
         <span className="shrink-0 text-sm font-bold tabular-nums">
@@ -45,14 +45,12 @@ export function ToValidateList({ rows, onOpen }: { rows: BookingRow[]; onOpen: (
       <h2 className="text-sm font-bold text-warning-foreground">Actions requises</h2>
       <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
         {rows.map((b) => (
-          <Card key={b.id} className="space-y-2 p-0">
-            <BookingCard b={b} onOpen={onOpen} tone="warning">
-              <span className="mt-1 flex items-center justify-between gap-2">
-                <Badge tone="warning">{b.booking_type === "hourly" ? "Mise à disposition" : "Demande"}</Badge>
-                <span className="text-sm tabular-nums">Estimation {formatEur(b.total_amount)}</span>
-              </span>
-            </BookingCard>
-          </Card>
+          <BookingCard key={b.id} b={b} onOpen={onOpen} tone="warning">
+            <span className="mt-1 flex items-center justify-between gap-2">
+              <Badge tone="warning">{b.booking_type === "hourly" ? "Mise à disposition" : "Demande"}</Badge>
+              <span className="text-sm tabular-nums">Estimation {formatEur(b.total_amount)}</span>
+            </span>
+          </BookingCard>
         ))}
       </div>
     </section>

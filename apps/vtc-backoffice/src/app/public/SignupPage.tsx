@@ -58,7 +58,7 @@ export default function SignupPage() {
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-8 text-foreground">
       <Card className="w-full max-w-xl space-y-6 p-6 sm:p-8">
         <Stepper steps={LABELS.map((label, i) => ({ id: String(i), label, done: i < step }))} current={String(step)} />
-        <h1 className="font-heading text-2xl font-black uppercase tracking-tight">{["Tes identifiants de connexion", "Identité du titulaire", "Détails juridiques et PRO"][step]}</h1>
+        <h1 className="font-heading text-2xl font-bold">{["Tes identifiants de connexion", "Identité du titulaire", "Détails juridiques et PRO"][step]}</h1>
 
         {!ready ? null : (
           <form onSubmit={(e) => void handleSubmit(next)(e)} noValidate className="space-y-3">

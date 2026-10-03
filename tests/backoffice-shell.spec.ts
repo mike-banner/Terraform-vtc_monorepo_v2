@@ -27,7 +27,10 @@ test.describe('coque React', () => {
     await page.goto('/app/vehicles');
     await expect(shell(page)).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Véhicules', level: 1 })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Retour' })).toBeVisible();
+    // Le bouton Retour n'existe qu'en mobile : en desktop la barre latérale suffit.
+    const back = page.getByRole('button', { name: 'Retour' });
+    if (info.project.name === 'backoffice-desktop') await expect(back).toBeHidden();
+    else await expect(back).toBeVisible();
     await expectNoHorizontalScroll(page);
     if (info.project.name === 'backoffice-mobile') await expectTouchTargets(page, '[data-bottom-nav] a');
     expect(errors()).toEqual([]);
@@ -68,7 +71,7 @@ test.describe('coque React', () => {
       await expect(shell(page)).toBeVisible();
       await setTenantStatus('suspended');
       await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange', { bubbles: true })));
-      await page.waitForURL('**/login?reason=suspended');
+      await expect(page).toHaveURL(/\/login\?reason=suspended/);
     } finally {
       await setTenantStatus('active');
       // La déconnexion révoque les sessions de l'utilisateur : régénérer les états partagés.

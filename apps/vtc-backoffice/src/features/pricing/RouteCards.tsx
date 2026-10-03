@@ -24,12 +24,12 @@ export function RouteCards({
       {routes.map((r) => (
         <div key={r.id} data-route={r.id} className="space-y-4 rounded-(--radius-card) border border-border bg-card p-4">
           <div className="flex items-center justify-between">
-            <Badge tone="success" className="uppercase">
+            <Badge tone="success">
               {r.vehicle_category}
             </Badge>
             {r.is_bidirectional ? <ArrowRightLeft aria-label="Aller-retour" className="size-4 text-muted-foreground" /> : null}
           </div>
-          <p className="min-w-0 truncate font-bold uppercase">
+          <p className="min-w-0 truncate font-bold">
             {r.pickup_zone?.name} → {r.dropoff_zone?.name}
           </p>
           <div className="flex items-center justify-between border-t border-border pt-3">

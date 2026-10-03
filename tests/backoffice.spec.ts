@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/auth';
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import './e2e-env';

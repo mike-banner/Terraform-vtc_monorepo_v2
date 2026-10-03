@@ -41,7 +41,7 @@ export function ActiveMissionBanner({ mission }: { mission: ActiveMission | null
   return (
     <div data-mission-banner className="flex items-center justify-between gap-3 border-t border-success bg-success-soft px-4 py-2 text-success-foreground">
       <Link to={bookingUrl(mission.id)} className="min-w-0 flex-1">
-        <span className="block text-xs font-bold uppercase">Mission en cours</span>
+        <span className="block text-xs font-bold">Mission en cours</span>
         <span className="block truncate text-sm">{mission.dropoff_address.split(",")[0].trim()}</span>
       </Link>
       <div className="flex flex-col items-end">

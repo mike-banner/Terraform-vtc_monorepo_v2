@@ -70,7 +70,7 @@ export default function BookingsPage() {
   const title = profile?.role === "driver" ? "Mes courses" : "Courses";
 
   return (
-    <div className="space-y-4 p-4 md:p-8">
+    <div className="space-y-4 page">
       <PageHeader
         title={title}
         action={
@@ -81,8 +81,16 @@ export default function BookingsPage() {
           ) : null
         }
       />
-      <BookingSearch value={raw} onChange={setRaw} />
-      {searching ? null : <BookingFilters filters={filters} onChange={(p) => patch(p, true)} />}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+        <div className="lg:flex-1">
+          <BookingSearch value={raw} onChange={setRaw} />
+        </div>
+        {searching ? null : (
+          <div className="lg:w-112">
+            <BookingFilters filters={filters} onChange={(p) => patch(p, true)} />
+          </div>
+        )}
+      </div>
 
       {active.isError && !active.data ? (
         <ErrorState message="Impossible de charger les courses." onRetry={() => void active.refetch()} />

@@ -42,7 +42,7 @@ export default function LedgerPage() {
   };
 
   return (
-    <div className="space-y-4 p-4 md:p-8">
+    <div className="space-y-4 page">
       <PageHeader title={month ? `${MONTH_FULL[month - 1]} ${year}` : `Exercice ${year}`} />
       <div className="flex flex-wrap items-center gap-2">
         {month ? (

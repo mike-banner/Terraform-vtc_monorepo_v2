@@ -85,7 +85,7 @@ export function ZonesSheet({
       <div className="mb-6 space-y-3">
         {zones.map((z) => (
           <div key={z.id} data-zone={z.id} className="space-y-2 rounded-xl border border-border bg-background p-3">
-            <p className="text-sm font-bold uppercase">{z.name}</p>
+            <p className="text-sm font-bold">{z.name}</p>
             <Input
               aria-label={`Codes postaux de ${z.name}`}
               value={codesDraft[z.id] ?? (z.postal_codes ?? []).join(", ")}

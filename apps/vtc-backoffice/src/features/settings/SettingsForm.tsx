@@ -81,7 +81,7 @@ export function SettingsForm({ tenantId, tenant }: { tenantId: string; tenant: T
           <p className="text-sm font-bold">Statut TVA</p>
           <div data-testid="vat-status" className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3">
             <Badge tone={exempt ? "warning" : "success"}>{exempt ? "Exonéré" : "Assujetti"}</Badge>
-            <span className="text-sm">{exempt ? "Exonéré (Art. 293 B CGI)" : `Assujetti — ${tenant.vat_rate ?? "?"} %`}</span>
+            <span className="text-sm">{exempt ? "Exonéré (Art. 293 B CGI)" : `Assujetti, ${tenant.vat_rate ?? "?"} %`}</span>
           </div>
         </div>
       </div>

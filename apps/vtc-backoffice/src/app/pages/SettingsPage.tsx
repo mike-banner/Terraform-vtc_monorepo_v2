@@ -26,11 +26,11 @@ export default function SettingsPage() {
     window.location.assign("/");
   };
 
-  if (!tenantId || isLoading) return <div className="p-4 md:p-8"><Skeleton /></div>;
-  if (isError || !tenant) return <div className="p-4 md:p-8"><ErrorState message="Impossible de charger les paramètres." onRetry={() => refetch()} /></div>;
+  if (!tenantId || isLoading) return <div className="page"><Skeleton /></div>;
+  if (isError || !tenant) return <div className="page"><ErrorState message="Impossible de charger les paramètres." onRetry={() => refetch()} /></div>;
 
   return (
-    <div className="space-y-6 p-4 md:p-8">
+    <div className="space-y-6 page">
       <PageHeader title="Entreprise" />
       <Card>
         <LogoUpload tenantId={tenantId} logoUrl={tenant.logo_url} name={tenant.name} />

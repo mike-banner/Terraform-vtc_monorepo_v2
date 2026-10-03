@@ -22,13 +22,13 @@ export default function ProfilePage() {
   const isOwner = profile?.role === "owner";
   const canManage = isOwner || profile?.role === "manager";
 
-  if (isLoading || tenant.isLoading) return <div className="p-4 md:p-8"><Skeleton /></div>;
-  if (!profile || !tenantId || !tenant.data) return <div className="p-4 md:p-8"><ErrorState message="Profil introuvable." onRetry={() => tenant.refetch()} /></div>;
+  if (isLoading || tenant.isLoading) return <div className="page"><Skeleton /></div>;
+  if (!profile || !tenantId || !tenant.data) return <div className="page"><ErrorState message="Profil introuvable." onRetry={() => tenant.refetch()} /></div>;
 
   const t = tenant.data;
   const isAuto = t.legal_form === "auto_entrepreneur";
   return (
-    <div className="space-y-8 p-4 md:p-8">
+    <div className="space-y-8 page">
       <PageHeader title="Mon compte" />
 
       <Card className="space-y-4">

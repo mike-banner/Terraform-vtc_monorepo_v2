@@ -23,7 +23,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 font-bold motion-safe:transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+      className={`inline-flex min-h-11 lg:pointer-fine:min-h-10 items-center justify-center gap-2 rounded-xl px-4 font-bold motion-safe:transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 ${
         size === "lg" ? "text-base px-6" : "text-sm"
       } ${variants[variant]} ${className}`}
       {...rest}

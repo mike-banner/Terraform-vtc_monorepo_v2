@@ -10,7 +10,7 @@ import {
 } from "react";
 
 const control =
-  "min-h-11 w-full rounded-xl border border-border bg-input px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring aria-[invalid=true]:border-destructive";
+  "min-h-11 w-full lg:pointer-fine:min-h-10 lg:pointer-fine:text-sm rounded-xl border border-border bg-input px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring aria-[invalid=true]:border-destructive";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(
   { className = "", ...p },
