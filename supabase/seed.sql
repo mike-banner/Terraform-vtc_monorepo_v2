@@ -2,8 +2,8 @@
 -- Connexion backoffice : owner@local.test / local-test-1234
 -- Tenant sans stripe_account_id : paiement direct avec la clé Stripe du .env.
 
-insert into public.tenants (id, name, primary_domain, email, phone, site_slug, setup_completed, vat_rate)
-values ('5750a0b3-4c6c-4782-b137-830a49e32249', 'Elite Lyon (local)', 'localhost', 'contact@local.test', '0400000000', 'elite-lyon', true, 10);
+insert into public.tenants (id, name, primary_domain, email, phone, setup_completed, vat_rate)
+values ('5750a0b3-4c6c-4782-b137-830a49e32249', 'Elite Lyon (local)', 'localhost', 'contact@local.test', '0400000000', true, 10);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,

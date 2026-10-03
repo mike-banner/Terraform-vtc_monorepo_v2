@@ -1301,7 +1301,6 @@ export type Database = {
           share_fee_rate: number | null
           siren: string | null
           siret: string | null
-          site_slug: string | null
           status: string
           stripe_account_id: string | null
           vat_number: string | null
@@ -1333,7 +1332,6 @@ export type Database = {
           share_fee_rate?: number | null
           siren?: string | null
           siret?: string | null
-          site_slug?: string | null
           status?: string
           stripe_account_id?: string | null
           vat_number?: string | null
@@ -1365,7 +1363,6 @@ export type Database = {
           share_fee_rate?: number | null
           siren?: string | null
           siret?: string | null
-          site_slug?: string | null
           status?: string
           stripe_account_id?: string | null
           vat_number?: string | null
