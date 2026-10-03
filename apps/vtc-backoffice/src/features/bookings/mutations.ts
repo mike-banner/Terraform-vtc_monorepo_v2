@@ -2,10 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { terrainTransition } from "@/features/missions/api";
 import { useDialog, useToast } from "@/ui";
 import {
-  acceptPaid, acceptQuote, cancelBooking, declineRequest, generateInvoice, issueCreditNote, markAddressVerified, markNoShow,
-  retryRefund, sendQuote, updateInstructions,
+  acceptPaid, acceptQuote, cancelBooking, createManualBooking, declineRequest, generateInvoice, issueCreditNote, markAddressVerified, markNoShow,
+  retryRefund, sendQuote, updateBookingDetails, updateInstructions,
 } from "./api";
 import { bookingKeys } from "./keys";
+import type { NewBookingValues, UpdatePayload } from "./schemas";
 
 type WithId = { bookingId: string };
 
@@ -66,3 +67,14 @@ export function useAcceptQuote() {
     (done) => (done ? "Devis accepté." : undefined),
   );
 }
+
+/** Création : relecture des listes ; l'appelant ouvre la nouvelle fiche. Erreurs affichées par le formulaire. */
+export function useCreateManualBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: NewBookingValues) => createManualBooking(v),
+    onSuccess: () => qc.invalidateQueries({ queryKey: bookingKeys.all }),
+  });
+}
+
+export const useUpdateBookingDetails = () => useAction((v: WithId & { payload: UpdatePayload }) => updateBookingDetails(v.bookingId, v.payload), "Course modifiée.");

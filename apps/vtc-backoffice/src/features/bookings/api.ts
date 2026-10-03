@@ -2,6 +2,7 @@ import { invokeFn, rpc } from "@/lib/app-error";
 import { supabase } from "@/lib/supabase/client";
 import type { Profile } from "@/app/auth/useSession";
 import { buildSearchFilter, sanitizeSearch } from "./search";
+import type { FixedRoute, NewBookingValues, UpdatePayload } from "./schemas";
 import { BOOKING_COLUMNS, PAGE_SIZE, type BookingFilters, type BookingRow, type Conflict } from "./types";
 
 // Annulées listées à part (onglet « Annulées »), sauf celles qui demandent une action (remboursement en cours ou échoué).
@@ -112,3 +113,64 @@ type CreditNoteReply = { url?: string; message?: string };
 export const issueCreditNote = (p: { bookingId: string; amount: number; reason: string }) =>
   invokeFn<CreditNoteReply>("generate-credit-note", { booking_id: p.bookingId, amount: p.amount, reason: p.reason });
 export const creditNotePdf = (creditNoteId: string) => invokeFn<CreditNoteReply>("generate-credit-note", { credit_note_id: creditNoteId });
+
+// Création et édition (plan 06) : le prix affiché vient du serveur, create_manual_booking recalcule et fait foi.
+export type EstimateArgs = { vehicleId: string; bookingType: "transfer" | "hourly"; distanceKm?: number; durationHours?: number; fixedRouteId?: string };
+/** Aperçu non contractuel ; null si aucune règle tarifaire. */
+export const quoteEstimate = (a: EstimateArgs) =>
+  rpc<number | null>("quote_booking_estimate", {
+    p_vehicle_id: a.vehicleId,
+    p_booking_type: a.bookingType,
+    ...(a.distanceKm ? { p_distance_km: a.distanceKm } : {}),
+    ...(a.durationHours ? { p_duration_hours: a.durationHours } : {}),
+    ...(a.fixedRouteId ? { p_fixed_route_id: a.fixedRouteId } : {}),
+  });
+
+export type FormVehicle = { id: string; brand: string; model: string; plate_number: string; category: string; status: string | null };
+export type FormFixedRoute = FixedRoute & { pickup_zone: { name: string } | null; dropoff_zone: { name: string } | null };
+
+export async function getBookingFormData(tenantId: string): Promise<{ vehicles: FormVehicle[]; routes: FormFixedRoute[] }> {
+  const [v, r] = await Promise.all([
+    supabase.from("vehicles").select("id, brand, model, plate_number, category, status").eq("tenant_id", tenantId).order("created_at"),
+    supabase
+      .from("fixed_routes")
+      .select("id, price, vehicle_category, pickup_zone_id, dropoff_zone_id, pickup_zone:pickup_zone_id(name), dropoff_zone:dropoff_zone_id(name)")
+      .eq("tenant_id", tenantId)
+      .eq("active", true),
+  ]);
+  if (v.error) throw new Error(v.error.message);
+  if (r.error) throw new Error(r.error.message);
+  return { vehicles: (v.data ?? []) as FormVehicle[], routes: (r.data ?? []) as unknown as FormFixedRoute[] };
+}
+
+const toNumber = (s: string) => Number(s.replace(",", "."));
+/** Mêmes paramètres que l'ancienne route create-booking ; manual_total envoyé s'il est renseigné (forfait compris : prix issu du serveur). */
+export const createManualBooking = (v: NewBookingValues) => {
+  const hourly = v.booking_type === "hourly";
+  return rpc<{ booking_id: string; total_price: number }[]>("create_manual_booking", {
+    p_pickup: v.pickup,
+    p_dropoff: !hourly && v.dropoff.trim() ? v.dropoff : undefined,
+    p_pickup_time: new Date(v.pickup_time).toISOString(),
+    p_client_name: v.client_name,
+    p_client_email: v.client_email,
+    p_payment_mode: v.payment_mode,
+    p_manual_total: v.manual_total.trim() ? toNumber(v.manual_total) : undefined,
+    p_booking_type: v.booking_type,
+    p_distance_km: hourly && v.mads_mode === "km" ? toNumber(v.distance_km) : undefined,
+    p_duration_hours: hourly && v.mads_mode === "hour" ? toNumber(v.duration_hours) : undefined,
+    p_passenger_count: toNumber(v.passenger_count),
+    p_luggage_count: toNumber(v.luggage_count),
+    p_vehicle_id: v.vehicle_id,
+    p_instructions: v.instructions.trim() || undefined,
+  }).then((rows) => (Array.isArray(rows) ? rows[0] : rows));
+};
+
+export const updateBookingDetails = (id: string, p: UpdatePayload) =>
+  rpc<number>("update_booking_details", {
+    p_booking_id: id,
+    p_pickup_time: p.pickup_time,
+    p_pickup_address: p.pickup_address,
+    p_dropoff_address: p.dropoff_address,
+    p_duration_hours: p.duration_hours,
+    p_manual_total: p.manual_total,
+  });
