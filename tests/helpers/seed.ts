@@ -117,3 +117,46 @@ export async function driverPhone(lastName: string, set?: string): Promise<strin
   if (error) throw new Error(`driverPhone : ${error.message}`);
   return data.phone;
 }
+
+/** Supprime les tarifs créés par les tests (service `E2E…`). */
+export async function resetPricing(): Promise<void> {
+  const { error } = await admin().from('pricing_rules').delete().eq('tenant_id', TENANT_ID).like('service_category', 'E2E%');
+  if (error) throw new Error(`resetPricing : ${error.message}`);
+}
+
+export async function pricingRule(category: string): Promise<Row | null> {
+  const { data, error } = await admin().from('pricing_rules').select('*').eq('tenant_id', TENANT_ID).eq('service_category', category).maybeSingle();
+  if (error) throw new Error(`pricingRule : ${error.message}`);
+  return data as Row | null;
+}
+
+export async function activePolicy(): Promise<Row> {
+  const { data, error } = await admin().from('cancellation_policies').select('*').eq('tenant_id', TENANT_ID).eq('active', true).single();
+  if (error) throw new Error(`activePolicy : ${error.message}`);
+  return data as Row;
+}
+
+/** Réactive la version `id` de la politique et supprime les versions créées depuis (aucune course ne les référence). */
+export async function restorePolicy(id: string): Promise<void> {
+  const db = admin();
+  const off = await db.from('cancellation_policies').update({ active: false } as never).eq('tenant_id', TENANT_ID).neq('id', id);
+  if (off.error) throw new Error(`restorePolicy : ${off.error.message}`);
+  const on = await db.from('cancellation_policies').update({ active: true } as never).eq('id', id);
+  if (on.error) throw new Error(`restorePolicy : ${on.error.message}`);
+  await db.from('cancellation_policies').delete().eq('tenant_id', TENANT_ID).neq('id', id);
+}
+
+const TENANT_COLS = 'legal_form, vat_number, is_vat_exempt, vat_rate, address_line, postal_code, city, logo_url';
+
+/** Lecture des réglages du tenant ; `restore` remet un instantané (la TVA se redérive par le trigger). */
+export async function tenantSettingsRow(): Promise<Row> {
+  const { data, error } = await admin().from('tenants').select(TENANT_COLS).eq('id', TENANT_ID).single();
+  if (error) throw new Error(`tenantSettingsRow : ${error.message}`);
+  return data as Row;
+}
+
+export async function restoreTenantSettings(snap: Row): Promise<void> {
+  const { legal_form, vat_number, address_line, postal_code, city, logo_url } = snap;
+  const { error } = await admin().from('tenants').update({ legal_form, vat_number, address_line, postal_code, city, logo_url } as never).eq('id', TENANT_ID);
+  if (error) throw new Error(`restoreTenantSettings : ${error.message}`);
+}
