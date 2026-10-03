@@ -176,6 +176,7 @@ export type Database = {
           stripe_payment_intent_id: string | null
           subtotal_amount: number
           total_amount: number
+          updated_at: string
           vat_amount: number
           vehicle_id: string | null
         }
@@ -225,6 +226,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           subtotal_amount: number
           total_amount: number
+          updated_at?: string
           vat_amount?: number
           vehicle_id?: string | null
         }
@@ -274,6 +276,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           subtotal_amount?: number
           total_amount?: number
+          updated_at?: string
           vat_amount?: number
           vehicle_id?: string | null
         }
