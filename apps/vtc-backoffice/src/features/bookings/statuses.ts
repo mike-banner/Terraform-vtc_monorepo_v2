@@ -69,6 +69,7 @@ export function isLate(b: Pick<BookingRow, "mission_status" | "pickup_time">, no
 }
 
 export type Capabilities = {
+  canEdit: boolean;
   canEditInstructions: boolean;
   canCancel: boolean;
   cancelMode: "cancel" | "no_show" | null;
@@ -96,6 +97,7 @@ export function bookingCapabilities(b: CapFields, profile: { role: TenantRole | 
   const closed = cancelled || b.status === "refund_failed";
 
   return {
+    canEdit: preMission && (b.status === "pending" || b.status === "accepted"),
     canEditInstructions: preMission && ["pending", "accepted", "accepted_pending_payment", "paid"].includes(b.status),
     canCancel,
     cancelMode: canCancel ? mode : null,

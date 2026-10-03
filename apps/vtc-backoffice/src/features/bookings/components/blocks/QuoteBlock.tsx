@@ -6,7 +6,7 @@ import type { BookingRow, Conflict } from "../../types";
 import { ActionButton } from "./ActionButton";
 
 /** Demande de devis venue d'un tunnel (owner/manager) : envoyer, accepter (avec conflits), refuser avec motif. */
-export function QuoteBlock({ booking, conflicts }: { booking: BookingRow; conflicts: Conflict[] }) {
+export function QuoteBlock({ booking, conflicts, onFixPrice }: { booking: BookingRow; conflicts: Conflict[]; onFixPrice?: () => void }) {
   const dialog = useDialog();
   const send = useSendQuote();
   const accept = useAcceptQuote();
@@ -30,6 +30,11 @@ export function QuoteBlock({ booking, conflicts }: { booking: BookingRow; confli
         >
           Envoyer le devis
         </ActionButton>
+        {onFixPrice ? (
+          <ActionButton variant="secondary" onClick={onFixPrice}>
+            Fixer le prix
+          </ActionButton>
+        ) : null}
         <ActionButton variant="secondary" loading={accept.isPending} onClick={() => accept.mutate({ bookingId: booking.id, conflicts: lines })}>
           Devis accepté
         </ActionButton>

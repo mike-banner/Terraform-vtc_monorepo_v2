@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useOnline } from "../useOnline";
 import { Button, EmptyState, ErrorState, Skeleton } from "@/ui";
 import { BookingDetailSheet } from "@/features/bookings/components/BookingDetailSheet";
 import { BookingFilters } from "@/features/bookings/components/BookingFilters";
 import { BookingList } from "@/features/bookings/components/BookingList";
+import { NewBookingSheet } from "@/features/bookings/components/NewBookingSheet";
 import { BookingSearch } from "@/features/bookings/components/BookingSearch";
 import { useDebounced } from "@/features/bookings/hooks";
 import { useBookingSearch, useBookings, useConflicts } from "@/features/bookings/queries";
@@ -19,6 +21,9 @@ export default function BookingsPage() {
   const { profile } = useProfile();
   const [params, setParams] = useSearchParams();
   const [raw, setRaw] = useState("");
+  const [creating, setCreating] = useState(false);
+  const { canWrite, offlineMessage } = useOnline();
+  const canCreate = profile?.role === "owner" || profile?.role === "manager";
 
   const status = params.get("status") ?? "all";
   const type = params.get("type") ?? "all";
@@ -66,7 +71,16 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-4 p-4 md:p-8">
-      <PageHeader title={title} />
+      <PageHeader
+        title={title}
+        action={
+          canCreate ? (
+            <Button disabled={!canWrite} title={canWrite ? undefined : offlineMessage} onClick={() => setCreating(true)}>
+              Nouvelle course
+            </Button>
+          ) : null
+        }
+      />
       <BookingSearch value={raw} onChange={setRaw} />
       {searching ? null : <BookingFilters filters={filters} onChange={(p) => patch(p, true)} />}
 
@@ -98,6 +112,14 @@ export default function BookingsPage() {
         </>
       )}
 
+      <NewBookingSheet
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={(id) => {
+          setCreating(false);
+          open(id);
+        }}
+      />
       <BookingDetailSheet bookingId={openId} onClose={close} />
     </div>
   );
