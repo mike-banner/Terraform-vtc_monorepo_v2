@@ -146,6 +146,9 @@ jobs:
           # (docs/INSTANCES.md).
           PUBLIC_SITE: elite-lyon
           SITE_MAP: ${{ secrets.SITE_MAP }}
+          # Bouton de connexion démo du backoffice : absent si ces secrets n'existent pas (aucune valeur dans le dépôt).
+          PUBLIC_DEMO_EMAIL: ${{ secrets.DEMO_EMAIL }}
+          PUBLIC_DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
         run: pnpm build
 
       - name: Deploy Backoffice

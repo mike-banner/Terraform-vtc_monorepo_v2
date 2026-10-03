@@ -21,6 +21,7 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 - Changer `mission_status` ou annuler une course ailleurs que via les RPC `terrain_transition` / `cancel_booking` (via l'Edge Function `cancel-booking`) / `mark_booking_no_show`. Aucun pourcentage ni montant de remboursement calculé côté navigateur.
 - INSERT sur `drivers` par un rôle autre que `owner`/`manager` (policy `drivers_insert`, Phase 13). Un
   `driver` ne peut modifier que son propre `phone` sur sa fiche (trigger `drivers_self_update_guard`).
+- Identifiant ou mot de passe (même de démo) écrit dans le code : le bouton de connexion démo de `login.astro` lit `PUBLIC_DEMO_EMAIL` / `PUBLIC_DEMO_PASSWORD` fournis à la compilation (secrets GitHub `DEMO_EMAIL` / `DEMO_PASSWORD` de l'instance du développeur) et ne s'affiche que s'ils existent ; le dépôt est public.
 - Élément UI à largeur fixe (`w-[1200px]`) sans variante mobile — le produit est mobile-first absolu (tester à 375px, pas de `lg:` pour la structure par défaut).
 
 ## Conventions
