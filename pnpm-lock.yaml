@@ -126,6 +126,9 @@ importers:
       '@vtc/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@vtc/realtime':
+        specifier: workspace:*
+        version: link:../../packages/realtime
       astro:
         specifier: ^5.17.1
         version: 5.18.2(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.62.0)(typescript@6.0.3)(yaml@2.9.0)
