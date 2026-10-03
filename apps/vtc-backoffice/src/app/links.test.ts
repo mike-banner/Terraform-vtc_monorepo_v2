@@ -15,6 +15,6 @@ describe("liens", () => {
     expect(MIGRATED_PATHS.has("/app/vehicles")).toBe(true);
     expect(MIGRATED_PATHS.has("/app/pricing")).toBe(true);
     expect(MIGRATED_PATHS.has("/app/ledger")).toBe(true);
-    expect(MIGRATED_PATHS.has("/app/dashboard")).toBe(false);
+    expect(MIGRATED_PATHS.has("/app/dashboard")).toBe(true);
   });
 });
