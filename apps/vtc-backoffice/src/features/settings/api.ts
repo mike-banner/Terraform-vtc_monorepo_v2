@@ -37,7 +37,7 @@ export const updateTenantAddress = (address: string, postalCode: string, city: s
 export async function uploadLogo(tenantId: string, file: File): Promise<string> {
   const ext = file.name.split(".").pop()?.toLowerCase();
   const path = `logos/${tenantId}/logo.${ext}`;
-  // Aucune policy UPDATE sur storage.objects : un upsert sur un logo existant est refusé (403). On supprime l'ancien (policy DELETE) puis on insère.
+  // On supprime l'ancien logo puis on insère : l'extension peut changer (png, svg), donc le chemin aussi.
   await supabase.storage.from("assets").remove([path]);
   const { error } = await supabase.storage.from("assets").upload(path, file, { contentType: file.type });
   if (error) throw error;
