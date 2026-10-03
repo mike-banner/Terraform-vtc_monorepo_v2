@@ -3,7 +3,8 @@
 import "../styles/global.css";
 import { isTenant } from "../lib/guards";
 import InactivityTimeout from "../components/common/InactivityTimeout.astro";
-import { RealtimeSync, SyncPill } from "../components/common/RealtimeStatus";
+import { SyncPill } from "../components/common/RealtimeStatus";
+import { RealtimeSync } from "../components/common/RealtimeSync";
 
 interface Props {
     title: string;
@@ -87,7 +88,7 @@ const tenantName = tenant?.name || "VTC HUB";
     </head>
 
     <body class="bg-background text-foreground selection:bg-primary/30 font-sans flex flex-col">
-        {realtimeTenantId && <RealtimeSync client:load tenantId={realtimeTenantId} />}
+        {realtimeTenantId && <RealtimeSync client:only="react" tenantId={realtimeTenantId} />}
 
         <!-- ═══════════════════════════════════
              MOBILE HEADER — in-flow, flex-shrink-0
