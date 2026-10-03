@@ -52,7 +52,7 @@ test.describe('owner', () => {
     const kpi = page.getByRole('group', { name: 'Indicateurs' });
     for (const label of ['Balance', 'Missions', 'Note']) await expect(kpi).toContainText(label);
     await expect(kpi).not.toContainText('–'); // les valeurs sont chargées
-    await expect(page.getByRole('button', { name: /Dashboard Stripe/ })).toBeEnabled();
+    await expect(page.getByRole('button', { name: /Dashboard Stripe/ })).toBeEnabled({ timeout: 15_000 }); // le bouton n'existe qu'après la réponse de l'info Stripe (squelette avant)
     await expectTouchTargets(page, 'main button');
     expect(errors()).toEqual([]);
   });
