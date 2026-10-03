@@ -137,7 +137,8 @@ SELECT pg_temp.expect_count('delete: client sans effet', $q$select count(*) from
 SELECT pg_temp.expect_sqlstate('delete: refusé même postgres', $q$delete from public.bookings where id = 'b3000000-0000-4000-8000-000000000003'$q$, 'P0001');
 
 -- ===== R7 : chaque chemin d'écriture diffuse ====================================================
--- Course payée Stripe à +48 h (annulation et remboursement raté).
+-- Course payée Stripe à +48 h (annulation et remboursement raté). Encaissement Stripe : réservé au serveur (claims service_role).
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
 INSERT INTO public.bookings (id, original_tenant_id, current_tenant_id, customer_id, vehicle_id, driver_id, status,
   payment_mode, stripe_payment_intent_id, pickup_time, mission_status, pickup_address, dropoff_address, total_amount,
   subtotal_amount, vat_amount, booking_type, booking_source, pricing_mode) VALUES
