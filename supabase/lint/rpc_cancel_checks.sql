@@ -25,7 +25,8 @@ SELECT pg_temp.expect_count('policy: 1 active par tenant fixture',
      and driver_fault_refund_rate = 1 and tenant_id in ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')$q$, 2);
 SELECT pg_temp.expect_count('policy: courses rattachées',
   $q$select count(*) from public.bookings b join public.cancellation_policies p on p.id = b.cancellation_policy_id
-     and p.tenant_id = b.current_tenant_id and p.active$q$, 9);
+     and p.tenant_id = b.current_tenant_id and p.active
+     where b.current_tenant_id in ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')$q$, 9);
 INSERT INTO public.tenants (id, name, primary_domain, legal_form, setup_completed)
   VALUES ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'RPC Test C', 'rpc-test-c.invalid', 'sasu', true);
 SELECT pg_temp.expect_count('policy: tenant C',

@@ -1944,6 +1944,17 @@ export type Database = {
           total_price: number
         }[]
       }
+      create_vehicle: {
+        Args: {
+          p_brand: string
+          p_capacity: number
+          p_category: Database["public"]["Enums"]["vehicle_category_enum"]
+          p_model: string
+          p_plate_number: string
+          p_status: string
+        }
+        Returns: string
+      }
       credit_note_remaining: { Args: { p_booking_id: string }; Returns: number }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_role: {
@@ -2067,6 +2078,16 @@ export type Database = {
           vat_collected: number
         }[]
       }
+      quote_booking_estimate: {
+        Args: {
+          p_booking_type: Database["public"]["Enums"]["booking_type_enum"]
+          p_distance_km?: number
+          p_duration_hours?: number
+          p_fixed_route_id?: string
+          p_vehicle_id: string
+        }
+        Returns: number
+      }
       record_booking_refund: {
         Args: {
           p_amount: number
@@ -2099,6 +2120,11 @@ export type Database = {
         Args: { p_booking_id: string; p_comment?: string; p_rating: number }
         Returns: undefined
       }
+      tenant_ledger_month: {
+        Args: { p_mode?: string; p_month: number; p_year: number }
+        Returns: Json
+      }
+      tenant_ledger_year: { Args: { p_year: number }; Returns: Json }
       terrain_transition: {
         Args: {
           p_action: string

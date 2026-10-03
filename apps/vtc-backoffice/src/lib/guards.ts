@@ -11,9 +11,8 @@ export function isTenant(profile: any) {
 
 /**
  * Politique d'accès par route, appliquée dans `middleware.ts` pour `/app/*` et
- * `/api/tenant/*`. Un seul endroit décide : poser le guard page par page laissait
- * les routes API à découvert (un `driver` pouvait appeler `api/tenant/update-settings`
- * alors que `app/settings.astro` lui était interdit).
+ * `/api/tenant/*`. Un seul endroit décide. Périmètre restant : les pages de
+ * l'application React et les deux exports (jusqu'à la phase 17).
  *
  * Deny-by-default : un chemin absent de cette table est refusé. Une nouvelle page
  * ou route doit s'y déclarer — `scripts/check-route-policy.mjs` le vérifie en CI,
@@ -41,17 +40,8 @@ export const ROUTE_POLICY: Record<string, TenantRole[]> = {
   "/app/setup": ["owner"],
 
   // --- Routes API ---
-  // Lecture/écriture des courses : le chauffeur en a besoin en exploitation.
-  // Le périmètre des données reste filtré par `.eq("driver_id", …)` dans bookings.ts
-  // et search-bookings.ts — cette table contrôle l'accès, pas le périmètre.
-  "/api/tenant/bookings": ALL_TENANT_ROLES,
-  "/api/tenant/search-bookings": ALL_TENANT_ROLES,
-  "/api/tenant/booking-actions": ALL_TENANT_ROLES,
-  "/api/tenant/create-booking": ["owner", "manager"],
   "/api/tenant/export-csv": ["owner", "manager"],
   "/api/tenant/export-fec": ["owner", "manager"],
-  "/api/tenant/update-settings": ["owner"],
-  "/api/tenant/update-logo": ["owner"],
 };
 
 /**
@@ -59,7 +49,7 @@ export const ROUTE_POLICY: Record<string, TenantRole[]> = {
  * (l'appelant doit alors refuser — voir deny-by-default ci-dessus).
  */
 export function allowedRolesFor(pathname: string): TenantRole[] | undefined {
-  // Normalise le slash final et l'extension .astro éventuelle du routage Astro.
+  // Normalise le slash final.
   const path = pathname.replace(/\/+$/, "") || "/";
   return ROUTE_POLICY[path];
 }

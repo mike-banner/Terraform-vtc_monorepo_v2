@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../../../../packages/ui/tokens.css";
 
 @theme inline {
   --color-background: var(--background);
@@ -20,6 +21,15 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-foreground: var(--info-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -33,14 +43,14 @@
 }
 
 @theme {
-  --radius-xs: calc(var(--radius) - 8px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 16px);
-  --radius-4xl: calc(var(--radius) + 24px);
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 3px;
+  --radius-3xl: 4px;
+  --radius-4xl: 4px;
 }
 
 * {
@@ -119,29 +129,15 @@
 
 :root {
   color-scheme: dark;
-  --shape: squircle;
+  --shape: round; /* coins ronds classiques : le squircle gonflait les rayons (x2,5) */
   --shape-multiplier: 1;
 
-  --background: #0F172A;
-  --foreground: #F8FAFC;
-  --primary: #E1C16E;
-  --primary-foreground: #020617;
   --secondary: #334155;
   --secondary-foreground: #F8FAFC;
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
   --accent: #1E293B;
   --accent-foreground: #E1C16E;
-  --destructive: #F87171;
-  /* Pendant manquant des autres tokens : permet un fond destructive plein et lisible. */
-  --destructive-foreground: #020617;
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
   --popover: #1E293B;
   --popover-foreground: #F8FAFC;
-  --border: #334155;
-  --input: #0F172A;
-  --ring: #E1C16E;
   --chart-1: #E1C16E;
   --chart-2: #3B82F6;
   --chart-3: #10B981;
@@ -156,16 +152,53 @@
   --radius: 1rem;
 }
 
-@supports (corner-shape: squircle) {
-  :root {
-    --shape-multiplier: 2.5;
-  }
-}
-
 html, body {
   overflow-x: hidden;
   max-width: 100vw;
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
+}
+
+
+/* Échelle desktop : tout est dimensionné pour le mobile par défaut ; à partir de 1024 px chaque taille monte d'un cran
+   (les utilitaires text-* lisent ces variables, aucun composant n'a à le savoir). */
+@media (min-width: 64rem) {
+  :root {
+    --text-xs: 0.8125rem;
+    --text-xs--line-height: 1.25rem;
+    --text-sm: 0.9375rem;
+    --text-sm--line-height: 1.375rem;
+    --text-lg: 1.25rem;
+    --text-lg--line-height: 1.75rem;
+    --text-xl: 1.5rem;
+    --text-xl--line-height: 2rem;
+    --text-2xl: 1.875rem;
+    --text-2xl--line-height: 2.25rem;
+    --text-3xl: 2.25rem;
+    --text-3xl--line-height: 2.5rem;
+  }
+}
+
+/* Conteneur de toutes les pages /app : largeur lisible et marges communes. */
+.page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding: 1rem;
+}
+@media (min-width: 48rem) {
+  .page {
+    padding: 2rem;
+  }
+}
+@media (min-width: 64rem) {
+  .page {
+    padding: 2.5rem 2rem;
+  }
+}
+
+/* Rayon unique du backoffice : très fin. --radius-card est partagé avec superadmin, il n'est redéfini qu'ici. */
+:root {
+  --radius-card: 2px;
 }

@@ -8,29 +8,34 @@
     "preview": "astro preview",
     "astro": "astro",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "gen:types": "supabase gen types typescript --project-id kpnkhmtxzigxtfnkmzru > ../../packages/database/src/database.types.ts"
   },
   "dependencies": {
-    "@ark-ui/react": "^5.31.0",
     "@astrojs/cloudflare": "^12.6.12",
-    "@astrojs/node": "^9.5.3",
     "@astrojs/react": "^5.0.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
-    "@types/qrcode": "^1.5.6",
+    "@tanstack/react-query": "^5.104.1",
     "@vtc/database": "workspace:*",
     "@vtc/realtime": "workspace:*",
     "astro": "^5.17.1",
     "lucide-react": "^0.564.0",
-    "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7",
+    "react-router-dom": "^7.18.0",
+    "zod": "^3.25"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.1",
+    "@testing-library/react": "^16",
+    "@testing-library/user-event": "^14",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "tailwindcss": "^4.3.1"
+    "happy-dom": "^20.14.5",
+    "tailwindcss": "^4.3.1",
+    "vitest": "4"
   }
 }

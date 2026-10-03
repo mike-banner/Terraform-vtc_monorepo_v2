@@ -1,6 +1,6 @@
 # Règles — backoffice
 
-Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, véhicules, onboarding. Astro SSR + React (îlots interactifs uniquement, `client:load`). Décisions d'architecture : `docs/decisions/ADR-001-monorepo-split-supabase-root.md` (monorepo-wide) et `docs/decisions/vtc-backoffice/ADR-*.md`.
+Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, véhicules, onboarding. Application React montée par deux pages Astro attrape-tout en `client:only` (`src/pages/app/[...path].astro`, `src/pages/[...path].astro`) ; code dans `src/app` (pages, coque), `src/features` (par domaine) et `src/ui` (composants partagés). Seuls ces deux `.astro` et `src/layouts/AppDocument.astro` sont autorisés. Décisions d'architecture : `docs/decisions/ADR-001-monorepo-split-supabase-root.md` (monorepo-wide) et `docs/decisions/vtc-backoffice/ADR-*.md`.
 
 > Conventions transverses (commits sans marque IA, gestion des secrets) : `AGENTS.md` à la racine.
 
@@ -9,8 +9,8 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 | Fichier | Rôle |
 |---|---|
 | `src/middleware.ts` | Guard global : auth, résolution du rôle (`platform_role`/`tenant_role`/`tenant_id`), routage SaaS |
-| `supabase/migrations/20260929110400_rpc_terrain_transition.sql`, `20261002100200_booking_cancel_refund.sql` | Seuls chemins qui changent `mission_status` / annulent une course (RPC gardées par rôle) : `terrain_transition` / `cancel_booking` (via l'Edge Function `cancel-booking`) / `mark_booking_no_show`. Le pourcentage de remboursement vient de `cancellation_preview` ; la politique se règle par `update_cancellation_policy` (owner). `api/missions/terrain-transition` et `api/tenant/booking-actions` n'en sont que les proxys |
-| `supabase/migrations/20260929110300_booking_pricing_functions.sql` | `calculate_booking_price` / `booking_vat_split` : prix et TVA de toute écriture. `src/lib/pricing.ts` = aperçu client seulement, non contractuel |
+| `supabase/migrations/20260929110400_rpc_terrain_transition.sql`, `20261002100200_booking_cancel_refund.sql` | Seuls chemins qui changent `mission_status` / annulent une course (RPC gardées par rôle) : `terrain_transition` / `cancel_booking` (via l'Edge Function `cancel-booking`) / `mark_booking_no_show`. Le pourcentage de remboursement vient de `cancellation_preview` ; la politique se règle par `update_cancellation_policy` (owner). |
+| `supabase/migrations/20260929110300_booking_pricing_functions.sql` | `calculate_booking_price` / `booking_vat_split` : prix et TVA de toute écriture. Aperçu de prix du formulaire : RPC `quote_booking_estimate` (non contractuel) ; plus aucun calcul de prix dans le navigateur |
 | `supabase/functions/stripe_webhook/` | Paiement/remboursement, recalcul serveur du montant |
 
 ## Interdits
@@ -21,7 +21,8 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 - Changer `mission_status` ou annuler une course ailleurs que via les RPC `terrain_transition` / `cancel_booking` (via l'Edge Function `cancel-booking`) / `mark_booking_no_show`. Aucun pourcentage ni montant de remboursement calculé côté navigateur.
 - INSERT sur `drivers` par un rôle autre que `owner`/`manager` (policy `drivers_insert`, Phase 13). Un
   `driver` ne peut modifier que son propre `phone` sur sa fiche (trigger `drivers_self_update_guard`).
-- Identifiant ou mot de passe (même de démo) écrit dans le code : le bouton de connexion démo de `login.astro` lit `PUBLIC_DEMO_EMAIL` / `PUBLIC_DEMO_PASSWORD` fournis à la compilation (secrets GitHub `DEMO_EMAIL` / `DEMO_PASSWORD` de l'instance du développeur) et ne s'affiche que s'ils existent ; le dépôt est public.
+- Identifiant ou mot de passe (même de démo) écrit dans le code : le bouton de connexion démo de `LoginPage.tsx` lit `PUBLIC_DEMO_EMAIL` / `PUBLIC_DEMO_PASSWORD` fournis à la compilation (secrets GitHub `DEMO_EMAIL` / `DEMO_PASSWORD` de l'instance du développeur) et ne s'affiche que s'ils existent ; le dépôt est public.
+- Couleur Tailwind brute, DOM impératif ou `.astro`/`src/scripts` hors liste : vérifiés en CI par `scripts/check-tokens.mjs` et `scripts/check-astro-residue.mjs`.
 - Élément UI à largeur fixe (`w-[1200px]`) sans variante mobile — le produit est mobile-first absolu (tester à 375px, pas de `lg:` pour la structure par défaut).
 
 ## Conventions

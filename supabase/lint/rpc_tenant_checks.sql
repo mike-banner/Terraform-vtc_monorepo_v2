@@ -169,6 +169,16 @@ SELECT public.complete_tenant_setup(:legal::jsonb, replace(replace(:vehicle, 'SE
 RESET ROLE;
 SELECT pg_temp.expect_count('setup: sans conduite', $q$select count(*) from public.vehicles where plate_number = 'SET-002-AA' and driver_id is null$q$, 1);
 
+-- Identité seule (première connexion guidée) : ni véhicule ni règle insérés, fiche chauffeur du propriétaire à jour.
+UPDATE public.tenants SET setup_completed = false WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+SELECT count(*) AS veh_avant FROM public.vehicles WHERE tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' \gset
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
+SELECT public.complete_tenant_setup(:legal::jsonb, '{}'::jsonb, '{}'::jsonb);
+RESET ROLE;
+SELECT pg_temp.expect_val('setup seul: setup_completed', $q$select setup_completed::text from public.tenants where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$q$, 'true');
+SELECT pg_temp.expect_count('setup seul: aucun véhicule ajouté', format($q$select count(*) from public.vehicles where tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and (select count(*) from public.vehicles where tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') = %s$q$, :veh_avant), :veh_avant);
+
 DO $$ BEGIN RAISE NOTICE 'RPC tenant checks passed.'; END $$;
 
 ROLLBACK;

@@ -15,10 +15,15 @@ const declared = new Set(
 const routesFrom = (dir, prefix, exts) =>
   readdirSync(join(root, dir), { withFileTypes: true })
     .filter((e) => e.isFile() && exts.some((x) => e.name.endsWith(x)))
-    .map((e) => `${prefix}/${e.name.replace(/\.(astro|ts)$/, "")}`);
+    .map((e) => `${prefix}/${e.name.replace(/\.ts$/, "")}`);
+
+// Pages React de la coque : src/app/pages/XPage.tsx -> /app/x (kebab-case).
+const reactPages = readdirSync(join(root, "app/pages"))
+  .filter((f) => f.endsWith("Page.tsx"))
+  .map((f) => "/app/" + f.replace(/Page\.tsx$/, "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase());
 
 const expected = [
-  ...routesFrom("pages/app", "/app", [".astro"]),
+  ...reactPages,
   ...routesFrom("pages/api/tenant", "/api/tenant", [".ts"]),
 ];
 

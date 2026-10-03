@@ -1,0 +1,59 @@
+/* Tokens sémantiques partagés. Dark = backoffice, light = superadmin. */
+:root,
+[data-theme="dark"] {
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --border: #334155;
+  --input: #0F172A;
+  --ring: #E1C16E;
+  --primary: #E1C16E;
+  --primary-foreground: #020617;
+  --destructive: #F87171;
+  --destructive-foreground: #020617;
+
+  --success: #10B981;
+  --success-soft: rgb(16 185 129 / 0.12);
+  --success-foreground: #6EE7B7;
+  --warning: #F59E0B;
+  --warning-soft: rgb(245 158 11 / 0.12);
+  --warning-foreground: #FCD34D;
+  --info: #818CF8;
+  --info-soft: rgb(129 140 248 / 0.12);
+  --info-foreground: #A5B4FC;
+
+  --radius-card: 12px;
+  --gap-grid: 16px;
+}
+
+[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #2563eb;
+  --primary: #0f172a;
+  --primary-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --success-foreground: #166534;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --warning-foreground: #92400e;
+  --info: #2563eb;
+  --info-soft: #dbeafe;
+  --info-foreground: #1e40af;
+
+  --radius-card: 12px;
+  --gap-grid: 16px;
+}

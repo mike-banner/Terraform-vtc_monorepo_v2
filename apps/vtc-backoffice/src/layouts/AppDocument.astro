@@ -1,0 +1,28 @@
+---
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="fr" data-theme="dark" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>VTC App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
+    <!-- phase 17 : <link rel="manifest"> et icônes 192/512/maskable ici -->
+  </head>
+  <body class="bg-background text-foreground font-sans">
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  /* Squelette statique contre l'écran blanc : masqué dès que la coque React est montée. */
+  body:has([data-app-shell]) [data-shell-skeleton] {
+    display: none;
+  }
+</style>
