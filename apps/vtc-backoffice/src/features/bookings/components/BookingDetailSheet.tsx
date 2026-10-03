@@ -1,10 +1,21 @@
+import { useMemo } from "react";
+import { useOnline } from "@/app/useOnline";
+import { useProfile } from "@/app/auth/useSession";
 import { EmptyState, ErrorState, Sheet, Skeleton } from "@/ui";
 import { useBooking, useConflicts } from "../queries";
 import { bookingRef } from "../format";
+import { useNow } from "../hooks";
+import { bookingCapabilities } from "../statuses";
+import { AcceptPaidBlock } from "./blocks/AcceptPaidBlock";
 import { AddressAlertBlock } from "./blocks/AddressAlertBlock";
+import { CancelPanel } from "./blocks/CancelPanel";
 import { ConflictsBlock } from "./blocks/ConflictsBlock";
+import { CreditNotesBlock } from "./blocks/CreditNotesBlock";
 import { CustomerBlock } from "./blocks/CustomerBlock";
 import { InstructionsBlock } from "./blocks/InstructionsBlock";
+import { InvoiceBlock } from "./blocks/InvoiceBlock";
+import { MissionCockpit } from "./blocks/MissionCockpit";
+import { QuoteBlock } from "./blocks/QuoteBlock";
 import { RatingBlock } from "./blocks/RatingBlock";
 import { RouteBlock } from "./blocks/RouteBlock";
 
@@ -12,17 +23,28 @@ import { RouteBlock } from "./blocks/RouteBlock";
 export function BookingDetailSheet({ bookingId, onClose }: { bookingId: string | null; onClose: () => void }) {
   const q = useBooking(bookingId);
   const conflicts = useConflicts(bookingId ? [bookingId] : []);
+  const { profile } = useProfile();
+  const { canWrite, offlineMessage } = useOnline();
+  const now = useNow(30_000);
   const b = q.data;
+  const caps = useMemo(() => (b ? bookingCapabilities(b, { role: profile?.role ?? null }, now) : null), [b, profile?.role, now]);
 
   return (
     <Sheet open={!!bookingId} onClose={onClose} title={bookingId ? `Course ${bookingRef(bookingId)}` : "Course"}>
-      {b ? (
+      {b && caps ? (
         <div className="space-y-6">
-          <InstructionsBlock instructions={b.instructions} missionNote={b.mission_note} />
+          {canWrite ? null : <p role="status" className="rounded-xl bg-warning-soft p-3 text-sm text-warning-foreground">{offlineMessage}</p>}
+          <InstructionsBlock bookingId={b.id} instructions={b.instructions} missionNote={b.mission_note} editable={caps.canEditInstructions} />
           <RouteBlock booking={b} />
           <CustomerBlock customer={b.customers} />
           <AddressAlertBlock booking={b} />
           <ConflictsBlock booking={b} conflicts={conflicts.data ?? []} />
+          {caps.canHandleQuote ? <QuoteBlock booking={b} conflicts={conflicts.data ?? []} /> : null}
+          {caps.canAcceptPaid ? <AcceptPaidBlock booking={b} /> : null}
+          {caps.canTerrain ? <MissionCockpit booking={b} /> : null}
+          {caps.canInvoice ? <InvoiceBlock booking={b} /> : null}
+          {caps.canCreditNote ? <CreditNotesBlock booking={b} /> : null}
+          <CancelPanel booking={b} caps={caps} />
           <RatingBlock booking={b} />
         </div>
       ) : q.isError ? (
