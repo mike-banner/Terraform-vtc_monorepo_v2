@@ -74,6 +74,7 @@ test.describe('connexion et pages publiques React', () => {
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
     await page.waitForURL('**/signup');
+    await expect(page.getByRole('heading', { name: 'Tes identifiants de connexion' })).toBeVisible();
   });
 
   test('/waiting-approval affiche l\'attente, sans défilement horizontal', async ({ page }) => {

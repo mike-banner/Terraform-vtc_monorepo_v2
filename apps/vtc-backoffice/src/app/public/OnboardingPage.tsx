@@ -1,8 +1,6 @@
-import { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 
-// /signup est encore une page Astro (plan 15) : react-router ne la connaît pas, donc chargement complet
-// (a la place de <Navigate>, qui afficherait « Page introuvable »).
+// /onboarding mène à l'inscription (le paramètre ?edit=true est conservé pour le middleware).
 export default function OnboardingPage() {
-  useEffect(() => window.location.replace("/signup"), []);
-  return null;
+  return <Navigate to={{ pathname: "/signup", search: useLocation().search }} replace />;
 }

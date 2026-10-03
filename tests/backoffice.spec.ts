@@ -50,27 +50,28 @@ test.describe.serial('Backoffice E2E Flow', () => {
     // 1. Navigation vers l'inscription
     await page.goto('/signup');
     
-    // 2. Remplir le formulaire principal
-    await page.fill('input[name="email"]', testEmail);
-    await page.fill('input[name="password"]', testPassword);
-    await page.click('button#next-btn');
-    
-    // Etape 2: Profil
-    await page.fill('input[name="first_name"]', 'Play');
-    await page.fill('input[name="last_name"]', 'Wright');
-    await page.fill('input[name="phone_number"]', `612${Date.now().toString().slice(-6)}`);
-    await page.click('button#next-btn');
-    
-    // Etape 3: Entreprise
+    // 2. Étape 1 : compte
+    await page.getByLabel('Email professionnel').fill(testEmail);
+    await page.getByLabel('Mot de passe').fill(testPassword);
+    const next = page.getByRole('button', { name: 'Suivant' });
+    await next.click();
+
+    // Étape 2 : profil
+    await page.getByLabel('Prénom').fill('Play');
+    await page.getByLabel('Nom', { exact: true }).fill('Wright');
+    await page.getByLabel('Téléphone').fill(`612${Date.now().toString().slice(-6)}`);
+    await next.click();
+
+    // Étape 3 : entreprise
     const testSiret = `123${Date.now().toString().slice(-11)}`;
-    await page.fill('input[name="company_name"]', 'E2E VTC Corp');
-    await page.fill('input[name="primary_domain"]', `e2e-domain-${Date.now()}`);
-    await page.fill('input[name="siret"]', testSiret);
-    await page.fill('input[name="vtc_license_number"]', `12${Date.now().toString().slice(-10)}`);
-    
-    // Soumission Finale
-    await page.click('button#final-btn');
-    
+    await page.getByLabel("Nom de l'entreprise").fill('E2E VTC Corp');
+    await page.getByLabel('Domaine web').fill(`e2e-domain-${Date.now()}`);
+    await page.getByLabel('SIRET').fill(testSiret);
+    await page.getByLabel('Carte VTC').fill(`12${Date.now().toString().slice(-10)}`);
+
+    // Soumission finale
+    await page.getByRole('button', { name: 'Finaliser' }).click();
+
     // Attente de la redirection sur /waiting-approval
     await page.waitForURL('**/waiting-approval');
     await expect(page).toHaveURL(/.*\/waiting-approval/);
@@ -131,9 +132,9 @@ test.describe.serial('Backoffice E2E Flow', () => {
     // L'approbation s'est faite côté serveur : le jeton de la session d'inscription est périmé, on se reconnecte.
     await page.context().clearCookies();
     await page.goto('/login');
-    await page.fill('input[name="email"]', testEmail);
-    await page.fill('input[name="password"]', testPassword);
-    await page.click('#login-form button[type="submit"]');
+    await page.getByLabel('Adresse email').fill(testEmail);
+    await page.getByLabel('Mot de passe', { exact: true }).fill(testPassword);
+    await page.getByRole('button', { name: 'Connexion', exact: true }).click();
     await page.waitForURL('**/app/**');
 
     // Scénario 3 : réservation manuelle (formulaire React)
