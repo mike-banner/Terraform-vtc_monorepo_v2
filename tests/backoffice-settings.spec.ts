@@ -60,6 +60,23 @@ test.describe('paramètres propriétaire', () => {
     expect(String((await tenantSettingsRow()).logo_url)).toMatch(/logos\/.*\/logo\.png/);
   });
 
+  test('logo : un SVG 1024x512 devient un PNG 512x256', async ({ page }) => {
+    await page.goto('/app/settings');
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="512"><rect width="1024" height="512" fill="#123456"/></svg>');
+    await page.getByLabel('Choisir un logo').setInputFiles({ name: 'logo.svg', mimeType: 'image/svg+xml', buffer: svg });
+    await page.getByRole('button', { name: 'Enregistrer le logo' }).click();
+    await expect(page.getByText('Logo mis à jour.')).toBeVisible();
+    const img = page.getByTestId('logo-img');
+    await expect(img).toHaveAttribute('src', /logos\/.*\/logo\.png/);
+    await expect.poll(() => img.evaluate((el: HTMLImageElement) => `${el.naturalWidth}x${el.naturalHeight}`)).toBe('512x256');
+  });
+
+  test('logo : un fichier qui n’est pas une image est refusé', async ({ page }) => {
+    await page.goto('/app/settings');
+    await page.getByLabel('Choisir un logo').setInputFiles({ name: 'faux.png', mimeType: 'image/png', buffer: Buffer.from('pas une image') });
+    await expect(page.getByText(/Image illisible/)).toBeVisible();
+  });
+
   test('logo trop volumineux refusé', async ({ page }) => {
     await page.goto('/app/settings');
     await page.getByLabel('Choisir un logo').setInputFiles({ name: 'gros.png', mimeType: 'image/png', buffer: Buffer.alloc(2 * 1024 * 1024 + 1) });

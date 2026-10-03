@@ -3,6 +3,7 @@ import { ImageIcon } from "lucide-react";
 import { useOnline } from "@/app/useOnline";
 import { Button, useToast } from "@/ui";
 import { useUploadLogo } from "./api";
+import { normalizeLogo } from "./logo";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 
@@ -22,7 +23,7 @@ export function LogoUpload({ tenantId, logoUrl, name }: { tenantId: string; logo
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  const pick = (e: ChangeEvent<HTMLInputElement>) => {
+  const pick = async (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     if (f.size > MAX_BYTES) {
@@ -30,7 +31,12 @@ export function LogoUpload({ tenantId, logoUrl, name }: { tenantId: string; logo
       e.target.value = "";
       return;
     }
-    setFile(f);
+    try {
+      setFile(await normalizeLogo(f));
+    } catch {
+      toast.show({ message: "Image illisible : choisissez un PNG, un JPG ou un SVG.", tone: "error" });
+      e.target.value = "";
+    }
   };
 
   const save = async () => {
@@ -54,7 +60,7 @@ export function LogoUpload({ tenantId, logoUrl, name }: { tenantId: string; logo
       <div className="min-w-0 space-y-2">
         <p className="truncate text-xl font-bold">{name}</p>
         <div className="flex flex-wrap gap-2">
-          <input ref={input} type="file" accept="image/png,image/svg+xml,image/jpeg" aria-label="Choisir un logo" className="sr-only" onChange={pick} />
+          <input ref={input} type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" aria-label="Choisir un logo" className="sr-only" onChange={pick} />
           <Button variant="secondary" disabled={!canWrite} onClick={() => input.current?.click()}>
             Changer le logo
           </Button>

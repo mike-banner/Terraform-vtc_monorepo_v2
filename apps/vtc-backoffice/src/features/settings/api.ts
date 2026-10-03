@@ -33,13 +33,12 @@ export const updateTenantSettings = (legalForm: string, vatNumber: string | null
 export const updateTenantAddress = (address: string, postalCode: string, city: string) =>
   rpc("update_tenant_address", { p_address_line: address, p_postal_code: postalCode, p_city: city });
 
-/** Téléverse dans Storage (même chemin qu'avant) puis enregistre l'URL par la RPC (garde owner + validation du chemin en base). */
+/** Téléverse le logo normalisé (PNG) à un chemin fixe, puis enregistre l'URL par la RPC (garde owner + validation du chemin en base). */
 export async function uploadLogo(tenantId: string, file: File): Promise<string> {
-  const ext = file.name.split(".").pop()?.toLowerCase();
-  const path = `logos/${tenantId}/logo.${ext}`;
-  // On supprime l'ancien logo puis on insère : l'extension peut changer (png, svg), donc le chemin aussi.
-  await supabase.storage.from("assets").remove([path]);
-  const { error } = await supabase.storage.from("assets").upload(path, file, { contentType: file.type });
+  const path = `logos/${tenantId}/logo.png`;
+  // Anciens logos d'avant la normalisation (autre extension) : nettoyage sans bloquer.
+  await supabase.storage.from("assets").remove(["svg", "jpg", "jpeg"].map((e) => `logos/${tenantId}/logo.${e}`));
+  const { error } = await supabase.storage.from("assets").upload(path, file, { contentType: "image/png", upsert: true });
   if (error) throw error;
   const { data } = supabase.storage.from("assets").getPublicUrl(path);
   return rpc<string>("update_tenant_logo", { p_url: `${data.publicUrl}?t=${Date.now()}` });
