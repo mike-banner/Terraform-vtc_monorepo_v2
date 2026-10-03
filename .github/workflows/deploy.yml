@@ -67,6 +67,9 @@ jobs:
       - name: Check tokens and DOM rules
         run: node scripts/check-tokens.mjs --self-test && node scripts/check-tokens.mjs
 
+      - name: Check Astro residue
+        run: node scripts/check-astro-residue.mjs --self-test && node scripts/check-astro-residue.mjs
+
       - name: Unit tests backoffice
         run: pnpm --filter @vtc/vtc-backoffice test
 
