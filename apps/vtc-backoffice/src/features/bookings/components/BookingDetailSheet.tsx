@@ -33,7 +33,7 @@ export function BookingDetailSheet({ bookingId, onClose }: { bookingId: string |
     <Sheet open={!!bookingId} onClose={onClose} title={bookingId ? `Course ${bookingRef(bookingId)}` : "Course"}>
       {b && caps ? (
         <div className="space-y-6">
-          {canWrite ? null : <p role="status" className="rounded-xl bg-warning-soft p-3 text-sm text-warning-foreground">{offlineMessage}</p>}
+          {canWrite ? null : <p role="note" className="rounded-xl bg-warning-soft p-3 text-sm text-warning-foreground">{offlineMessage}</p>}
           <InstructionsBlock bookingId={b.id} instructions={b.instructions} missionNote={b.mission_note} editable={caps.canEditInstructions} />
           <RouteBlock booking={b} />
           <CustomerBlock customer={b.customers} />
