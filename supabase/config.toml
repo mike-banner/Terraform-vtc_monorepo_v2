@@ -16,6 +16,16 @@ entrypoint = "./functions/stripe_webhook/index.ts"
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/stripe_webhook/*.html" ]
 
+[functions.send-email]
+enabled = true
+# Appelée seulement de serveur à serveur (webhook Stripe, génération de pièces) avec la clé de service en Bearer.
+# Les fonctions reçoivent cette clé au format `sb_secret_…`, que la passerelle ne sait pas vérifier comme JWT :
+# avec verify_jwt = true elle répondait 403 avant l'exécution du code, donc aucun e-mail ne partait.
+# L'autorisation reste stricte : le code compare le Bearer à SUPABASE_SERVICE_ROLE_KEY (T-14.1-36).
+verify_jwt = false
+import_map = "./functions/send-email/deno.json"
+entrypoint = "./functions/send-email/index.ts"
+
 [functions.create-connect-account]
 enabled = true
 verify_jwt = true
