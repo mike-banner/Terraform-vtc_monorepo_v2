@@ -32,7 +32,7 @@ export default defineConfig({
       name: 'backoffice-mobile',
       testMatch: /backoffice-.*\.spec\.ts/,
       dependencies: ['setup'],
-      use: { ...devices['iPhone 13'], viewport: { width: 375, height: 812 }, baseURL: 'http://localhost:4329' },
+      use: { ...devices['Pixel 5'], viewport: { width: 375, height: 812 }, baseURL: 'http://localhost:4329' },
     },
     {
       name: 'backoffice-desktop',

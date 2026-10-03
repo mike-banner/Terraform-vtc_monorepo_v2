@@ -65,3 +65,32 @@ where id = '44444444-4444-4444-4444-444444444444';
 
 insert into public.drivers (id, tenant_id, first_name, last_name, phone, license_number, user_id)
 values ('55555555-5555-5555-5555-555555555555', '5750a0b3-4c6c-4782-b137-830a49e32249', 'Test', 'Chauffeur', '0600000001', 'LOCAL-002', '44444444-4444-4444-4444-444444444444');
+
+-- Courses de démonstration (horaires relatifs à now()). Montants posés tels quels :
+-- aucun calcul, mêmes valeurs que supabase/lint/_rpc_fixtures.sql.
+insert into public.customers (id, tenant_id, email, first_name, last_name)
+values ('66666666-6666-6666-6666-666666666666', '5750a0b3-4c6c-4782-b137-830a49e32249', 'client-seed@local.test', 'Client', 'Seed');
+
+insert into public.bookings (id, original_tenant_id, current_tenant_id, customer_id, driver_id, status,
+  payment_mode, pickup_time, mission_status, pickup_address, dropoff_address, total_amount, subtotal_amount,
+  vat_amount, booking_type, booking_source, pricing_mode, address_alert) values
+  -- acceptée, assignée au chauffeur de test, dans 2 jours
+  ('77777777-7777-7777-7777-777777777771', '5750a0b3-4c6c-4782-b137-830a49e32249', '5750a0b3-4c6c-4782-b137-830a49e32249',
+    '66666666-6666-6666-6666-666666666666', '55555555-5555-5555-5555-555555555555', 'accepted', 'cash',
+    now() + interval '2 days', 'not_started', 'Place Bellecour, Lyon', 'Gare Part-Dieu, Lyon', 100, 90.91, 9.09,
+    'transfer', 'manual_driver', 'direct', null),
+  -- payée, dans 3 heures, adresse de départ hors zone
+  ('77777777-7777-7777-7777-777777777772', '5750a0b3-4c6c-4782-b137-830a49e32249', '5750a0b3-4c6c-4782-b137-830a49e32249',
+    '66666666-6666-6666-6666-666666666666', null, 'paid', 'card',
+    now() + interval '3 hours', 'not_started', 'Mâcon', 'Gare Part-Dieu, Lyon', 100, 90.91, 9.09,
+    'transfer', 'manual_driver', 'direct', 'hors_zone_depart'),
+  -- terminée hier
+  ('77777777-7777-7777-7777-777777777773', '5750a0b3-4c6c-4782-b137-830a49e32249', '5750a0b3-4c6c-4782-b137-830a49e32249',
+    '66666666-6666-6666-6666-666666666666', '55555555-5555-5555-5555-555555555555', 'completed', 'cash',
+    now() - interval '1 day', 'completed', 'Place Bellecour, Lyon', 'Aéroport Saint-Exupéry', 100, 90.91, 9.09,
+    'transfer', 'manual_driver', 'direct', null),
+  -- en attente, issue d'un tunnel (demande de devis)
+  ('77777777-7777-7777-7777-777777777774', '5750a0b3-4c6c-4782-b137-830a49e32249', '5750a0b3-4c6c-4782-b137-830a49e32249',
+    '66666666-6666-6666-6666-666666666666', null, 'pending', 'card',
+    now() + interval '5 days', 'to_validate', 'Villeurbanne', 'Aéroport Saint-Exupéry', 100, 90.91, 9.09,
+    'transfer', 'customer', 'manual', null);
