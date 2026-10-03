@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect, asOwner, asDriver } from './fixtures/auth';
 import { collectConsoleErrors, expectNoHorizontalScroll, expectTouchTargets } from './helpers/page-checks';
-import { cleanupByPrefix, restoreSetup, seedBooking, unconfigureTenant, updateBooking, type SetupSnapshot } from './helpers/seed';
+import { cleanupByPrefix, restoreSetup, seedBooking, setStripeAccount, unconfigureTenant, updateBooking, type SetupSnapshot } from './helpers/seed';
 
 // Tableau de bord React : mêmes fiche et cockpit que /app/bookings (annexe A, plan 16-07).
 const DRIVER_ID = '55555555-5555-5555-5555-555555555555';
@@ -34,6 +34,7 @@ async function gotoDashboard(page: Page) {
 }
 
 test.beforeAll(async () => {
+  await setStripeAccount('acct_e2e_dashboard'); // la carte affiche « Dashboard Stripe » : compte déjà connecté
   cleanupByPrefix(TAG);
   const soon = new Date(Date.now() + 10 * 60_000).toISOString();
   const cur = { status: 'accepted', mission_status: 'not_started' };
@@ -41,7 +42,10 @@ test.beforeAll(async () => {
   ids.up = (await seedBooking({ tag: `${TAG}-up`, ...cur, pickup_time: soon, driver_id: DRIVER_ID })).id;
   ids.hr = (await seedBooking({ tag: `${TAG}-hr`, booking_type: 'hourly', duration_hours: 2, pickup_time: new Date(Date.now() + 5 * 86_400_000).toISOString() })).id;
 });
-test.afterAll(() => cleanupByPrefix(TAG));
+test.afterAll(async () => {
+  await cleanupByPrefix(TAG);
+  await setStripeAccount(null);
+});
 // Une mission démarrée masque le reste du tableau : état de départ rétabli après chaque test.
 test.afterEach(() => updateBooking(ids.up, { mission_status: 'not_started', mission_note: null }));
 

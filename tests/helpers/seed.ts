@@ -82,6 +82,12 @@ export async function setTenantStatus(status: 'active' | 'suspended'): Promise<v
   if (error) throw new Error(`setTenantStatus : ${error.message}`);
 }
 
+/** Compte Stripe du tenant : null = jamais connecté (état du seed). */
+export async function setStripeAccount(id: string | null): Promise<void> {
+  const { error } = await admin().from('tenants').update({ stripe_account_id: id } as never).eq('id', TENANT_ID);
+  if (error) throw new Error(`setStripeAccount : ${error.message}`);
+}
+
 const SEED_PLATE = 'AA-001-AA';
 
 /** Remet les véhicules du seed : supprime les plaques `E2E-*`, réactive le véhicule du seed (un seul actif). */
