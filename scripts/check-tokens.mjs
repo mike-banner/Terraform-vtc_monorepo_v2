@@ -21,9 +21,9 @@ const rules = [
   },
   {
     id: "dom-imperatif",
-    re: /getElementById|querySelector|innerHTML|(?<![.\w])(alert|confirm|prompt)\(|location\.reload/,
+    re: /getElementById|querySelector|innerHTML|(?<![.\w])(alert|confirm|prompt)\((?!\w+\??:)|location\.reload/,
     bad: ["document.getElementById('x')", "el.innerHTML = a", "alert('x')", "if (confirm('?'))", "location.reload()"],
-    ok: ["await dialog.confirm({})", "useDialog().alert({})"],
+    ok: ["confirm(o: ConfirmOpts): Promise<boolean>;", "await dialog.confirm({})", "useDialog().alert({})"],
   },
   { id: "xss", re: /dangerouslySetInnerHTML/, bad: ["<div dangerouslySetInnerHTML={x} />"], ok: ["<div>{x}</div>"] },
   {
