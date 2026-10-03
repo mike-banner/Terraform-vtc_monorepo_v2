@@ -59,3 +59,4 @@ terraform/.terraform/
 apps/vtc-websites/src/sites/*
 !apps/vtc-websites/src/sites/elite-lyon/
 !apps/vtc-websites/src/sites/_modele/
+tests/.auth/
