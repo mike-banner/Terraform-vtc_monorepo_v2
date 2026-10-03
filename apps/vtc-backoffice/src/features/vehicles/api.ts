@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { rpc } from "@/lib/app-error";
+import { AppError, PLATE_TAKEN, rpc } from "@/lib/app-error";
 import { supabase } from "@/lib/supabase/client";
 import type { Database } from "@vtc/database";
 import type { VehicleValues } from "./schema";
@@ -39,7 +39,7 @@ export async function updateVehicle(id: string, v: VehicleValues): Promise<void>
     if (e) throw e;
   }
   const { error } = await supabase.from("vehicles").update(v).eq("id", id);
-  if (error) throw error;
+  if (error) throw error.code === "23505" ? new AppError(PLATE_TAKEN, error.code) : error;
 }
 
 export async function deleteVehicle(id: string): Promise<void> {
