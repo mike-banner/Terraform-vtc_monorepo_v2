@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "gen:types": "supabase gen types typescript --project-id kpnkhmtxzigxtfnkmzru > ../../packages/database/src/database.types.ts"
   },
   "dependencies": {
@@ -25,12 +26,18 @@
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7",
+    "zod": "^3.25"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.1",
+    "@testing-library/react": "^16",
+    "@testing-library/user-event": "^14",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "tailwindcss": "^4.3.1"
+    "happy-dom": "^20.14.5",
+    "tailwindcss": "^4.3.1",
+    "vitest": "4"
   }
 }

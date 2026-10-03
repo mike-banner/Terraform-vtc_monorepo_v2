@@ -64,6 +64,9 @@ jobs:
       - name: Check route policy coverage
         run: node scripts/check-route-policy.mjs
 
+      - name: Check tokens and DOM rules
+        run: node scripts/check-tokens.mjs --self-test && node scripts/check-tokens.mjs
+
       # Règle de facturabilité (logique pure, chemin comptable) : un transfert au
       # kilomètre ne doit jamais devenir facturable par accident.
       - name: Setup Deno

@@ -1,5 +1,4 @@
-// Lancé à la main : node --test apps/vtc-backoffice/src/lib/geo-communes.test.mjs
-import test from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { analyserCodes, analyserCommunes, choisirCodesCommune } from "./geo-communes.mjs";
 
