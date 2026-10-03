@@ -75,3 +75,9 @@ export function cleanupByPrefix(tag: string): void {
     { stdio: 'pipe' },
   );
 }
+
+/** Change le statut du tenant du seed (kill switch plateforme) ; rétablir à 'active' après usage. */
+export async function setTenantStatus(status: 'active' | 'suspended'): Promise<void> {
+  const { error } = await admin().from('tenants').update({ status } as never).eq('id', TENANT_ID);
+  if (error) throw new Error(`setTenantStatus : ${error.message}`);
+}

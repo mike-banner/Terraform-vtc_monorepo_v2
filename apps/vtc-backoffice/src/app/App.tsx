@@ -3,6 +3,7 @@ import { DialogProvider, ToastHost } from "@/ui";
 import { SetupGate } from "./auth/SetupGate";
 import { QueryClientProvider, getQueryClient } from "./realtime";
 import { AppRoutes } from "./routes";
+import { AppShell } from "./shell/AppShell";
 
 export default function App() {
   return (
@@ -11,9 +12,9 @@ export default function App() {
         <DialogProvider>
           <ToastHost>
             <SetupGate>
-              <main data-app-shell>
+              <AppShell>
                 <AppRoutes />
-              </main>
+              </AppShell>
             </SetupGate>
           </ToastHost>
         </DialogProvider>
