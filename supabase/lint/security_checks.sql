@@ -129,7 +129,9 @@ BEGIN
     SELECT t.name
     FROM unnest(ARRAY['trg_prevent_booking_delete',
       'trg_prevent_pickup_time_change_after_paid','trg_prevent_policy_update','trg_protect_booking_fields',
-      'trg_validate_booking_status_transition','trg_auto_financial_movement']) AS t(name)
+      'trg_validate_booking_status_transition','trg_auto_financial_movement',
+      -- Phase 15 : horodatage et diffusion temps réel (ADR-014) ; un trigger désactivé couperait le temps réel en silence.
+      'trg_zz_bookings_set_updated_at','trg_bookings_broadcast_ins','trg_bookings_broadcast_upd']) AS t(name)
     WHERE NOT EXISTS (
       SELECT 1 FROM pg_trigger g
       WHERE g.tgrelid = 'public.bookings'::regclass AND g.tgname = t.name AND g.tgenabled = 'O'
@@ -177,6 +179,25 @@ BEGIN
       AND pol.roles && ARRAY['public', 'anon', 'authenticated']::name[]
   LOOP
     violations := violations || format('policy %I on %I allows INSERT to clients (breaks ADR-012 invariant)', r.policyname, r.tablename);
+  END LOOP;
+
+  -- 11. Canal temps réel (phase 15, ADR-014) : réception par policy SELECT seulement ; un client n'émet
+  --     jamais (le diffuseur est le trigger SECURITY DEFINER). Hors schéma public : non couvert par les règles 2 à 6.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies pol
+    WHERE pol.schemaname = 'realtime' AND pol.tablename = 'messages'
+      AND pol.policyname = 'realtime_tenant_bookings_receive' AND pol.cmd = 'SELECT'
+  ) THEN
+    violations := violations || 'realtime.messages has no SELECT policy realtime_tenant_bookings_receive';
+  END IF;
+  FOR r IN
+    SELECT pol.policyname, pol.cmd
+    FROM pg_policies pol
+    WHERE pol.schemaname = 'realtime' AND pol.tablename = 'messages'
+      AND (pol.roles && ARRAY['public', 'anon', 'authenticated']::name[])
+      AND (pol.cmd IN ('INSERT', 'UPDATE', 'DELETE', 'ALL') OR trim(COALESCE(pol.qual, '')) = 'true')
+  LOOP
+    violations := violations || format('policy %I on realtime.messages (%s) opens the channel to clients', r.policyname, r.cmd);
   END LOOP;
 
   IF array_length(violations, 1) > 0 THEN
