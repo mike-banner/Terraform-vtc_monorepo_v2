@@ -143,6 +143,11 @@ export default function SignupPage() {
             </div>
           </form>
         )}
+        {step === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">
+            Déjà un compte ? <a href="/login" className="font-bold text-primary underline underline-offset-2 hover:opacity-90">Se connecter</a>
+          </p>
+        ) : null}
       </Card>
     </main>
   );

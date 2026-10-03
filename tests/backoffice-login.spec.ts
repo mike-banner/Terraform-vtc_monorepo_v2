@@ -15,6 +15,7 @@ test.describe('connexion et pages publiques React', () => {
     const errors = collectConsoleErrors(page);
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: 'Espace Gestion', level: 1 })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Créer un compte' })).toHaveAttribute('href', '/signup');
     await expectNoHorizontalScroll(page);
     await fill(page, password);
     await page.getByRole('button', { name: 'Connexion', exact: true }).click();
@@ -87,6 +88,7 @@ test.describe('connexion et pages publiques React', () => {
   test('accueil public et chemin inconnu sans donnée de tenant', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('link', { name: 'Démarrer maintenant' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Se connecter' })).toHaveAttribute('href', '/login');
     await page.getByRole('button', { name: 'En savoir plus' }).click();
     await expect(page.getByRole('heading', { name: 'Comptabilité' })).toBeVisible();
     await expectNoHorizontalScroll(page);
