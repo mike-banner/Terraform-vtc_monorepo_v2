@@ -3,16 +3,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { bookingKeys } from "@/features/bookings/keys";
 import { terrainTransition, type ActiveMission } from "@/features/missions/api";
-import { Button, Field, Input, Sheet, useToast } from "@/ui";
+import { EndTimeSheet, enRouteAt, needsEndCorrection } from "@/features/missions/EndTimeSheet";
+import { Button, useToast } from "@/ui";
 import { bookingUrl } from "../links";
 import { useOnline } from "../useOnline";
-
-const toLocalInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-
-function enRouteAt(m: ActiveMission): Date {
-  const match = m.mission_note?.match(/\[terrain\] en_route_at=([^\s\n]+)/);
-  return match ? new Date(match[1]) : new Date(m.pickup_time);
-}
 
 /** Bandeau de course en cours : « Terminer », avec correction de l'heure de fin au-delà de 4 h. Écriture par terrain_transition uniquement. */
 export function ActiveMissionBanner({ mission }: { mission: ActiveMission | null | undefined }) {
@@ -21,7 +15,6 @@ export function ActiveMissionBanner({ mission }: { mission: ActiveMission | null
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [endAt, setEndAt] = useState("");
   if (!mission) return null;
 
   const complete = async (correctedAt?: string) => {
@@ -38,13 +31,11 @@ export function ActiveMissionBanner({ mission }: { mission: ActiveMission | null
     }
   };
 
-  const start = enRouteAt(mission);
+  const start = enRouteAt(mission.mission_note, mission.pickup_time);
   const onTerminate = () => {
     const now = new Date();
-    if ((now.getTime() - start.getTime()) / 3_600_000 > 4) {
-      setEndAt(toLocalInput(now));
-      setOpen(true);
-    } else void complete();
+    if (needsEndCorrection(start, now)) setOpen(true);
+    else void complete();
   };
 
   return (
@@ -59,20 +50,7 @@ export function ActiveMissionBanner({ mission }: { mission: ActiveMission | null
         </Button>
         {canWrite ? null : <span className="text-xs">{offlineMessage}</span>}
       </div>
-      <Sheet open={open} onClose={() => setOpen(false)} title="Fin de course">
-        <p className="mb-4 text-sm text-muted-foreground">La mission est en cours depuis plus de 4 h. Quelle était l'heure réelle de fin ?</p>
-        <Field label="Heure réelle de fin">
-          <Input type="datetime-local" value={endAt} min={toLocalInput(start)} max={toLocalInput(new Date())} onChange={(e) => setEndAt(e.target.value)} />
-        </Field>
-        <div className="mt-4 flex flex-col gap-2">
-          <Button disabled={!canWrite || !endAt} loading={busy} onClick={() => complete(new Date(endAt).toISOString())}>
-            Confirmer l'heure corrigée
-          </Button>
-          <Button variant="secondary" disabled={!canWrite} loading={busy} onClick={() => complete()}>
-            Utiliser l'heure actuelle
-          </Button>
-        </div>
-      </Sheet>
+      <EndTimeSheet open={open} onClose={() => setOpen(false)} start={start} busy={busy} canWrite={canWrite} onConfirm={(c) => void complete(c)} />
     </div>
   );
 }
