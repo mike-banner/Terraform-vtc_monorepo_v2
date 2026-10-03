@@ -1,4 +1,4 @@
-import { rpc } from "@/lib/app-error";
+import { invokeFn, rpc } from "@/lib/app-error";
 import { supabase } from "@/lib/supabase/client";
 import type { Profile } from "@/app/auth/useSession";
 import { buildSearchFilter, sanitizeSearch } from "./search";
@@ -73,3 +73,42 @@ export async function getConflicts(ids: string[]): Promise<Conflict[]> {
     return [];
   }
 }
+
+/** Fiche chauffeur de l'utilisateur connecté (null : aucun profil chauffeur). */
+export async function getMyDriverId(profile: Profile): Promise<string | null> {
+  const { data } = await supabase.from("drivers").select("id").eq("user_id", profile.userId).eq("tenant_id", profile.tenantId!).limit(1).maybeSingle();
+  return data?.id ?? null;
+}
+
+// Actions de la fiche : RPC et Edge Functions existantes, appelées telles quelles (le serveur reste l'arbitre).
+export const updateInstructions = (id: string, text: string) =>
+  rpc<string>("update_booking_instructions", { p_booking_id: id, p_instructions: text });
+export const markAddressVerified = (id: string) => rpc<string>("mark_address_verified", { p_booking_id: id });
+export const acceptQuote = (id: string, force: boolean) =>
+  rpc<string>("accept_quote_manually", { p_booking_id: id, ...(force ? { p_force: true } : {}) });
+export const declineRequest = (id: string, reason: string) => rpc<string>("decline_booking_request", { p_booking_id: id, p_reason: reason });
+export const acceptPaid = (id: string, driverId: string) => rpc<string>("accept_paid_booking", { p_booking_id: id, p_driver_id: driverId });
+export const sendQuote = (id: string) => invokeFn<{ invoice_url?: string }>("generate-devis", { booking_id: id });
+export const generateInvoice = (id: string) =>
+  invokeFn<{ invoice_url?: string; already_generated?: boolean }>("generate-invoice", { booking_id: id });
+
+export type CancelPreviewRow = { case_code: string; rate: number | null; amount: number | null; paid: boolean };
+/** Taux et montants calculés par le serveur ; `rate` (fraction) optionnel pour les cas à taux libre. */
+export const cancellationPreview = async (id: string, rate?: number) =>
+  ((await rpc<CancelPreviewRow[] | null>("cancellation_preview", rate === undefined ? { p_booking_id: id } : { p_booking_id: id, p_rate: rate })) ?? []);
+export const cancelBooking = (p: { bookingId: string; case: string; rate?: number; note: string }) =>
+  invokeFn<{ refund_status?: string | null }>("cancel-booking", { booking_id: p.bookingId, case: p.case, rate: p.rate, note: p.note });
+export const retryRefund = (id: string) => invokeFn<{ refund_status?: string | null }>("cancel-booking", { booking_id: id, retry: true });
+export const markNoShow = (id: string, reason: string) => rpc<string>("mark_booking_no_show", { p_booking_id: id, p_reason: reason });
+
+export type CreditNote = { id: string; number: string; amount_ttc: number; issued_at: string };
+export const creditNoteRemaining = (id: string) => rpc<number | null>("credit_note_remaining", { p_booking_id: id });
+export async function listCreditNotes(id: string): Promise<CreditNote[]> {
+  const { data, error } = await supabase.from("credit_notes").select("id, number, amount_ttc, issued_at").eq("booking_id", id).order("issued_at");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as CreditNote[];
+}
+type CreditNoteReply = { url?: string; message?: string };
+export const issueCreditNote = (p: { bookingId: string; amount: number; reason: string }) =>
+  invokeFn<CreditNoteReply>("generate-credit-note", { booking_id: p.bookingId, amount: p.amount, reason: p.reason });
+export const creditNotePdf = (creditNoteId: string) => invokeFn<CreditNoteReply>("generate-credit-note", { credit_note_id: creditNoteId });
