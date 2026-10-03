@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -111,10 +131,12 @@ export type Database = {
       }
       bookings: {
         Row: {
+          address_alert: string | null
           approval_required: boolean
           booking_source: Database["public"]["Enums"]["booking_source"]
           booking_type: Database["public"]["Enums"]["booking_type_enum"]
           cancellation_initiator: string | null
+          cancellation_note: string | null
           cancellation_policy_id: string | null
           cancellation_reason:
             | Database["public"]["Enums"]["cancellation_reason_enum"]
@@ -128,6 +150,7 @@ export type Database = {
           dropoff_address: string
           duration_hours: number | null
           id: string
+          instructions: string | null
           invoice_created_at: string | null
           invoice_number: string | null
           invoice_url: string | null
@@ -145,6 +168,9 @@ export type Database = {
           rating: number | null
           rating_comment: string | null
           rating_created_at: string | null
+          refund_amount: number | null
+          refund_attempts: number
+          refund_rate: number | null
           status: Database["public"]["Enums"]["booking_status"]
           stripe_invoice_id: string | null
           stripe_payment_intent_id: string | null
@@ -154,10 +180,12 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          address_alert?: string | null
           approval_required?: boolean
           booking_source: Database["public"]["Enums"]["booking_source"]
           booking_type: Database["public"]["Enums"]["booking_type_enum"]
           cancellation_initiator?: string | null
+          cancellation_note?: string | null
           cancellation_policy_id?: string | null
           cancellation_reason?:
             | Database["public"]["Enums"]["cancellation_reason_enum"]
@@ -171,6 +199,7 @@ export type Database = {
           dropoff_address: string
           duration_hours?: number | null
           id?: string
+          instructions?: string | null
           invoice_created_at?: string | null
           invoice_number?: string | null
           invoice_url?: string | null
@@ -188,6 +217,9 @@ export type Database = {
           rating?: number | null
           rating_comment?: string | null
           rating_created_at?: string | null
+          refund_amount?: number | null
+          refund_attempts?: number
+          refund_rate?: number | null
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_invoice_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -197,10 +229,12 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          address_alert?: string | null
           approval_required?: boolean
           booking_source?: Database["public"]["Enums"]["booking_source"]
           booking_type?: Database["public"]["Enums"]["booking_type_enum"]
           cancellation_initiator?: string | null
+          cancellation_note?: string | null
           cancellation_policy_id?: string | null
           cancellation_reason?:
             | Database["public"]["Enums"]["cancellation_reason_enum"]
@@ -214,6 +248,7 @@ export type Database = {
           dropoff_address?: string
           duration_hours?: number | null
           id?: string
+          instructions?: string | null
           invoice_created_at?: string | null
           invoice_number?: string | null
           invoice_url?: string | null
@@ -231,6 +266,9 @@ export type Database = {
           rating?: number | null
           rating_comment?: string | null
           rating_created_at?: string | null
+          refund_amount?: number | null
+          refund_attempts?: number
+          refund_rate?: number | null
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_invoice_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -309,7 +347,7 @@ export type Database = {
           no_show_refund_rate: number
           partial_refund_rate: number
           platform_fee_non_refundable: boolean
-          tenant_id: string | null
+          tenant_id: string
           version: number
         }
         Insert: {
@@ -322,7 +360,7 @@ export type Database = {
           no_show_refund_rate: number
           partial_refund_rate: number
           platform_fee_non_refundable?: boolean
-          tenant_id?: string | null
+          tenant_id: string
           version: number
         }
         Update: {
@@ -335,7 +373,7 @@ export type Database = {
           no_show_refund_rate?: number
           partial_refund_rate?: number
           platform_fee_non_refundable?: boolean
-          tenant_id?: string | null
+          tenant_id?: string
           version?: number
         }
         Relationships: [
@@ -434,6 +472,117 @@ export type Database = {
           {
             foreignKeyName: "circles_created_by_tenant_id_fkey"
             columns: ["created_by_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_note_sequences: {
+        Row: {
+          last_seq: number
+          tenant_id: string
+          year: number
+        }
+        Insert: {
+          last_seq: number
+          tenant_id: string
+          year: number
+        }
+        Update: {
+          last_seq?: number
+          tenant_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_note_sequences_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "admin_tenants_overview"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_note_sequences_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_notes: {
+        Row: {
+          amount_ht: number
+          amount_ttc: number
+          booking_id: string
+          created_by: string
+          id: string
+          invoice_number: string
+          issued_at: string
+          number: string
+          reason: string
+          tenant_id: string
+          vat_amount: number
+        }
+        Insert: {
+          amount_ht: number
+          amount_ttc: number
+          booking_id: string
+          created_by: string
+          id?: string
+          invoice_number: string
+          issued_at?: string
+          number: string
+          reason: string
+          tenant_id: string
+          vat_amount: number
+        }
+        Update: {
+          amount_ht?: number
+          amount_ttc?: number
+          booking_id?: string
+          created_by?: string
+          id?: string
+          invoice_number?: string
+          issued_at?: string
+          number?: string
+          reason?: string
+          tenant_id?: string
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "admin_bookings_full_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_stuck_pending_refund"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "admin_tenants_overview"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_notes_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
@@ -1127,7 +1276,9 @@ export type Database = {
       }
       tenants: {
         Row: {
+          address_line: string | null
           capital_social: number | null
+          city: string | null
           company_type: Database["public"]["Enums"]["company_type_enum"] | null
           created_at: string | null
           deleted_at: string | null
@@ -1142,6 +1293,7 @@ export type Database = {
           name: string
           phone: string | null
           platform_fee_rate: number | null
+          postal_code: string | null
           primary_color: string | null
           primary_domain: string
           rcs_number: string | null
@@ -1155,7 +1307,9 @@ export type Database = {
           vat_rate: number | null
         }
         Insert: {
+          address_line?: string | null
           capital_social?: number | null
+          city?: string | null
           company_type?: Database["public"]["Enums"]["company_type_enum"] | null
           created_at?: string | null
           deleted_at?: string | null
@@ -1170,6 +1324,7 @@ export type Database = {
           name: string
           phone?: string | null
           platform_fee_rate?: number | null
+          postal_code?: string | null
           primary_color?: string | null
           primary_domain: string
           rcs_number?: string | null
@@ -1183,7 +1338,9 @@ export type Database = {
           vat_rate?: number | null
         }
         Update: {
+          address_line?: string | null
           capital_social?: number | null
+          city?: string | null
           company_type?: Database["public"]["Enums"]["company_type_enum"] | null
           created_at?: string | null
           deleted_at?: string | null
@@ -1198,6 +1355,7 @@ export type Database = {
           name?: string
           phone?: string | null
           platform_fee_rate?: number | null
+          postal_code?: string | null
           primary_color?: string | null
           primary_domain?: string
           rcs_number?: string | null
@@ -1281,18 +1439,21 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          postal_codes: string[]
           tenant_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
+          postal_codes?: string[]
           tenant_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
+          postal_codes?: string[]
           tenant_id?: string | null
         }
         Relationships: [
@@ -1668,9 +1829,39 @@ export type Database = {
       }
     }
     Functions: {
+      accept_paid_booking: {
+        Args: { p_booking_id: string; p_driver_id: string }
+        Returns: string
+      }
       approve_onboarding_tx: {
         Args: { onboarding_uuid: string }
         Returns: undefined
+      }
+      accept_quote_manually: {
+        Args: { p_booking_id: string; p_force?: boolean }
+        Returns: string
+      }
+      assign_invoice_number: {
+        Args: { p_booking_id: string }
+        Returns: {
+          invoice_created_at: string
+          invoice_number: string
+        }[]
+      }
+      authorize_quote: {
+        Args: { p_booking_id: string }
+        Returns: undefined
+      }
+      booking_conflicts: {
+        Args: { p_booking_id?: string }
+        Returns: {
+          booking_id: string
+          other_end_time: string
+          other_id: string
+          other_pickup_address: string
+          other_pickup_time: string
+          other_status: string
+        }[]
       }
       booking_vat_split: {
         Args: { p_gross: number; p_is_exempt: boolean; p_vat_rate: number }
@@ -1680,6 +1871,10 @@ export type Database = {
           vat: number
         }[]
       }
+      booking_window: {
+        Args: { p_hours: number; p_pickup: string }
+        Returns: unknown
+      }
       calculate_booking_price: {
         Args: {
           p_booking_type: Database["public"]["Enums"]["booking_type_enum"]
@@ -1687,6 +1882,32 @@ export type Database = {
           p_duration_hours: number
           p_tenant_id: string
           p_vehicle_id: string
+        }
+        Returns: number
+      }
+      cancel_booking: {
+        Args: {
+          p_booking_id: string
+          p_case: string
+          p_note: string
+          p_rate: number
+        }
+        Returns: Json
+      }
+      cancellation_preview: {
+        Args: { p_booking_id: string; p_rate?: number }
+        Returns: {
+          amount: number
+          case_code: string
+          paid: boolean
+          rate: number
+        }[]
+      }
+      cancellation_refund_rate: {
+        Args: {
+          b: Database["public"]["Tables"]["bookings"]["Row"]
+          p_case: string
+          p_rate: number
         }
         Returns: number
       }
@@ -1706,6 +1927,7 @@ export type Database = {
           p_distance_km?: number
           p_dropoff: string
           p_duration_hours?: number
+          p_instructions?: string
           p_luggage_count?: number
           p_manual_total?: number
           p_passenger_count?: number
@@ -1719,12 +1941,17 @@ export type Database = {
           total_price: number
         }[]
       }
+      credit_note_remaining: { Args: { p_booking_id: string }; Returns: number }
       current_tenant_id: { Args: never; Returns: string }
       current_tenant_role: {
         Args: never
         Returns: Database["public"]["Enums"]["tenant_role"]
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      decline_booking_request: {
+        Args: { p_booking_id: string; p_reason: string }
+        Returns: string
+      }
       delete_tenant_account: { Args: never; Returns: undefined }
       driver_cancel_booking: {
         Args: { p_booking_id: string; p_reason: string }
@@ -1756,6 +1983,10 @@ export type Database = {
           total_amount: number
         }[]
       }
+      get_public_payment_state: {
+        Args: { p_session_id: string }
+        Returns: string
+      }
       get_public_tenant: {
         Args: { p_host: string; p_id?: string }
         Returns: {
@@ -1783,8 +2014,34 @@ export type Database = {
           refund_allowed: boolean
         }[]
       }
+      issue_credit_note: {
+        Args: { p_amount_ttc: number; p_booking_id: string; p_reason: string }
+        Returns: {
+          credit_note_id: string
+          number: string
+          payment_intent_id: string
+        }[]
+      }
+      ledger_insert_refund: {
+        Args: {
+          p_booking_id: string
+          p_event: string
+          p_gross: number
+          p_payment_intent: string
+          p_stripe_refund_id: string
+        }
+        Returns: undefined
+      }
+      mark_address_verified: {
+        Args: { p_booking_id: string }
+        Returns: string
+      }
       mark_booking_no_show: {
         Args: { p_booking_id: string; p_reason: string }
+        Returns: string
+      }
+      mark_refund_failed: {
+        Args: { p_booking_id: string; p_message: string }
         Returns: string
       }
       next_invoice_number: {
@@ -1806,6 +2063,34 @@ export type Database = {
           tenant_status: string
           vat_collected: number
         }[]
+      }
+      record_booking_refund: {
+        Args: {
+          p_amount: number
+          p_booking_id: string
+          p_stripe_refund_id: string
+        }
+        Returns: string
+      }
+      retry_refund: { Args: { p_booking_id: string }; Returns: Json }
+      submit_booking_request: {
+        Args: {
+          p_dropoff: string
+          p_email: string
+          p_end_time: string
+          p_first_name: string
+          p_instructions: string
+          p_last_name: string
+          p_luggage_count: number
+          p_passenger_count: number
+          p_phone: string
+          p_pickup: string
+          p_pickup_time: string
+          p_request_kind: string
+          p_tenant_id: string
+          p_vehicle_id: string
+        }
+        Returns: boolean
       }
       submit_rating: {
         Args: { p_booking_id: string; p_comment?: string; p_rating: number }
@@ -1830,6 +2115,24 @@ export type Database = {
           p_pickup_time: string
         }
         Returns: number
+      }
+      update_booking_instructions: {
+        Args: { p_booking_id: string; p_instructions: string }
+        Returns: string
+      }
+      update_cancellation_policy: {
+        Args: {
+          p_driver_fault_rate: number
+          p_full_hours: number
+          p_no_show_rate: number
+          p_partial_hours: number
+          p_partial_rate: number
+        }
+        Returns: string
+      }
+      update_tenant_address: {
+        Args: { p_address_line: string; p_city: string; p_postal_code: string }
+        Returns: undefined
       }
       update_tenant_logo: { Args: { p_url: string }; Returns: string }
       update_tenant_settings: {
@@ -1859,6 +2162,7 @@ export type Database = {
         | "no_show"
         | "driver_fault"
         | "platform_issue"
+        | "other"
       company_type_enum: "auto_entrepreneur" | "societe"
       customer_type_enum: "individual" | "company"
       legal_form_enum:
@@ -1903,12 +2207,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1932,11 +2236,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1957,11 +2261,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1982,11 +2286,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1999,11 +2303,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2013,6 +2317,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       booking_source: ["manual_driver", "customer"],
@@ -2037,6 +2344,7 @@ export const Constants = {
         "no_show",
         "driver_fault",
         "platform_issue",
+        "other",
       ],
       company_type_enum: ["auto_entrepreneur", "societe"],
       customer_type_enum: ["individual", "company"],
@@ -2073,3 +2381,4 @@ export const Constants = {
     },
   },
 } as const
+

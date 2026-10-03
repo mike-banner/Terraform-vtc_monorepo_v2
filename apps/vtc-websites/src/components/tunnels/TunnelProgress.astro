@@ -1,6 +1,6 @@
 ---
 // src/components/tunnels/TunnelProgress.astro
-const { currentStep = 1, totalSteps = 4, color = 'bg-black' } = Astro.props;
+const { currentStep = 1, totalSteps = 4, color = 'bg-primary' } = Astro.props;
 
 const steps = [
   { number: 1, label: 'Détails du trajet' },
@@ -13,7 +13,7 @@ const steps = [
 <div class='w-full'>
   <div class='flex justify-between relative'>
     <!-- Ligne de progression -->
-    <div class='absolute top-4 left-0 right-0 h-0.5 bg-zinc-200 -z-10'></div>
+    <div class='absolute top-4 left-0 right-0 h-0.5 bg-ui-line -z-10'></div>
     <div
       id="progress-bar-line"
       class={`absolute top-4 left-0 h-0.5 ${color} -z-10 transition-all duration-500`}
@@ -29,17 +29,17 @@ const steps = [
             class={`progress-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300
             ${
               step.number < currentStep
-                ? `bg-black text-white`
+                ? `bg-ui-ink text-white`
                 : step.number === currentStep
-                  ? `bg-black text-white ring-4 ring-black/5`
-                  : 'bg-zinc-200 text-zinc-500'
+                  ? `bg-ui-ink text-white ring-4 ring-primary/20`
+                  : 'bg-ui-line text-ui-muted'
             }`}>
             {step.number}
           </div>
           <span
             data-step={step.number}
-            class={`progress-step-label mt-2 text-xs font-medium text-center transition-colors duration-300
-            ${step.number <= currentStep ? 'text-zinc-900' : 'text-zinc-500'}`}>
+            class={`progress-step-label mt-1 text-xs font-medium text-center transition-colors duration-300
+            ${step.number <= currentStep ? 'text-ui-ink' : 'text-ui-muted'}`}>
             {step.label}
           </span>
         </div>

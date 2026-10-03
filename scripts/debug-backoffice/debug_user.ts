@@ -42,5 +42,9 @@ async function checkSpecificUser(email: string) {
   console.log(JSON.stringify(profile, null, 2));
 }
 
-const emailToCheck = process.argv[2] || "mike.webfree@gmail.com";
+const emailToCheck = process.argv[2];
+if (!emailToCheck) {
+  console.error("usage : debug_user.ts <adresse e-mail>");
+  process.exit(1);
+}
 checkSpecificUser(emailToCheck);

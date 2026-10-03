@@ -1,6 +1,10 @@
 ---
 // src/pages/app/bookings.astro
 import Badge from "../../components/ui/Badge.astro";
+const ADRESSE_A_VERIFIER = ["hors_zone_depart", "hors_zone_arrivee", "hors_zone", "a_verifier"];
+const adresseAVerifier = (b: any) =>
+  ADRESSE_A_VERIFIER.includes(b.address_alert) &&
+  !String(b.status).startsWith("cancel") && b.status !== "no_show" && b.mission_status !== "completed";
 import Button from "../../components/ui/Button.astro";
 import Card from "../../components/ui/Card.astro";
 import AppLayout from "../../layouts/AppLayout.astro";
@@ -26,33 +30,38 @@ let query = supabaseServer
     .select("*, customers(*)", { count: "exact" })
     .eq("current_tenant_id", profile.tenant_id as string);
 
-const CANCELLED_STATUSES = ["cancelled", "cancelled_no_refund", "cancelled_pending_refund", "cancelled_refunded", "deprecated_refunded", "no_show"] as const;
+// Courses annulées : listées à part (onglet « Annulées »), sauf celles qui demandent une action
+// (remboursement en cours ou échoué), qui restent visibles dans la liste principale.
+const ACTION_STATUSES = ["cancelled_pending_refund", "refund_failed"] as const;
+const CANCELLED_STATUSES = ["cancelled", "cancelled_no_refund", "cancelled_refunded", "deprecated_refunded", "no_show"] as const;
+const HIDDEN_FROM_MAIN = `(${CANCELLED_STATUSES.join(",")})`;
 
 if (currentStatus === "cancelled") {
-    query = query.in("status", CANCELLED_STATUSES as unknown as string[]);
+    query = query.in("status", [...CANCELLED_STATUSES, ...ACTION_STATUSES]);
 } else if (currentStatus !== "all") {
-    query = query.eq("mission_status", currentStatus as any).not("status", "in", `(${CANCELLED_STATUSES.join(",")})`);
+    query = query.eq("mission_status", currentStatus as any).not("status", "in", HIDDEN_FROM_MAIN);
 } else {
-    query = query.not("status", "in", `(${CANCELLED_STATUSES.join(",")})`);
+    query = query.not("status", "in", HIDDEN_FROM_MAIN);
 }
 
 if (currentType !== "all") {
     query = query.eq("booking_type", currentType as any);
 }
 
-let driverId = null;
-if (profile.tenant_role === "driver") {
-    const { data: driver } = await supabaseServer
-        .from("drivers")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("tenant_id", profile.tenant_id!)
-        .limit(1)
-        .maybeSingle();
+// Profil chauffeur de l'utilisateur (un propriétaire peut aussi conduire : il en a besoin pour « Prendre la main »).
+const { data: driver } = await supabaseServer
+    .from("drivers")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("tenant_id", profile.tenant_id!)
+    .limit(1)
+    .maybeSingle();
+const driverId = driver?.id ?? null;
 
-    if (driver) {
-        driverId = driver.id;
-        query = query.eq("driver_id", driver.id);
+// Un chauffeur ne voit que ses propres courses ; propriétaire et gérant voient tout le tenant.
+if (profile.tenant_role === "driver") {
+    if (driverId) {
+        query = query.eq("driver_id", driverId);
     } else {
         query = query.eq("id", "00000000-0000-0000-0000-000000000000");
     }
@@ -91,6 +100,21 @@ const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
 if (error) console.error("Bookings Fetch Error:", error);
 
+// Alerte de conflit (D-36) : owner/manager seulement ; une erreur ne casse jamais la page.
+const conflitsParCourse = new Map<string, any[]>();
+if (profile.tenant_role === "owner" || profile.tenant_role === "manager") {
+    try {
+        const { data: conflits, error: conflitsError } = await supabaseServer.rpc("booking_conflicts");
+        if (conflitsError) throw conflitsError;
+        for (const c of conflits ?? []) {
+            conflitsParCourse.set(c.booking_id, [...(conflitsParCourse.get(c.booking_id) ?? []), c]);
+        }
+    } catch (e) {
+        console.error("Booking conflicts Error:", e);
+    }
+}
+for (const b of (bookings ?? []) as any[]) b.conflicts = conflitsParCourse.get(b.id) ?? [];
+
 const tabs = [
     { id: 'all', label: 'Toutes' },
     { id: 'to_validate', label: 'À Valider' },
@@ -114,6 +138,14 @@ const STATUS_LABELS_FR: Record<string, string> = {
     no_show: "Non réalisée",
     expired_payment: "Paiement expiré",
     refund_failed: "Échec remboursement"
+};
+
+// « Remboursée » sans montant prête à confusion avec le total de la course : on affiche le montant réellement remboursé.
+const statusText = (b: any): string => {
+    const label = STATUS_LABELS_FR[b.status] || b.status;
+    return b.status === "cancelled_refunded" && b.refund_amount != null
+        ? `${label} ${Number(b.refund_amount).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+        : label;
 };
 
 const typeFilters = [
@@ -270,6 +302,8 @@ const getFilterUrl = (params: Record<string, string>) => {
                                              booking.mission_status === 'not_started' ? 'Non Démarré' :
                                              booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
                                         </Badge>
+                                        {adresseAVerifier(booking) && <Badge variant="amber">Adresse à vérifier</Badge>}
+{(booking as any).conflicts?.length > 0 && <Badge variant="rose">Conflit</Badge>}
                                     </div>
 
                                     <div class="space-y-1.5 pb-3 border-b border-white/5 mb-3">
@@ -393,6 +427,8 @@ const getFilterUrl = (params: Record<string, string>) => {
                                                          booking.mission_status === 'not_started' ? 'Non Démarré' :
                                                          booking.mission_status === 'in_progress' ? 'En Cours' : 'Terminée'}
                                                     </Badge>
+                                                    {adresseAVerifier(booking) && <Badge variant="amber">Adresse à vérifier</Badge>}
+{(booking as any).conflicts?.length > 0 && <Badge variant="rose">Conflit</Badge>}
                                                 </td>
                                                 <td class="px-8 py-4 text-right">
                                                     <div class="flex flex-col items-end">
@@ -405,7 +441,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                                                             booking.status === "pending" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
                                                             "bg-primary/10 text-primary border-primary/20"
                                                         }`}>
-                                                            {STATUS_LABELS_FR[booking.status] || booking.status}
+                                                            {statusText(booking)}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -634,6 +670,8 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </div>
                         </div>
 
+                        <textarea name="instructions" maxlength="500" rows="2" placeholder="N° de vol, panneau d'accueil, bagages…" class="w-full bg-background border border-border rounded-[var(--radius)] py-3 px-4 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors font-medium placeholder:text-muted-foreground"></textarea>
+
                         <!-- KM / HEURES — visibles seulement pour mise à dispo après sélection du mode -->
                         <div id="distance-km-container" class="hidden items-center gap-3 bg-background border border-border rounded-[var(--radius)] px-4 py-3 focus-within:border-primary/50 transition-colors">
                             <label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest whitespace-nowrap flex-shrink-0">Distance (km)</label>
@@ -641,7 +679,7 @@ const getFilterUrl = (params: Record<string, string>) => {
                         </div>
                         <div id="duration-hours-container" class="hidden items-center gap-3 bg-background border border-border rounded-[var(--radius)] px-4 py-3 focus-within:border-primary/50 transition-colors">
                             <label class="text-[10px] font-black uppercase text-muted-foreground tracking-widest whitespace-nowrap flex-shrink-0">Durée (heures)</label>
-                            <input type="number" id="duration_hours" name="duration_hours" value="1" min="1" max="24" class="flex-1 min-w-0 bg-transparent text-sm text-foreground focus:outline-none font-medium tabular-nums text-right" />
+                            <input type="number" id="duration_hours" name="duration_hours" value="1" min="1" max="8760" class="flex-1 min-w-0 bg-transparent text-sm text-foreground focus:outline-none font-medium tabular-nums text-right" />
                         </div>
                     </div>
                 </div>
@@ -722,13 +760,13 @@ const getFilterUrl = (params: Record<string, string>) => {
                 <!-- Durée (mise à disposition) -->
                 <div id="edit-duration-container" class="hidden space-y-2">
                     <label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Durée (heures)</label>
-                    <input type="number" id="edit-duration-hours" name="duration_hours" min="1" max="24" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors" />
+                    <input type="number" id="edit-duration-hours" name="duration_hours" min="1" max="8760" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors" />
                 </div>
 
                 <!-- Montant TTC -->
                 <div class="space-y-2">
                     <label for="edit-amount" class="text-[10px] font-black uppercase tracking-widest text-slate-500">Montant TTC (€)</label>
-                    <input type="number" id="edit-amount" name="manual_total" min="0.01" max="9999" step="0.01" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors read-only:opacity-60" />
+                    <input type="number" id="edit-amount" name="manual_total" min="0.01" max="99999" step="0.01" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors read-only:opacity-60" />
                     <p class="text-[9px] text-slate-600">La TVA est recalculée côté serveur à l'enregistrement.</p>
                 </div>
 
@@ -807,6 +845,29 @@ const getFilterUrl = (params: Record<string, string>) => {
                         </div>
                     </div>
 
+                    <!-- SIGNALEMENT D'ADRESSE -->
+                    <div id="modal-address-alert-box" class="hidden bg-muted/10 p-4 rounded-[var(--radius)] border border-border space-y-3">
+                        <p id="modal-address-alert" class="text-xs text-foreground font-medium"></p>
+                        <button id="modal-address-verify-btn" class="hidden py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Marquer comme vérifié</button>
+                        <p id="modal-address-error" class="text-xs text-destructive"></p>
+                    </div>
+
+                    <!-- CONFLIT DE CRÉNEAU -->
+                    <p id="modal-conflicts" class="hidden text-xs text-destructive font-medium whitespace-pre-line"></p>
+
+                    <!-- DEMANDE DE DEVIS -->
+                    <div id="modal-quote-box" class="hidden bg-muted/10 p-4 rounded-[var(--radius)] border border-border space-y-3">
+                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Demande de devis</p>
+                        <p class="text-xs text-foreground font-medium">Fixez le prix, envoyez le devis, puis validez ou refusez la demande.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="quote-price-btn" class="py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Fixer le prix</button>
+                            <button id="quote-send-btn" class="py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl disabled:opacity-50">Envoyer le devis</button>
+                            <button id="quote-accept-btn" class="py-2 px-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl disabled:opacity-50">Devis accepté</button>
+                            <button id="quote-decline-btn" class="py-2 px-4 bg-background hover:bg-muted border border-border text-destructive text-[10px] font-black uppercase tracking-widest rounded-xl disabled:opacity-50">Refuser la demande</button>
+                        </div>
+                        <p id="quote-error" class="text-xs text-destructive"></p>
+                    </div>
+
                     <!-- CARACTÉRISTIQUES -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-muted/10 p-5 rounded-[var(--radius)] border border-border flex items-center gap-4">
@@ -832,16 +893,16 @@ const getFilterUrl = (params: Record<string, string>) => {
                     <!-- 🕹️ MISSION COCKPIT CONTAINER -->
                     <div id="mission-cockpit-root"></div>
 
-                    <!-- NOTES -->
+                    <!-- NOTES / INSTRUCTIONS (bloc principal) -->
                     <div class="bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
                         <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Notes / Instructions</p>
                         <p id="modal-notes" class="text-xs text-foreground font-medium leading-relaxed whitespace-pre-line">---</p>
-                    </div>
-
-                    <!-- HISTORIQUE (événements de la course, masqué s'il est vide) -->
-                    <div class="hidden bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
-                        <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Historique de la course</p>
-                        <p id="modal-history" class="text-xs text-foreground font-medium leading-relaxed whitespace-pre-line"></p>
+                        <div id="instr-edit-area" class="hidden mt-3 space-y-3">
+                            <textarea id="instr-input" maxlength="500" rows="3" placeholder="N° de vol, panneau d'accueil, bagages…" class="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground"></textarea>
+                            <button id="instr-save-btn" class="w-full py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Enregistrer</button>
+                            <p id="instr-error" class="text-xs text-destructive"></p>
+                        </div>
+                        <button id="instr-edit-btn" class="hidden mt-3 py-2 px-4 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">Modifier</button>
                     </div>
 
                     <!-- AVIS & QR CODE -->
@@ -877,6 +938,23 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </div>
                         </div>
 
+                        <!-- AVOIRS (course facturée, owner/manager) -->
+                        <div id="credit-note-section" class="hidden bg-muted/10 p-4 rounded-[var(--radius)] border border-border mt-4 space-y-3">
+                            <p class="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Avoirs</p>
+                            <div id="credit-note-list" class="space-y-1"></div>
+                            <p id="credit-note-remaining" class="text-xs font-bold text-foreground"></p>
+                            <button id="credit-note-open-btn" type="button" class="w-full py-3 bg-background hover:bg-muted border border-border text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl">
+                                Émettre un avoir
+                            </button>
+                            <div id="credit-note-form" class="hidden space-y-2">
+                                <input id="credit-note-amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Montant TTC (€)" class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground text-sm" />
+                                <textarea id="credit-note-reason" maxlength="500" rows="2" placeholder="Motif (obligatoire)" class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground text-sm"></textarea>
+                                <button id="credit-note-send-btn" type="button" class="w-full py-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl disabled:opacity-50">
+                                    Émettre l'avoir
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="flex flex-col sm:flex-row gap-3 mt-4">
                             <button id="modal-invoice-btn" class="hidden flex-1 py-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50">
                                 Facture PDF
@@ -892,31 +970,38 @@ const getFilterUrl = (params: Record<string, string>) => {
                             </button>
                         </div>
 
-                        <!-- Annulation chauffeur (pré-mission uniquement) -->
+                        <!-- Annulation (pré-mission uniquement) -->
                         <div id="cancel-section" class="hidden mt-2">
                             <div id="cancel-trigger-area">
-                                <button id="cancel-booking-btn" class="w-full py-4 bg-rose-500/5 hover:bg-rose-500/10 text-rose-400/60 hover:text-rose-400 border border-rose-500/10 hover:border-rose-500/20 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95">
+                                <button id="cancel-booking-btn" class="w-full py-4 bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95">
                                     Annuler la course
                                 </button>
                             </div>
                             <div id="cancel-form-area" class="hidden mt-3 space-y-3">
-                                <div class="flex items-start gap-3 p-4 bg-rose-500/5 border border-rose-500/15 rounded-2xl">
-                                    <svg class="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                                    </svg>
-                                    <p id="cancel-hint" class="text-[11px] text-rose-300/70 font-medium leading-relaxed">Convention VTC — un motif d'annulation est obligatoire et sera conservé dans le dossier.</p>
-                                </div>
-                                <textarea id="cancel-reason" placeholder="Décrivez le motif d'annulation…" rows="3" class="w-full bg-white/5 border border-rose-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/40 resize-none transition-colors"></textarea>
+                                <p id="cancel-hint" class="p-4 bg-card border border-border rounded-2xl text-[11px] text-muted-foreground font-medium leading-relaxed">Convention VTC — un motif d'annulation est obligatoire et sera conservé dans le dossier.</p>
+                                <select id="cancel-case" class="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground"></select>
+                                <input id="cancel-rate" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="Taux remboursé (%)" class="hidden w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground" />
+                                <p id="cancel-summary" class="text-xs text-muted-foreground"></p>
+                                <textarea id="cancel-reason" maxlength="500" placeholder="Décrivez le motif d'annulation…" rows="3" class="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none resize-none transition-colors"></textarea>
                                 <div class="flex gap-3">
-                                    <button id="cancel-confirm-btn" class="flex-1 py-4 bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95">
+                                    <button id="cancel-confirm-btn" class="flex-1 py-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95">
                                         Confirmer l'annulation
                                     </button>
-                                    <button id="cancel-back-btn" class="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-white/5 active:scale-95">
+                                    <button id="cancel-back-btn" class="flex-1 py-4 bg-muted hover:bg-muted/80 text-muted-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all border border-border active:scale-95">
                                         Retour
                                     </button>
                                 </div>
                             </div>
                         </div>
+                        <button id="refund-retry-btn" class="hidden w-full mt-2 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95 disabled:opacity-50">
+                            Relancer le remboursement
+                        </button>
+
+                    <!-- HISTORIQUE (événements de la course, replié, masqué s'il est vide) -->
+                    <details class="hidden bg-muted/10 p-6 rounded-[var(--radius)] border border-border">
+                        <summary class="text-[10px] font-black uppercase text-muted-foreground tracking-widest cursor-pointer">Historique de la course</summary>
+                        <p id="modal-history" class="mt-3 text-xs text-foreground font-medium leading-relaxed whitespace-pre-line"></p>
+                    </details>
                     </div>
                 </div>
             </div>

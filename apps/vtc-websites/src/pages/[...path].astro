@@ -1,61 +1,12 @@
 ---
-// src/pages/[...path].astro
+// Ne sert que la landing du site choisi par domaine (D-29 c) ; tunnels et pages fonctionnelles sont des routes communes.
+import { landings } from "virtual:vtc-sites";
 import { resolveSite } from "../router/siteResolver";
+import NotFound from "../components/ui/NotFound.astro";
 
-const host = Astro.url.host;
-const site = resolveSite(host);
-const path = Astro.params.path || "";
-
-const tenantData = Astro.locals.tenant;
-
-// 1. Liste de tous les fichiers possibles pour ce site
-const sitePages = import.meta.glob("../sites/*/pages/**/*.astro");
-// 2. Chercher le fichier correspondant
-// On essaie plusieurs combinaisons :
-// - Chemin exact (ex: index, services)
-// - Catch-all tunnels (si le chemin commence par tunnels/)
-// - Index dans un sous-dossier
-
-let targetFile;
-let targetPath = path === "" ? "index" : path;
-
-// Normalisation (suppression des slashs de fin et passage en minuscules)
-targetPath = targetPath.replace(/\/$/, "").toLowerCase();
-
-// Cas spécifique des tunnels
-if (targetPath.startsWith("tunnels/")) {
-    targetFile = `../sites/${site}/pages/tunnels/[...slug].astro`;
-} else {
-    // Cas classique
-    targetFile = `../sites/${site}/pages/${targetPath}.astro`;
-}
-
-let Page;
-if (sitePages[targetFile]) {
-    const module = await sitePages[targetFile]();
-    Page = (module as any).default;
-} else {
-    console.warn(`[ROUTER] File not found in glob: ${targetFile}`);
-    // Si pas trouvé, on peut essayer tunnels sans le catch-all si c'est juste /tunnels
-    if (targetPath === "tunnels") {
-        const fallback = `../sites/${site}/pages/tunnels/index.astro`;
-        if (sitePages[fallback]) {
-            const module = await sitePages[fallback]();
-            Page = (module as any).default;
-        }
-    }
-}
+const site = resolveSite(Astro.url.host);
+const path = (Astro.params.path || "").replace(/\/$/, "");
+const Page = path === "" ? (await landings[site]?.())?.default : undefined;
 ---
 
-{Page ? (
-  <Page />
-) : (
-  <main class="min-h-screen flex items-center justify-center bg-zinc-50 p-8 font-sans">
-    <div class="max-w-md w-full text-center">
-      <h1 class="text-9xl font-semibold text-zinc-200 tracking-tighter">404</h1>
-      <p class="text-zinc-500 uppercase tracking-[0.2em] text-[10px] font-bold mt-4">Page introuvable chez {tenantData?.name || 'VTC HUB'}</p>
-      <p class="text-[8px] text-zinc-300 mt-2">ID Site: {site} | Path: {path}</p>
-      <a href="/" class="inline-block mt-12 px-10 py-4 bg-black text-white text-[11px] font-bold uppercase tracking-widest shadow-xl hover:bg-zinc-800 transition-all">Retour à l'accueil</a>
-    </div>
-  </main>
-)}
+{Page ? <Page /> : <NotFound />}

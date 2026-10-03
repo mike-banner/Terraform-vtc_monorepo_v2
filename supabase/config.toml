@@ -3,17 +3,6 @@
 enabled = true
 uri = "pg-functions://postgres/public/custom_access_token_hook"
 
-[functions.create_refund]
-enabled = true
-verify_jwt = true
-import_map = "./functions/create_refund/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/create_refund/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/create_refund/*.html" ]
-
 [functions.stripe_webhook]
 enabled = true
 # Stripe ne peut pas fournir de JWT Supabase : l'authentification se fait par
@@ -70,14 +59,3 @@ entrypoint = "./functions/create_customer/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/create_customer/*.html" ]
-
-[functions.accept-booking]
-enabled = true
-verify_jwt = true
-import_map = "./functions/accept-booking/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/accept-booking/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/accept-booking/*.html" ]

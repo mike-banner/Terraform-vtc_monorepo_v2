@@ -1,7 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
-import { generateDevisEmail } from "../_shared/email-templates/devis.ts";
+import { generateDevisEmail } from "../_shared/email-templates/native/devis.ts";
 import { sendEmailLog } from "../_shared/send-email-log.ts";
+import { formatParisDate } from "../_shared/invoice-mentions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,34 +19,38 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Devis réservé à owner/manager du tenant : authorize_quote est évaluée avec le JWT de l'appelant (T-14.1-35).
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+  }
+
   try {
     const { booking_id } = await req.json();
     if (!booking_id) {
       return new Response("Missing booking_id", { status: 400 });
     }
 
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { error: authErr } = await userClient.rpc("authorize_quote", { p_booking_id: booking_id });
+    if (authErr) {
+      const status = authErr.code === "42501" ? 403 : authErr.code === "P0002" ? 404 : 400;
+      return new Response(authErr.message, { status, headers: corsHeaders });
+    }
+
     const { data: booking } = await supabase.from("bookings").select(
-      "id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, total_amount, subtotal_amount, vat_amount, payment_mode, booking_type, passenger_count, luggage_count, invoice_number"
+      "id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, total_amount, subtotal_amount, vat_amount, payment_mode, booking_type, duration_hours, passenger_count, luggage_count"
     ).eq("id", booking_id).single();
 
     if (!booking) {
       return new Response("Booking not found", { status: 404 });
     }
 
-    // Devis déjà généré — on renvoie l'existant
-    if (booking.invoice_number?.startsWith("DEV-")) {
-      const { data: existing, error: urlErr } = await supabase.storage
-        .from("invoices")
-        .createSignedUrl(`${booking.current_tenant_id}/devis/${booking_id}.pdf`, 60 * 60 * 24 * 7); // 7 jours (WR-03)
-      if (urlErr || !existing?.signedUrl) {
-        console.error("SIGNED URL ERROR (idempotent path)", urlErr);
-        return new Response("PDF introuvable, veuillez régénérer le devis", { status: 404 });
-      }
-      return new Response(
-        JSON.stringify({ success: true, invoice_number: booking.invoice_number, invoice_url: existing.signedUrl }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    // Toujours régénéré : le montant ou la période ont pu changer depuis un devis précédent.
 
     const [{ data: tenant }, { data: customer }] = await Promise.all([
       supabase.from("tenants").select(
@@ -122,7 +127,7 @@ Deno.serve(async (req) => {
     }
 
     page.drawText(`N° ${invoiceNumber}`, { x: width - 200, y: height - 82, size: 11, font: fontBold, color: black });
-    page.drawText(`Date : ${now.toLocaleDateString("fr-FR")}`, { x: width - 200, y: height - 97, size: 10, font, color: black });
+    page.drawText(`Date : ${formatParisDate(now)}`, { x: width - 200, y: height - 97, size: 10, font, color: black });
     page.drawText("Valable 30 jours", { x: width - 200, y: height - 112, size: 9, font, color: gray });
 
     y -= 20;
@@ -169,8 +174,14 @@ Deno.serve(async (req) => {
     y -= 16;
 
     const pickupDate = booking.pickup_time
-      ? new Date(booking.pickup_time).toLocaleString("fr-FR")
+      ? formatParisDate(booking.pickup_time, true)
       : "—";
+    // Mise à disposition : période (début, fin = début + durée) ; longue distance : itinéraire seul (D-34).
+    const hours = Number(booking.duration_hours ?? 0);
+    const isHourly = booking.booking_type === "hourly" && booking.pickup_time && hours > 0;
+    const periodEnd = isHourly
+      ? formatParisDate(new Date(new Date(booking.pickup_time).getTime() + hours * 3600_000), true)
+      : null;
     const subtotal = Number(booking.subtotal_amount ?? booking.total_amount ?? 0);
 
     page.drawText(`Course VTC — ${pickupDate}`, { x: col[0], y, size: 10, font: fontBold, color: black });
@@ -180,8 +191,10 @@ Deno.serve(async (req) => {
     y -= 14;
 
     for (const detail of [
+      isHourly ? `Période : du ${pickupDate} au ${periodEnd}` : null,
+      isHourly ? `Durée : ${hours} h` : null,
       `Départ : ${booking.pickup_address ?? "—"}`,
-      `Arrivée : ${booking.dropoff_address ?? "—"}`,
+      isHourly ? null : `Arrivée : ${booking.dropoff_address ?? "—"}`,
       booking.passenger_count ? `${booking.passenger_count} passager(s)` : null,
       booking.luggage_count ? `${booking.luggage_count} bagage(s)` : null,
     ].filter(Boolean) as string[]) {

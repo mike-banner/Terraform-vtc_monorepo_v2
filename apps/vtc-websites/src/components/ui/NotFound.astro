@@ -1,0 +1,15 @@
+---
+// Page « introuvable » commune : catch-all, /404 et tunnels inconnus ou non exposés.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StatusPage from "./StatusPage.astro";
+
+const tenantName = Astro.locals.tenant?.name;
+Astro.response.status = 404;
+---
+
+<BaseLayout title="Page introuvable" minimal>
+  <StatusPage tone="error" title="Page introuvable" tenantName={tenantName}>
+    <p>L'adresse demandée n'existe pas ou a été déplacée.</p>
+    <a slot="actions" href="/" class="inline-flex h-11 w-full items-center justify-center rounded-md bg-ui-ink px-4 text-sm font-semibold text-ui-card transition-colors hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-ink">Retour à l'accueil</a>
+  </StatusPage>
+</BaseLayout>

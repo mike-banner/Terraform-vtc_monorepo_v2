@@ -3,6 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["SITE_MAP"],
       "outputs": [".astro/**", "dist/**"]
     },
     "dev": {

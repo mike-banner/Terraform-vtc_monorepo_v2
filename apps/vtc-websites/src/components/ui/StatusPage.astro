@@ -1,0 +1,45 @@
+---
+// Page d'état commune à tous les sites : succès, attente, erreur.
+// Les couleurs et la police viennent des tokens `ui-*` de global.css.
+export interface Props {
+  tone: 'success' | 'pending' | 'error';
+  title: string;
+  tenantName?: string;
+}
+
+const { tone, title, tenantName } = Astro.props;
+
+const toneClass = {
+  success: 'bg-ui-ok-soft text-ui-ok',
+  pending: 'bg-ui-wait-soft text-ui-wait',
+  error: 'bg-ui-bad-soft text-ui-bad',
+}[tone];
+---
+
+<div class="min-h-screen bg-ui-page text-ui-ink font-[family-name:var(--font-body)] flex flex-col items-center justify-center px-4 py-12">
+  {tenantName && <p class="mb-6 text-sm font-semibold text-ui-muted">{tenantName}</p>}
+
+  <div class="w-full max-w-md rounded-lg border border-ui-line bg-ui-card p-8 shadow-sm">
+    <div class={`mb-5 inline-flex h-10 w-10 items-center justify-center rounded-full ${toneClass}`} aria-hidden="true">
+      {tone === 'success' && (
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+      )}
+      {tone === 'pending' && (
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+      )}
+      {tone === 'error' && (
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 17h.01" /><circle cx="12" cy="12" r="9" /></svg>
+      )}
+    </div>
+
+    <h1 class="text-xl font-semibold text-balance" role={tone === 'error' ? 'alert' : undefined}>{title}</h1>
+
+    <div class="mt-3 space-y-4 text-sm leading-6 text-ui-muted">
+      <slot />
+    </div>
+
+    <div class="mt-8">
+      <slot name="actions" />
+    </div>
+  </div>
+</div>

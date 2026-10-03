@@ -1,0 +1,77 @@
+---
+// Route commune des tunnels (D-29 c) : la même pour tous les sites ; seuls la landing et la configuration changent par site.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// Désactiver le layout standard pour les tunnels (ils ont leur propre layout)
+export const partial = false;
+
+// Récupérer le slug depuis les params Astro, ou l'extraire du path si appelé via le router global
+const { slug, path } = Astro.params;
+const currentSlug = slug || (path?.startsWith('tunnels/') ? path.replace('tunnels/', '') : '');
+
+// Rediriger l'ancienne route 'airport' vers 'transfert'
+if (currentSlug === 'airport') {
+  return Astro.redirect('/tunnels/transfert');
+}
+
+// Normaliser le slug pour correspondre aux clés de serviceConfigs
+const slugMap: Record<string, string> = {
+  transfert: 'transfert',
+  'long-distance': 'longDistance',
+  availability: 'availability',
+};
+
+const normalizedSlug = slugMap[currentSlug as keyof typeof slugMap];
+
+// Vérifier si le slug est valide
+if (!normalizedSlug) {
+  console.error(`[TUNNEL] Slug invalide: ${currentSlug}`);
+  return Astro.rewrite('/404');
+}
+
+// Composants disponibles (mapping dynamique)
+const tunnelComponents: Record<string, () => Promise<{ default: any }>> = {
+  transfert: () => import('../../components/tunnels/TransfertTunnel.astro'),
+  longDistance: () => import('../../components/tunnels/LongDistanceTunnel.astro'),
+  availability: () => import('../../components/tunnels/AvailabilityTunnel.astro'),
+};
+
+// Vérifier si le composant existe
+if (!tunnelComponents[normalizedSlug]) {
+  console.error(`[TUNNEL] Composant introuvable pour: ${normalizedSlug}`);
+  return Astro.rewrite('/404');
+}
+
+// Charger le composant dynamiquement
+let TunnelResult;
+try {
+  TunnelResult = await tunnelComponents[normalizedSlug]();
+} catch (error) {
+  console.error(`[TUNNEL] Erreur de chargement du composant: ${error}`);
+  return Astro.rewrite('/404');
+}
+
+const TunnelComponent = TunnelResult.default;
+
+// Métadonnées SEO par tunnel
+const seoConfigs = {
+  transfert: {
+    title: 'Transfert privé',
+    description: 'Réservez votre transfert privé en ligne.',
+  },
+  longDistance: {
+    title: 'Longue distance',
+    description: 'Réservez en ligne votre trajet longue distance.',
+  },
+  availability: {
+    title: 'Mise à disposition',
+    description: "Chauffeur privé à votre disposition à l'heure ou à la journée.",
+  },
+};
+
+const seo = seoConfigs[normalizedSlug as keyof typeof seoConfigs] || seoConfigs.transfert;
+---
+
+<BaseLayout title={seo.title} description={seo.description} minimal={true}>
+  <TunnelComponent serviceType={normalizedSlug} />
+</BaseLayout>

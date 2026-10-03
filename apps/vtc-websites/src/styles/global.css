@@ -28,6 +28,20 @@
   --font-headline: 'Poppins', sans-serif;
   --font-body: 'Roboto', sans-serif;
   --font-label: 'Poppins', sans-serif;
+
+  /* Pages d'état communes (succès, attente, erreur) : neutres, la police suit --font-body du site */
+  --color-ui-page: #f6f9fc;
+  --color-ui-card: #ffffff;
+  --color-ui-ink: #1a1f36;
+  --color-ui-muted: #4f566b;
+  --color-ui-line: #e3e8ee;
+  --color-ui-line-strong: #8792a2;
+  --color-ui-ok: #137752;
+  --color-ui-ok-soft: #e6f4ee;
+  --color-ui-wait: #8a5a00;
+  --color-ui-wait-soft: #fdf3dc;
+  --color-ui-bad: #b3261e;
+  --color-ui-bad-soft: #fbe9e7;
 }
 
 @layer utilities {
@@ -100,4 +114,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 .bg-secondary {
   background-color: var(--color-secondary) !important;
+}
+
+/* Champ refusé dans un tunnel */
+[aria-invalid='true'] {
+  border-color: var(--color-ui-bad) !important;
 }

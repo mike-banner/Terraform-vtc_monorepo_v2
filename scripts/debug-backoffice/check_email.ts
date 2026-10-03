@@ -25,4 +25,9 @@ async function checkSpecificEmail(email: string) {
   }
 }
 
-checkSpecificEmail("mike.webfree@gmail.com");
+const emailArg = process.argv[2];
+if (!emailArg) {
+  console.error("usage : check_email.ts <adresse e-mail>");
+  process.exit(1);
+}
+checkSpecificEmail(emailArg);

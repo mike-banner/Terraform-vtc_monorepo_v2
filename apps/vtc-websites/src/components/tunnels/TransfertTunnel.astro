@@ -6,9 +6,11 @@ import InlineError from '../ui/InlineError.astro';
 import ContactStep from './steps/ContactStep.astro';
 import VehicleGridStep from './steps/VehicleGridStep.astro';
 import { supabase } from '../../core/supabase';
+import { configDuSite } from '../../core/site-config';
 import DateTimePicker from './steps/DateTimePicker.astro';
 
 const { tenant } = Astro.locals;
+const site = configDuSite(Astro.url.host);
 const tenantId = tenant?.id || "";
 
 // 1 & 2. Récupération des données en parallèle pour accélérer le chargement SSR
@@ -19,7 +21,7 @@ const [
   supabase.rpc('get_available_vehicles', { p_tenant_id: tenantId }),
   supabase
     .from('fixed_routes')
-    .select('*, pickup_zone:pickup_zone_id(name), dropoff_zone:dropoff_zone_id(name)')
+    .select('*, pickup_zone:pickup_zone_id(name, postal_codes), dropoff_zone:dropoff_zone_id(name, postal_codes)')
     .eq('tenant_id', tenantId)
     .eq('active', true)
 ]);
@@ -63,21 +65,21 @@ const { serviceType = 'airport', ...props } = Astro.props;
 ---
 
 <TunnelLayout currentStep={1} totalSteps={4} serviceType={serviceType} {...props}>
-  <div id="tunnel-data" data-tenant-id={tenantId} data-routes={JSON.stringify(fixedRoutesData)} class="hidden"></div>
+  <div id="tunnel-data" data-tenant-id={tenantId} data-routes={JSON.stringify(fixedRoutesData)} data-placeholder-adresse={site.transfertPlaceholderAdresse} class="hidden"></div>
   <form id='tunnel-form' class='max-w-4xl mx-auto' novalidate>
     <!-- Étape 1: Sélection transfert/aéroport -->
     <div class='step-container' data-step='1'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>
           Sélectionnez votre trajet
         </h2>
-        <p class='text-zinc-600 mb-8'>
+        <p class='text-ui-muted mb-5'>
           Choisissez le forfait fixe et le sens du trajet.
         </p>
 
         <div class='mb-8'>
-          <label class='block text-sm font-medium text-zinc-700 mb-2'>Liaison disponible</label>
-          <select name='routeSelect' id='routeSelect' class='w-full px-4 py-4 border-2 border-zinc-200 rounded-xl focus:ring-2 focus:ring-accent focus:border-accent bg-white text-zinc-900 font-medium text-lg' required>
+          <label class='block text-sm font-medium text-ui-ink mb-1.5'>Liaison disponible</label>
+          <select name='routeSelect' id='routeSelect' class='w-full px-4 py-4 border-2 border-ui-line rounded-xl focus:ring-2 focus:ring-primary focus:border-primary bg-ui-card text-ui-ink font-medium text-lg' required>
             <option value='' disabled selected>Sélectionnez un trajet...</option>
             {destinations.map(dest => (
               <option value={`${dest.pickup}|${dest.dropoff}`} data-min-price={dest.minPrice}>
@@ -89,43 +91,39 @@ const { serviceType = 'airport', ...props } = Astro.props;
 
         <!-- Visuel Départ / Arrivée + Bouton Swap -->
         <div id="directionDisplayContainer" class="hidden mb-8">
-          <div class="flex items-center justify-between p-4 bg-white border-2 border-zinc-200 rounded-xl">
+          <div class="flex items-center justify-between p-4 bg-ui-card border-2 border-ui-line rounded-xl">
             <div class="flex-1 text-center">
-              <div class="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-1">Départ</div>
-              <div id="displayPickup" class="font-bold text-zinc-900 text-lg sm:text-xl">---</div>
+              <div class="text-xs text-ui-muted uppercase tracking-wider font-semibold mb-1">Départ</div>
+              <div id="displayPickup" class="font-bold text-ui-ink text-lg sm:text-xl">---</div>
             </div>
             
-            <button type="button" id="swapDirectionBtn" class="w-12 h-12 rounded-full bg-zinc-50 border border-zinc-200 shadow-sm flex flex-col items-center justify-center text-zinc-600 hover:text-accent hover:border-accent transition-all shrink-0 mx-2 sm:mx-4 group relative">
+            <button type="button" id="swapDirectionBtn" class="w-12 h-12 rounded-full bg-ui-page border border-ui-line shadow-sm flex flex-col items-center justify-center text-ui-muted hover:text-primary hover:border-primary transition-all shrink-0 mx-2 sm:mx-4 group relative">
               <Icon name="ri:arrow-left-right-line" class="text-xl group-hover:rotate-180 transition-transform duration-300" />
             </button>
             
             <div class="flex-1 text-center">
-              <div class="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-1">Arrivée</div>
-              <div id="displayDropoff" class="font-bold text-zinc-900 text-lg sm:text-xl">---</div>
+              <div class="text-xs text-ui-muted uppercase tracking-wider font-semibold mb-1">Arrivée</div>
+              <div id="displayDropoff" class="font-bold text-ui-ink text-lg sm:text-xl">---</div>
             </div>
           </div>
           <input type="hidden" name="direction" id="directionState" value="forward" />
         </div>
 
-        <div id="addressFieldsContainer" class="hidden space-y-6 p-6 bg-zinc-50 border border-zinc-200 rounded-xl">
-          <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 text-sm text-blue-700 hidden" id="parisAlert">
-            <p class="font-bold">Information importante :</p>
-            <p>L'adresse dans Paris doit obligatoirement inclure un code postal valide (ex: <span class="font-bold">75001</span>).</p>
-          </div>
+        <div id="addressFieldsContainer" class="hidden space-y-6 p-6 bg-ui-page border border-ui-line rounded-xl">
           <div>
-            <label id="pickupLabel" class='block text-sm font-medium text-zinc-700 mb-2'>Adresse de départ</label>
-            <input type='text' name='pickupAddress' id='pickupAddress' class='w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent' required />
+            <label id="pickupLabel" class='block text-sm font-medium text-ui-ink mb-1.5'>Adresse de départ</label>
+            <input type='text' name='pickupAddress' id='pickupAddress' class='w-full px-4 py-2.5 bg-ui-card text-ui-ink border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
             <InlineError id="pickupError" />
           </div>
           <div>
-            <label id="dropoffLabel" class='block text-sm font-medium text-zinc-700 mb-2'>Adresse d'arrivée</label>
-            <input type='text' name='dropoffAddress' id='dropoffAddress' class='w-full px-4 py-3 bg-white text-zinc-900 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent' required />
+            <label id="dropoffLabel" class='block text-sm font-medium text-ui-ink mb-1.5'>Adresse d'arrivée</label>
+            <input type='text' name='dropoffAddress' id='dropoffAddress' class='w-full px-4 py-2.5 bg-ui-card text-ui-ink border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
             <InlineError id="dropoffError" />
           </div>
-          <div id="flightTrackingContainer" class="hidden mt-4 pt-4 border-t border-zinc-200">
+          <div id="flightTrackingContainer" class="hidden mt-4 pt-4 border-t border-ui-line">
             <label class='flex items-center gap-3 cursor-pointer'>
-              <input type='checkbox' name='flightTracking' class='w-5 h-5 text-accent rounded focus:ring-accent' />
-              <span class='text-sm text-zinc-700'>Activer le suivi de vol/train (ajustement de l'heure en cas de retard)</span>
+              <input type='checkbox' name='flightTracking' class='w-5 h-5 text-primary rounded focus:ring-primary' />
+              <span class='text-sm text-ui-ink'>Activer le suivi de vol/train (ajustement de l'heure en cas de retard)</span>
             </label>
           </div>
         </div>
@@ -135,7 +133,6 @@ const { serviceType = 'airport', ...props } = Astro.props;
     <!-- Étape 2: Type de véhicule -->
     <VehicleGridStep 
       stepNumber={2} 
-      themeColor="accent" 
       vehicleTypes={vehicleTypes} 
       title="Choisissez votre véhicule"
       subtitle="Sélectionnez le type de véhicule adapté à vos besoins"
@@ -143,9 +140,9 @@ const { serviceType = 'airport', ...props } = Astro.props;
 
     <!-- Étape 3: Date et heure -->
     <div class='step-container hidden' data-step='3'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Date et heure du transfert</h2>
-        <p class='text-zinc-600 mb-8'>Précisez la date et l'heure de votre trajet</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Date et heure du transfert</h2>
+        <p class='text-ui-muted mb-5'>Précisez la date et l'heure de votre trajet</p>
 
         <DateTimePicker
           variant='flatpickr'
@@ -162,13 +159,14 @@ const { serviceType = 'airport', ...props } = Astro.props;
 
     
     <!-- Étape 4: Coordonnées -->
-    <ContactStep stepNumber={4} themeColor="accent" />
+    <ContactStep stepNumber={4} withInstructions />
   </form>
 </TunnelLayout>
 
 <script>
   import { supabase } from '../../core/supabase';
   import { TunnelManager } from '../../core/tunnel-core';
+  import { codePostalAdresse, statutExtremite, zonesDuSens } from '../../core/zone-check.mjs';
   
   function initTunnel() {
     const dataDiv = document.getElementById('tunnel-data');
@@ -176,7 +174,10 @@ const { serviceType = 'airport', ...props } = Astro.props;
 
     const tenantId = dataDiv.dataset.tenantId;
     const routes = JSON.parse(dataDiv.dataset.routes || '[]');
+    const placeholderAdresse = dataDiv.dataset.placeholderAdresse || '';
+    const estAeroport = (lieu: string) => /a[ée]roport|airport|terminal/i.test(lieu);
 
+    const montrer = (t: string) => { const m = document.getElementById('tunnel-message'); if (m) m.textContent = t; };
     const routeSelect = document.getElementById('routeSelect') as HTMLSelectElement;
     const vehicleInputs = document.querySelectorAll('input[name="vehicle"]');
     const pickupInput = document.getElementById('pickupAddress') as HTMLInputElement;
@@ -186,7 +187,6 @@ const { serviceType = 'airport', ...props } = Astro.props;
     const flightTrackingContainer = document.getElementById('flightTrackingContainer');
     const addressFieldsContainer = document.getElementById('addressFieldsContainer');
     const directionDisplayContainer = document.getElementById('directionDisplayContainer');
-    const parisAlert = document.getElementById('parisAlert');
     
     const swapBtn = document.getElementById('swapDirectionBtn');
     const directionState = document.getElementById('directionState') as HTMLInputElement;
@@ -200,43 +200,52 @@ const { serviceType = 'airport', ...props } = Astro.props;
       },
       onValidateStep: async (stepIndex, formData) => {
         // Cacher les erreurs précédentes
+        montrer('');
         const pickupError = document.getElementById('pickupError');
         const dropoffError = document.getElementById('dropoffError');
         if (pickupError) pickupError.classList.add('hidden');
         if (dropoffError) dropoffError.classList.add('hidden');
 
         if (stepIndex === 1) {
-          if (!routeSelect.value) { alert("Veuillez sélectionner un trajet."); return false; }
+          if (!routeSelect.value) { montrer("Veuillez sélectionner un trajet."); return false; }
           const pAddress = formData.get('pickupAddress') as string;
           const dAddress = formData.get('dropoffAddress') as string;
-          if (!pAddress || !dAddress) { alert("Veuillez indiquer les adresses de départ et d'arrivée."); return false; }
+          if (!pAddress || !dAddress) { montrer("Veuillez indiquer les adresses de départ et d'arrivée."); return false; }
 
+          // Contrôle des deux extrémités contre les codes postaux des zones du chauffeur (D-33).
+          // Zone sans code, adresse introuvable ou service muet : on laisse passer, le serveur signale.
           const [basePickup, baseDropoff] = routeSelect.value.split('|');
-          const isForward = directionState.value === 'forward';
-          const currentPickup = isForward ? basePickup : baseDropoff;
-          const currentDropoff = isForward ? baseDropoff : basePickup;
-          
-          let hasError = false;
-          const parisRegex = /75\d{3}/;
-          if (currentPickup.toLowerCase().includes('paris') && !parisRegex.test(pAddress)) {
-            if (pickupError) { pickupError.textContent = `Veuillez inclure un code postal parisien (ex: 75001).`; pickupError.classList.remove('hidden'); }
-            hasError = true;
+          const route = routes.find((r: any) => r.pickup_zone?.name === basePickup && r.dropoff_zone?.name === baseDropoff);
+          if (route) {
+            const { depart, arrivee } = zonesDuSens(route, directionState.value);
+            manager.setLoading(true, "Vérification de l'adresse…");
+            try {
+              const [cpDepart, cpArrivee] = await Promise.all([
+                depart?.postal_codes?.length ? codePostalAdresse(pAddress) : null,
+                arrivee?.postal_codes?.length ? codePostalAdresse(dAddress) : null,
+              ]);
+              const horsZone = (cp: string | null, z: any, el: HTMLElement | null) => {
+                if (statutExtremite(cp, z?.postal_codes) !== 'hors_zone') return false;
+                if (el) { el.textContent = `Cette adresse n'est pas dans la zone « ${z?.name} ».`; el.classList.remove('hidden'); }
+                return true;
+              };
+              const d = horsZone(cpDepart, depart, pickupError);
+              const a = horsZone(cpArrivee, arrivee, dropoffError);
+              if (d || a) return false;
+            } finally {
+              manager.setLoading(false);
+            }
           }
-          if (currentDropoff.toLowerCase().includes('paris') && !parisRegex.test(dAddress)) {
-            if (dropoffError) { dropoffError.textContent = `Veuillez inclure un code postal parisien (ex: 75001).`; dropoffError.classList.remove('hidden'); }
-            hasError = true;
-          }
-          if (hasError) return false;
         }
 
-        if (stepIndex === 2 && !formData.get('vehicle')) { alert("Veuillez choisir un véhicule."); return false; }
-        if (stepIndex === 3 && (!formData.get('date') || !formData.get('time'))) { alert("Veuillez préciser la date et l'heure."); return false; }
+        if (stepIndex === 2 && !formData.get('vehicle')) { montrer("Veuillez choisir un véhicule."); return false; }
+        if (stepIndex === 3 && (!formData.get('date') || !formData.get('time'))) { montrer("Veuillez préciser la date et l'heure."); return false; }
 
         if (stepIndex === 4) {
           if (!formData.get('firstName') || !formData.get('lastName') || !formData.get('email') || !formData.get('phone')) {
-            alert("Veuillez remplir vos coordonnées."); return false;
+            montrer("Veuillez remplir vos coordonnées."); return false;
           }
-          if (!formData.get('vehicle')) { alert("Veuillez sélectionner un véhicule à l'étape 2."); return false; }
+          if (!formData.get('vehicle')) { montrer("Veuillez sélectionner un véhicule à l'étape 2."); return false; }
         }
         return true;
       },
@@ -271,14 +280,16 @@ const { serviceType = 'airport', ...props } = Astro.props;
               },
               booking_data: {
                 tenant_id: tenantId,
-                type: 'standard',
+                type: 'transfer',
                 vehicle_id: vehicleId,
                 fixed_route_id: route.id,
+                direction: directionState.value,
                 pickup_address: formData.get('pickupAddress') || pickupZone,
                 dropoff_address: formData.get('dropoffAddress') || dropoffZone,
                 pickup_time: scheduledDate,
                 passenger_count: 1,
-                luggage_count: 0
+                luggage_count: 0,
+                instructions: String(formData.get('instructions') ?? '').trim().slice(0, 500)
               }
             }
           });
@@ -288,7 +299,7 @@ const { serviceType = 'airport', ...props } = Astro.props;
           else throw new Error("Impossible de générer le lien de paiement Stripe.");
         } catch (err: any) {
           console.error("Checkout error:", err);
-          alert(err.message || "Erreur lors de la création du paiement");
+          montrer("Le paiement n'a pas pu être lancé. Aucun montant n'a été débité, merci de réessayer dans un instant.");
           manager.setLoading(false);
         }
       }
@@ -318,19 +329,32 @@ const { serviceType = 'airport', ...props } = Astro.props;
       if (displayPickup) displayPickup.textContent = currentPickup;
       if (displayDropoff) displayDropoff.textContent = currentDropoff;
 
-      const isParis = currentPickup.toLowerCase().includes('paris') || currentDropoff.toLowerCase().includes('paris');
-      if (parisAlert) {
-        if (isParis) parisAlert.classList.remove('hidden');
-        else parisAlert.classList.add('hidden');
-      }
-
-      const isAirportPickup = currentPickup.toLowerCase().match(/aéroport|aeroport|cdg|ory|lys/);
+      const isAirportPickup = estAeroport(currentPickup);
 
       if (pickupLabel) pickupLabel.textContent = `Adresse exacte de départ (${currentPickup})`;
       if (dropoffLabel) dropoffLabel.textContent = `Adresse exacte d'arrivée (${currentDropoff})`;
-      
-      pickupInput.placeholder = isAirportPickup ? `Ex: Terminal 2E, Vol AF123` : (currentPickup.toLowerCase().includes('paris') ? 'Ex: 1 Rue de Rivoli, 75001 Paris' : 'Ex: Adresse complète');
-      dropoffInput.placeholder = currentDropoff.toLowerCase().includes('paris') ? 'Ex: 1 Rue de Rivoli, 75001 Paris' : 'Ex: Adresse complète';
+
+      pickupInput.placeholder = isAirportPickup ? 'Ex : terminal, n° de vol' : placeholderAdresse;
+      dropoffInput.placeholder = placeholderAdresse;
+
+      // Une extrémité dont la zone n'a pas de codes postaux (aéroport, gare) n'est pas contrôlable : pas de saisie libre,
+      // le champ porte le nom de la zone. Les détails (terminal, vol) vont dans les instructions de l'étape 4.
+      const route = routes.find((r: any) => r.pickup_zone?.name === basePickup && r.dropoff_zone?.name === baseDropoff);
+      const { depart, arrivee } = route ? zonesDuSens(route, directionState.value) : { depart: null, arrivee: null };
+      const verrou = ['bg-ui-page', 'text-ui-muted', 'cursor-not-allowed'];
+      const fixer = (input: HTMLInputElement, zone: any) => {
+        if (zone && !zone.postal_codes?.length) {
+          input.value = zone.name;
+          input.readOnly = true;
+          input.classList.add(...verrou);
+        } else if (input.readOnly) {
+          input.value = '';
+          input.readOnly = false;
+          input.classList.remove(...verrou);
+        }
+      };
+      fixer(pickupInput, depart);
+      fixer(dropoffInput, arrivee);
 
       if (flightTrackingContainer) {
         if (isAirportPickup) flightTrackingContainer.classList.remove('hidden');
@@ -364,12 +388,12 @@ const { serviceType = 'airport', ...props } = Astro.props;
         if (priceDiv) {
           if (route && route.price) {
             priceDiv.textContent = `${route.price} €`;
-            priceDiv.classList.remove('text-amber-600', 'text-sm');
-            priceDiv.classList.add('text-accent', 'text-lg');
+            priceDiv.classList.remove('text-ui-wait', 'text-sm');
+            priceDiv.classList.add('text-primary', 'text-lg');
           } else {
             priceDiv.textContent = `Sur devis`;
-            priceDiv.classList.remove('text-amber-600', 'text-sm');
-            priceDiv.classList.add('text-accent', 'text-lg');
+            priceDiv.classList.remove('text-ui-wait', 'text-sm');
+            priceDiv.classList.add('text-primary', 'text-lg');
           }
           radio.disabled = false;
           vehicleCard.style.opacity = '1';

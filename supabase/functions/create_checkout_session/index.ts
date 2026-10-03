@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@12.18.0?target=deno&no-check';
+import { alerteAdresse, codePostalAdresse, statutExtremite, zonesDuSens } from '../_shared/zone-check.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -110,14 +111,15 @@ Deno.serve(async (req) => {
 
     if (!tenant) throw new Error('tenant not found');
 
-    if (!tenant.stripe_account_id) {
-      throw new Error('stripe not connected');
-    }
+    // Paiement direct sur la clé de l'instance (D-18) ; chemin Connect gardé tel quel, dormant (D-20).
+    const connected = !!tenant.stripe_account_id;
 
-    const account = await stripe.accounts.retrieve(tenant.stripe_account_id);
+    if (connected) {
+      const account = await stripe.accounts.retrieve(tenant.stripe_account_id);
 
-    if (!account.charges_enabled) {
-      throw new Error('stripe not ready');
+      if (!account.charges_enabled) {
+        throw new Error('stripe not ready');
+      }
     }
 
     // =========================
@@ -125,12 +127,13 @@ Deno.serve(async (req) => {
     // =========================
 
     let calculatedTotal = 0;
+    let addressAlert: string | null = null;
     const fixedRouteId = booking_data.fixed_route_id;
 
     if (fixedRouteId) {
       const { data: route, error: rErr } = await supabaseAdmin
         .from('fixed_routes')
-        .select('price, tenant_id, active')
+        .select('price, tenant_id, active, is_bidirectional, pickup_zone:pickup_zone_id(name, postal_codes), dropoff_zone:dropoff_zone_id(name, postal_codes)')
         .eq('id', fixedRouteId)
         .single();
 
@@ -144,6 +147,23 @@ Deno.serve(async (req) => {
         throw new Error('Fixed route tenant mismatch');
       }
       calculatedTotal = Number(route.price);
+
+      // Contrôle de zone des deux extrémités (D-33) : signalement, jamais un refus de paiement.
+      try {
+        const { depart, arrivee } = zonesDuSens(route as any, booking_data.direction);
+        const statut = async (zone: any, adresse: unknown) =>
+          statutExtremite(
+            zone?.postal_codes?.length ? await codePostalAdresse(String(adresse ?? '')) : null,
+            zone?.postal_codes,
+          );
+        const [sDepart, sArrivee] = await Promise.all([
+          statut(depart, booking_data.pickup_address),
+          statut(arrivee, booking_data.dropoff_address),
+        ]);
+        addressAlert = alerteAdresse(sDepart, sArrivee);
+      } catch {
+        addressAlert = 'a_verifier';
+      }
     } else {
       const { data: allPricingRules, error: prErr } = await supabaseAdmin
         .from('pricing_rules')
@@ -206,6 +226,8 @@ Deno.serve(async (req) => {
         fixed_route_id: booking_data.fixed_route_id || "",
         passenger_count: String(booking_data.passenger_count || "1"),
         luggage_count: String(booking_data.luggage_count || "0"),
+        instructions: String(booking_data.instructions ?? "").trim().slice(0, 500),
+        address_alert: addressAlert ?? "",
       },
 
       line_items: [
@@ -221,18 +243,22 @@ Deno.serve(async (req) => {
         },
       ],
 
-      payment_intent_data: {
-        application_fee_amount: feeInCents > 0 ? feeInCents : undefined,
+      ...(connected
+        ? {
+          payment_intent_data: {
+            application_fee_amount: feeInCents > 0 ? feeInCents : undefined,
 
-        transfer_data: {
-          destination: tenant.stripe_account_id,
-        },
+            transfer_data: {
+              destination: tenant.stripe_account_id,
+            },
 
-        on_behalf_of: tenant.stripe_account_id,
-      },
+            on_behalf_of: tenant.stripe_account_id,
+          },
+        }
+        : {}),
 
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/transfert`,
+      cancel_url: `${origin}/tunnels/transfert`,
     });
 
     await supabaseAdmin.from('stripe_events').insert({

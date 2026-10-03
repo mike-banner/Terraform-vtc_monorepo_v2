@@ -59,3 +59,114 @@ heure 50, minimum 20 ; transfert 30 km = 70 ; transfert 2 km = 20 ; hourly 2 h =
 
 **Déclencheur pour rouvrir :** toute modification de la formule, ou la migration des Edge Functions de paiement
 vers la RPC (appel `calculate_booking_price` avec la clé service_role).
+
+## Modals génériques du backoffice (remplacer alert, confirm, prompt du navigateur)
+
+**Reporté depuis :** Phase 14.1 (2026-10-02), décision utilisateur après test du parcours d'annulation : les fenêtres
+`alert`, `confirm` et `prompt` du navigateur ne sont pas celles de l'application.
+**État actuel :** environ 23 appels, dans `scripts/bookings.ts` (13), `pricing.astro` (3), `settings.astro` (4),
+`setup.astro` (2) et `profile.astro` (1).
+**À faire :** un modal générique centré (titre, message, champs variables, boutons) avec une API d'appel
+unique, utilisé partout. Version bureau en React lors de la Phase 16 (pages en React). Version mobile avec la
+Phase 18 (notifications), pas avant.
+
+**Déclencheur pour rouvrir :** démarrage de la Phase 16, ou un retour utilisateur sur ces fenêtres.
+
+## Fiscal : fiche de course cliquable dans le détail du mois
+
+**Reporté depuis :** Phase 14.1 (2026-10-02), décision utilisateur.
+**État actuel :** la ligne du détail du mois montre la date, le client, le mode, HT et TVA. Les remboursements sont
+distingués (libellé, montants négatifs, export CSV typé et signé) depuis la 14.1.
+**À faire :** rendre la ligne cliquable, avec une fiche en modal : trajet, horaires, montants (HT, TVA, TTC),
+mode de paiement, statut, remboursement lié, lien vers la facture ou l'avoir. À faire avec le modal générique
+ci-dessus, lors de la migration de la page `ledger` (Phase 16).
+
+**Déclencheur pour rouvrir :** migration de `ledger` en React, ou demande de l'expert-comptable du premier client.
+
+## Première connexion guidée (React) : liste des éléments obligatoires, étape par étape
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1.
+**Idée :** à la première connexion, le propriétaire doit renseigner ce qui est **obligatoire pour que l'application
+tourne** (par exemple : coordonnées et mentions légales du tenant, tarifs de départ, véhicule, profil chauffeur,
+compte de paiement). On en fait une **liste** guidée, **étape par étape**, avec des animations qui mettent le focus sur
+ce qui reste à remplir.
+**À faire :** dresser d'abord la liste exacte des prérequis (à partir de l'assistant `/app/setup` actuel et de ce que
+`create_checkout_session`, les factures et le grand livre exigent), puis concevoir le parcours en React lors de la
+Phase 16 (pages en React).
+
+**Déclencheur pour rouvrir :** démarrage de la Phase 16, ou première installation d'un client réel (le script
+d'installation d'instance crée le tenant et le propriétaire, pas ces éléments).
+
+## Mise à disposition longue : conflits de créneaux et transfert à un collègue
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1 (plan 05).
+**Contexte :** une mise à disposition peut durer une semaine (le plan 05 plafonne aujourd'hui `duration_hours` à 24 h). Si un
+transfert arrive pendant ce créneau, le chauffeur doit soit l'annuler (remboursement existant), soit l'envoyer à un collègue.
+**Dans la Phase 14.1 :** contrôle de chevauchement à la validation d'un devis et alerte de conflit dans le backoffice (voir plan 05).
+**Reporté :** « transférer la course à un collègue » (flux d'affectation à un autre chauffeur, avec acceptation), et le blocage
+des créneaux déjà pris directement dans le tunnel de réservation des clients.
+
+**Déclencheur pour rouvrir :** premier chauffeur avec plusieurs véhicules ou collègues, ou premier conflit réel de créneau.
+
+## Calendrier de disponibilités (créneaux pris) pour la mise à disposition et les transferts
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1 (plan 05). Remplace l'idée d'une durée plafonnée.
+**Idée :** un calendrier des créneaux pris (courses acceptées, mises à disposition, périodes bloquées à la main : congés,
+repos), par chauffeur ou par véhicule, qui sert de base unique au contrôle de chevauchement. La durée d'une mise à
+disposition n'est pas bornée (une semaine ou plus) : on saisit une période (début, fin) plutôt qu'un nombre d'heures.
+**Affichage :** pour le chauffeur, dans le backoffice (React, Phase 16). Pour le client, **orientation du 2026-10-02 : un
+calendrier dans le tunnel des réservations à paiement immédiat (Transfert), avec les créneaux déjà pris grisés**, parce qu'une
+course payée puis refusée est la pire expérience. Pas de calendrier pour les devis (aucun paiement, le chauffeur valide à la
+main). Réserve du chauffeur : un client qui voit le chauffeur toujours complet peut ne pas revenir.
+**Compromis à étudier :** réglage par chauffeur (afficher ou non ses disponibilités) ; **compromis n°2 retenu le 2026-10-02** : ne griser que les **jours ou demi-journées
+entièrement indisponibles** (mise à disposition longue, congés) et vérifier le créneau exact en silence au paiement ; ne jamais exposer la
+raison de l'indisponibilité ni le détail des courses.
+**Frontières (2026-10-02) :** matin avant midi, après-midi après midi ; la nuit se traite comme une mise à disposition. Un
+transfert occupe une demi-journée (route, repos, embouteillages : toujours anticiper).
+**Prérequis de données :** une heure de fin pour **toutes** les courses (aujourd'hui seules les mises à disposition ont
+`duration_hours` ; il faudrait une durée estimée par trajet fixe et une marge entre deux courses) ; plusieurs chauffeurs ou
+véhicules : disponible s'il en reste un de libre.
+**Dans la Phase 14.1 :** seulement le contrôle de chevauchement côté base (début + `duration_hours`, sans plafond de 24 h) et
+l'alerte de conflit. Le calendrier visuel et le blocage dans le tunnel sont reportés.
+
+**Déclencheur pour rouvrir :** démarrage de la Phase 16 (pages en React), ou premier conflit réel de créneau.
+
+## Business (B2B) : demi-journée, journée, semaine, mois, avec facture électronique
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1 (plan 05).
+**Idée :** le tunnel Business fonctionne comme la mise à disposition, avec des forfaits entreprise : demi-journée, journée,
+semaine, mois. Il s'adresse à des entreprises et suppose la **facture électronique** (réforme française de la facturation
+électronique, calendrier et obligations à faire confirmer par l'expert-comptable).
+**Décision :** on le met de côté tant que la facture électronique n'existe pas. Dans la 14.1, le tunnel Business n'est pas
+exposé aux clients.
+**À faire :** forfaits (demi-journée, journée, semaine, mois) avec kilométrage inclus éventuel, devis, puis émission d'une
+facture électronique conforme.
+
+**Déclencheur pour rouvrir :** mise en place de la facture électronique, ou première demande d'une entreprise.
+
+## Simplification des rôles : retirer `manager`, garder `owner` et `driver`
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1. Moment non fixé.
+**Constat :** le rôle `manager` est déjà **inatteignable** : la Phase 9 a retenu le mode solo comme chemin nominal (`approve_onboarding_tx`
+crée le tenant et le profil `owner`), le multi-chauffeurs et `manager` sont renvoyés à un milestone dédié, et aucun écran
+n'attribue ce rôle. Les profils locaux ne contiennent que des `owner`.
+**Étendue d'un retrait propre :** l'énumération `tenant_role` contient `manager` ; environ 42 lignes dans 13 migrations
+(politiques RLS, RPC), 2 Edge Functions, 8 suites SQL, 9 fichiers du backoffice (`guards.ts`, `AppLayout`, `env.d.ts`, `bookings`,
+etc.). Postgres ne sait pas retirer une valeur d'une énumération : il faut recréer le type et réécrire les objets qui en dépendent.
+**Plan en 4 temps :** (1) interdire l'attribution de `manager` ; (2) réécrire politiques et RPC sur `owner` et `driver` (les
+vérifications « owner ou manager » des plans 02, 03, 04 et 05 deviennent « owner ») ; (3) recréer l'énumération sans `manager` ;
+(4) aligner types, backoffice et suites SQL. Un plan, après la Phase 14.1, avant la Phase 15.
+**Pas dans la 14.1 :** le rôle est inoffensif aujourd'hui, et le retirer maintenant invaliderait les suites SQL tout juste
+validées pour un gain nul auprès du premier client.
+**Question produit à garder en tête :** sans `manager`, un assistant ou un régulateur d'agence ne peut pas avoir de compte
+distinct du propriétaire. Le premier client est un chauffeur : pas de conflit.
+
+**Déclencheur pour rouvrir :** fin de la Phase 14.1, ou première demande d'un compte non-chauffeur.
+
+## Politique de confidentialité du client : adresses envoyées à un service public
+
+**Noté le :** 2026-10-02, décision utilisateur, pendant la Phase 14.1 (plans 13 et 14).
+**À faire :** le contrôle de zone envoie l'adresse saisie par le client à `api-adresse.data.gouv.fr` (service public français,
+sans clé) pour en tirer le code postal. La politique de confidentialité de chaque client (le chauffeur) doit le mentionner :
+finalité (vérifier la zone du trajet), destinataire (service public de l'État), aucune conservation par nous.
+**Déclencheur pour rouvrir :** rédaction de la politique de confidentialité du premier client, ou mise en ligne de son site.

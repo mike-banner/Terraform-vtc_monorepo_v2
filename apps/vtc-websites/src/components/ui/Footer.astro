@@ -1,7 +1,11 @@
 ---
 // src/components/ui/Footer.astro
 import { Icon } from 'astro-icon/components';
+import { configDuSite } from '../../core/site-config';
 const { tenant } = Astro.locals;
+const site = configDuSite(Astro.url.host);
+const email = tenant?.email || site.email;
+const telephone = tenant?.phone || site.telephone;
 ---
 
 <footer class="bg-black text-white py-24 border-t border-white/5 font-sans">
@@ -56,14 +60,18 @@ const { tenant } = Astro.locals;
           <li>FAQ & Aide</li>
           <li>Mentions Légales</li>
           <li>Données personnelles</li>
-          <li class="mt-4 flex items-center gap-2">
-            <Icon name="ri:mail-line" class="text-white text-lg" />
-            <span class="text-white font-bold tracking-wide">{tenant.email || 'contact@lyon-estate.fr'}</span>
-          </li>
-          <li class="flex items-center gap-2">
-            <Icon name="ri:phone-line" class="text-zinc-500 text-lg" />
-            <span class="text-zinc-500">{tenant.phone || '+33 6 66 64 44 44'}</span>
-          </li>
+          {email && (
+            <li class="mt-4 flex items-center gap-2">
+              <Icon name="ri:mail-line" class="text-white text-lg" />
+              <span class="text-white font-bold tracking-wide">{email}</span>
+            </li>
+          )}
+          {telephone && (
+            <li class="flex items-center gap-2">
+              <Icon name="ri:phone-line" class="text-zinc-500 text-lg" />
+              <span class="text-zinc-500">{telephone}</span>
+            </li>
+          )}
         </ul>
       </div>
 

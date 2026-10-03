@@ -51,6 +51,8 @@ export class TunnelManager {
       e.preventDefault();
       const formData = new FormData(this.form!);
 
+      if (!this.validerChamps()) return;
+
       if (this.currentStep < this.maxSteps) {
         let isValid = true;
         if (this.config.onValidateStep) {
@@ -77,6 +79,39 @@ export class TunnelManager {
     this.showStep(1);
   }
 
+  /** Contrôle les champs obligatoires de l'étape affichée : message sous chaque champ, focus sur le premier. */
+  validerChamps(): boolean {
+    const etape = this.steps[this.currentStep - 1];
+    if (!etape) return true;
+    etape.querySelectorAll('.field-error').forEach((p) => p.remove());
+    const invalides: { cible: HTMLElement; champ: HTMLInputElement }[] = [];
+    etape.querySelectorAll<HTMLInputElement>('input[required], select[required], textarea[required]').forEach((el) => {
+      el.removeAttribute('aria-invalid');
+      const radio = el.type === 'radio';
+      if (el.offsetParent === null && !radio) return; // champ masqué : ignoré
+      if (el.checkValidity()) return;
+      const cible = radio ? ((el.closest('.grid') as HTMLElement | null) ?? el) : el;
+      if (invalides.some((i) => i.cible === cible)) return;
+      const p = document.createElement('p');
+      p.className = 'field-error text-ui-bad text-sm mt-1.5 font-medium';
+      p.textContent = radio ? 'Choisissez une option.' : el.validity.typeMismatch ? 'Format invalide.' : 'Ce champ est obligatoire.';
+      cible.insertAdjacentElement('afterend', p);
+      el.setAttribute('aria-invalid', 'true');
+      invalides.push({ cible, champ: el });
+    });
+    if (invalides.length === 0) return true;
+    const { cible, champ } = invalides[0];
+    cible.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (champ.type !== 'radio') champ.focus({ preventScroll: true });
+    const effacer = () => {
+      etape.querySelectorAll('.field-error').forEach((p) => p.remove());
+      etape.querySelectorAll('[aria-invalid]').forEach((e) => e.removeAttribute('aria-invalid'));
+    };
+    this.form?.addEventListener('input', effacer, { once: true });
+    this.form?.addEventListener('change', effacer, { once: true });
+    return false;
+  }
+
   showStep(stepIndex: number) {
     // Affichage des étapes
     this.steps.forEach((el, idx) => {
@@ -97,7 +132,7 @@ export class TunnelManager {
     circles.forEach(circle => {
       const stepNum = parseInt(circle.getAttribute('data-step') || '1', 10);
       circle.className = `progress-step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-        stepNum < stepIndex ? 'bg-black text-white' : stepNum === stepIndex ? 'bg-black text-white ring-4 ring-black/5' : 'bg-zinc-200 text-zinc-500'
+        stepNum < stepIndex ? 'bg-ui-ink text-white' : stepNum === stepIndex ? 'bg-ui-ink text-white ring-4 ring-primary/20' : 'bg-ui-line text-ui-muted'
       }`;
     });
 
@@ -105,7 +140,7 @@ export class TunnelManager {
     labels.forEach(label => {
       const stepNum = parseInt(label.getAttribute('data-step') || '1', 10);
       label.className = `progress-step-label mt-2 text-xs font-medium text-center transition-colors duration-300 ${
-        stepNum <= stepIndex ? 'text-zinc-900' : 'text-zinc-500'
+        stepNum <= stepIndex ? 'text-ui-ink' : 'text-ui-muted'
       }`;
     });
 

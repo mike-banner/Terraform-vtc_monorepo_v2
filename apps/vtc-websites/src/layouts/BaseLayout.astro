@@ -1,11 +1,12 @@
 ---
 // src/layouts/BaseLayout.astro
 import Footer from "../components/ui/Footer.astro";
+import { configDuSite } from "../core/site-config";
 import Header from "../components/ui/Header.astro";
 import "../styles/global.css";
 
 const { title, description, minimal = false } = Astro.props;
-const tenant = Astro.locals.tenant || { name: 'Elite Lyon', id: 'default' };
+const tenant = Astro.locals.tenant || { name: configDuSite(Astro.url.host).nom, id: '' };
 ---
 
 <!DOCTYPE html>

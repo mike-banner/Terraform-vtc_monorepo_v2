@@ -1,6 +1,7 @@
 ---
 import { supabase } from "../core/supabase";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import StatusPage from "../components/ui/StatusPage.astro";
 
 
 const sessionId = Astro.url.searchParams.get("session_id");
@@ -36,64 +37,45 @@ if (sessionId) {
   }
 }
 
+// Sans session Stripe, la page n'a pas de sens : retour à l'accueil.
+if (!sessionId) return Astro.redirect("/");
+
+let paymentState = "pending";
 if (!booking) {
   error = true;
+  const { data: state } = await supabase.rpc("get_public_payment_state", { p_session_id: sessionId });
+  if (state === "failed") paymentState = "failed";
 }
+const { tenant } = Astro.locals;
+const buttonClass = "inline-flex h-11 w-full items-center justify-center rounded-md bg-ui-ink px-4 text-sm font-semibold text-ui-card transition-colors hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-ink";
 ---
 
-<BaseLayout title="Réservation Confirmée">
-  <div class="min-h-screen bg-zinc-50 flex items-center justify-center py-12 px-4 italic">
-    <div class="max-w-md w-full bg-white shadow-2xl rounded-sm p-8 border-t-8 border-green-500">
-
-      {error || !booking ? (
-        <div class="text-center">
-          <h1 class="text-2xl font-black text-red-600 mb-4 uppercase">Erreur de confirmation</h1>
-          <p class="text-zinc-600 font-bold">Nous n'avons pas trouvé votre réservation, mais le paiement a peut-être été validé. Contactez-nous.</p>
-          <a href="/booking-transfert" class="btn bg-black text-white mt-8 w-full h-14 rounded-sm uppercase font-black tracking-widest hover:bg-zinc-800 transition-colors border-none flex items-center justify-center">Retour au formulaire</a>
-        </div>
-      ) : (
-        <div class="text-center">
-          <div class="mb-6 inline-flex items-center justify-center w-16 h-16 bg-green-100 text-green-500 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-
-          <h1 class="text-3xl font-black text-black mb-2 uppercase tracking-tighter">Merci {booking.customer_first_name || 'Cher client'} !</h1>
-          <p class="text-zinc-500 font-bold mb-8 uppercase text-xs tracking-widest">Votre course est officiellement réservée</p>
-
-          <div class="bg-zinc-100 p-6 rounded-sm text-left mb-8 space-y-3 font-bold text-sm uppercase">
-            <div class="flex justify-between border-b border-zinc-200 pb-2">
-              <span class="text-zinc-400">Référence</span>
-              <span class="text-black font-black">{booking.booking_id.slice(0, 8).toUpperCase()}</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-200 pb-2 text-[10px]">
-              <span class="text-zinc-400">Prise en charge</span>
-              <span class="text-black text-right max-w-[200px] truncate">{booking.pickup_address}</span>
-            </div>
-            {booking.dropoff_address && (
-              <div class="flex justify-between border-b border-zinc-200 pb-2 text-[10px]">
-                <span class="text-zinc-400">Destination</span>
-                <span class="text-black text-right max-w-[200px] truncate">{booking.dropoff_address}</span>
-              </div>
-            )}
-            <div class="flex justify-between pt-2">
-              <span class="text-zinc-400">Total payé</span>
-              <span class="text-green-600 font-black text-lg">{booking.total_amount} €</span>
-            </div>
-          </div>
-
-          <a href="/" class="btn bg-black text-white w-full h-14 font-black uppercase tracking-widest rounded-sm hover:bg-zinc-800 transition-colors border-none flex items-center justify-center">
-            Retour à l'accueil
-          </a>
-
-          {booking.customer_email && (
-            <p class="mt-6 text-[10px] text-zinc-400 font-bold uppercase italic">Un email de confirmation a été envoyé à {booking.customer_email}</p>
-          )}
-        </div>
-      )}
-    </div>
-  </div>
+<BaseLayout title="Réservation" minimal>
+  {error || !booking ? (
+    paymentState === "failed" ? (
+      <StatusPage tone="error" title="Paiement reçu, réservation à confirmer" tenantName={tenant?.name}>
+        <p>Votre paiement a bien été reçu, mais votre réservation n'a pas pu être enregistrée automatiquement. {tenant?.name ?? "Votre chauffeur"} a été prévenu et vous contacte rapidement. À défaut, vous serez remboursé.</p>
+        {(tenant?.phone || tenant?.email) && <p>Pour aller plus vite : {[tenant?.phone, tenant?.email].filter(Boolean).join(' · ')}.</p>}
+        <a slot="actions" href="/" class={buttonClass}>Retour à l'accueil</a>
+      </StatusPage>
+    ) : (
+      <StatusPage tone="pending" title="Confirmation en cours" tenantName={tenant?.name}>
+        <p>Votre réservation n'est pas encore confirmée. Si votre paiement a été débité, elle le sera dans quelques minutes et vous recevrez un email.</p>
+        <p>Sans nouvelle de notre part, contactez-nous{(tenant?.phone || tenant?.email) && ` : ${[tenant?.phone, tenant?.email].filter(Boolean).join(' · ')}`}.</p>
+        <a slot="actions" href="/" class={buttonClass}>Retour à l'accueil</a>
+      </StatusPage>
+    )
+  ) : (
+    <StatusPage tone="success" title={`Merci ${booking.customer_first_name || ''}, votre course est réservée`.replace(' ,', ',')} tenantName={tenant?.name}>
+      <dl class="divide-y divide-ui-line rounded-md border border-ui-line">
+        <div class="flex justify-between gap-4 px-4 py-3"><dt>Référence</dt><dd class="font-medium text-ui-ink">{booking.booking_id.slice(0, 8).toUpperCase()}</dd></div>
+        <div class="flex justify-between gap-4 px-4 py-3"><dt>Prise en charge</dt><dd class="text-right font-medium text-ui-ink">{booking.pickup_address}</dd></div>
+        {booking.dropoff_address && (
+          <div class="flex justify-between gap-4 px-4 py-3"><dt>Destination</dt><dd class="text-right font-medium text-ui-ink">{booking.dropoff_address}</dd></div>
+        )}
+        <div class="flex justify-between gap-4 px-4 py-3"><dt>Total payé</dt><dd class="font-semibold text-ui-ink">{Number(booking.total_amount).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</dd></div>
+      </dl>
+      <a slot="actions" href="/" class={buttonClass}>Retour à l'accueil</a>
+    </StatusPage>
+  )}
 </BaseLayout>
-
-

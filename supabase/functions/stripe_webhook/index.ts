@@ -1,4 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getBrand } from "../_shared/email-templates/brand.ts";
+import { bookingConfirmationEmail } from "../_shared/email-templates/site/booking-confirmation.ts";
+import { paymentWithoutBookingEmail } from "../_shared/email-templates/native/payment-without-booking.ts";
+import { paymentReceivedCustomerEmail } from "../_shared/email-templates/native/payment-received-customer.ts";
+import { sendEmailLog } from "../_shared/send-email-log.ts";
+import { ALERTES_ADRESSE } from "../_shared/zone-check.ts";
 import Stripe from "https://esm.sh/stripe@12.18.0?target=deno&no-check";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -9,6 +15,84 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+async function sendMail(to: string, subject: string, html: string) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
+    body: JSON.stringify({ to, subject, html }),
+  });
+  if (!res.ok) console.error("ALERT EMAIL FAILED", to, res.status);
+}
+
+// Paiement encaissé mais course non créée : prévient le chauffeur (avec les infos du client
+// pour rembourser ou recréer la course) et le client. Appelée une seule fois par événement.
+async function alertBookingFailed(session: any, tenantId: string | null, reason: string) {
+  if (!tenantId) return;
+  const m = session.metadata ?? {};
+  const { data: tenant } = await supabase.from("tenants").select("name, email, logo_url, primary_color, phone").eq("id", tenantId).maybeSingle();
+  const { data: cust } = m.customer_id
+    ? await supabase.from("customers").select("first_name, last_name, email, phone").eq("id", m.customer_id).maybeSingle()
+    : { data: null };
+
+  let to = tenant?.email as string | null | undefined;
+  if (!to) {
+    // Repli : l'email de connexion du propriétaire du tenant.
+    const { data: owner } = await supabase.from("profiles").select("id").eq("tenant_id", tenantId).eq("tenant_role", "owner").limit(1).maybeSingle();
+    if (owner) to = (await supabase.auth.admin.getUserById(owner.id)).data.user?.email;
+  }
+
+  const customerEmail = cust?.email ?? session.customer_details?.email;
+  const amount = (session.amount_total ?? 0) / 100;
+  const testMode = (Deno.env.get("STRIPE_SECRET_KEY") ?? "").startsWith("sk_test_") ? "/test" : "";
+  const name = [cust?.first_name, cust?.last_name].filter(Boolean).join(" ") || session.customer_details?.name || "Client";
+
+  if (to) {
+    await sendMail(to, "Action requise : paiement reçu, course non créée", paymentWithoutBookingEmail({
+      amount,
+      customerName: name,
+      customerEmail,
+      customerPhone: cust?.phone ?? session.customer_details?.phone,
+      pickupAddress: m.pickup_address,
+      dropoffAddress: m.dropoff_address,
+      pickupTime: m.pickup_time,
+      stripeUrl: `https://dashboard.stripe.com${testMode}/payments/${session.payment_intent}`,
+      reason,
+    }));
+  } else {
+    console.error("ALERT: aucun email chauffeur pour le tenant", tenantId);
+  }
+
+  if (customerEmail) {
+    await sendMail(customerEmail, `Votre paiement a bien été reçu${tenant?.name ? ` | ${tenant.name}` : ""}`,
+      paymentReceivedCustomerEmail({ brand: getBrand(tenant), firstName: cust?.first_name, amount }));
+  }
+}
+
+// Course créée : confirmation au client, aux couleurs du chauffeur. Un échec d'envoi ne bloque jamais le webhook.
+async function sendBookingConfirmation(session: any, tenantId: string, booking: any) {
+  const m = session.metadata ?? {};
+  const { data: tenant } = await supabase.from("tenants").select("name, email, logo_url, primary_color, phone").eq("id", tenantId).maybeSingle();
+  const { data: cust } = m.customer_id
+    ? await supabase.from("customers").select("first_name, email").eq("id", m.customer_id).maybeSingle()
+    : { data: null };
+  const to = cust?.email ?? session.customer_details?.email;
+  if (!to) return;
+  // Journalisé dans email_logs ; sendEmailLog ne lève pas sur un refus du service d'envoi.
+  await sendEmailLog({ bookingId: booking.id, emailType: "booking_confirmation", recipientEmail: to,
+    subject: `Votre réservation est confirmée${tenant?.name ? ` | ${tenant.name}` : ""}`, html: bookingConfirmationEmail({
+    brand: getBrand(tenant),
+    firstName: cust?.first_name,
+    reference: String(booking.id).slice(0, 8).toUpperCase(),
+    pickupAddress: booking.pickup_address,
+    dropoffAddress: booking.dropoff_address,
+    pickupTime: booking.pickup_time,
+    total: Number(booking.total_amount),
+  }) });
+}
 
 Deno.serve(async (req) => {
   const signature = req.headers.get("stripe-signature");
@@ -74,7 +158,7 @@ Deno.serve(async (req) => {
 
   const { data: existing } = await supabase
     .from("stripe_events")
-    .select("id")
+    .select("id, status")
     .eq("stripe_event_id", event.id)
     .maybeSingle();
 
@@ -93,10 +177,40 @@ Deno.serve(async (req) => {
     await supabase
       .from("stripe_events")
       .update({
-        status,
+        // booking_created / booking_failed ne sont jamais réécrits par un rejeu
+        ...(["booking_created", "booking_failed"].includes(existing.status) ? {} : { status }),
         metadata: event,
       })
       .eq("stripe_event_id", event.id);
+  }
+
+  // --------------------------
+  // REMBOURSEMENTS (refund.updated / refund.failed)
+  // --------------------------
+  if (event.type === "refund.updated" || event.type === "refund.failed") {
+    const r = obj;
+    const bookingId = r?.metadata?.booking_id;
+    // Le grand livre d'un avoir est écrit par l'avoir lui-même (plan 04).
+    if (bookingId && !r.metadata?.credit_note_id) {
+      let rpcErr = null;
+      if (r.status === "succeeded") {
+        ({ error: rpcErr } = await supabase.rpc("record_booking_refund", {
+          p_booking_id: bookingId,
+          p_stripe_refund_id: r.id,
+          p_amount: r.amount / 100,
+        }));
+      } else if (r.status === "failed" || r.status === "canceled") {
+        ({ error: rpcErr } = await supabase.rpc("mark_refund_failed", {
+          p_booking_id: bookingId,
+          p_message: r.failure_reason ?? r.status,
+        }));
+      }
+      if (rpcErr) {
+        console.error("stripe_webhook: refund RPC:", rpcErr.message);
+        return new Response("Error: refund RPC", { status: 500 }); // Stripe rejoue, RPC idempotentes
+      }
+    }
+    return new Response("OK");
   }
 
   // --------------------------
@@ -105,13 +219,25 @@ Deno.serve(async (req) => {
   if (event.type === "checkout.session.completed") {
     const session = obj as any;
 
+    const failBooking = async (reason: string, httpStatus: number) => {
+      await supabase
+        .from("stripe_events")
+        .update({ status: "booking_failed", error: reason })
+        .eq("stripe_event_id", event.id);
+      // Une seule alerte : Stripe rejoue l'événement pendant plusieurs jours.
+      if (existing?.status !== "booking_failed") {
+        await alertBookingFailed(session, tenantId, reason).catch((e) => console.error("ALERT ERROR", e));
+      }
+      return new Response(`Error: ${reason}`, { status: httpStatus });
+    };
+
     if (session?.metadata) {
       const m = session.metadata;
 
       // 1. Valider tenant_id existe en DB
       if (!tenantId) {
         console.error("CRITICAL: tenant_id is missing in session metadata");
-        return new Response("Error: tenant_id missing", { status: 400 });
+        return await failBooking("tenant_id missing", 400);
       }
 
       const { data: tenantExists, error: tenantChkError } = await supabase
@@ -122,14 +248,14 @@ Deno.serve(async (req) => {
 
       if (tenantChkError || !tenantExists) {
         console.error("CRITICAL: Tenant does not exist in database:", tenantId);
-        return new Response("Error: Tenant not found", { status: 400 });
+        return await failBooking("Tenant not found", 400);
       }
 
       // 2. Valider pricing contre la grille tarifaire du tenant (F-06)
       const vehicleId = m.vehicle_id;
       if (!vehicleId) {
         console.error("CRITICAL: vehicle_id missing in session metadata");
-        return new Response("Error: vehicle_id missing", { status: 400 });
+        return await failBooking("vehicle_id missing", 400);
       }
 
       const { data: vehicle, error: vehicleErr } = await supabase
@@ -140,12 +266,12 @@ Deno.serve(async (req) => {
 
       if (vehicleErr || !vehicle) {
         console.error("CRITICAL: Vehicle not found:", vehicleId);
-        return new Response("Error: Vehicle not found", { status: 400 });
+        return await failBooking("Vehicle not found", 400);
       }
 
       if (vehicle.tenant_id !== tenantId) {
         console.error("CRITICAL: Vehicle tenant mismatch:", vehicle.tenant_id, "vs", tenantId);
-        return new Response("Error: Vehicle tenant mismatch", { status: 400 });
+        return await failBooking("Vehicle tenant mismatch", 400);
       }
 
       let calculatedPrice = 0;
@@ -160,15 +286,15 @@ Deno.serve(async (req) => {
 
         if (rErr || !route) {
           console.error("CRITICAL: Fixed route not found:", fixedRouteId);
-          return new Response("Error: Fixed route not found", { status: 400 });
+          return await failBooking("Fixed route not found", 400);
         }
         if (!route.active) {
           console.error("CRITICAL: Fixed route is inactive:", fixedRouteId);
-          return new Response("Error: Fixed route inactive", { status: 400 });
+          return await failBooking("Fixed route inactive", 400);
         }
         if (route.tenant_id !== tenantId) {
           console.error("CRITICAL: Fixed route tenant mismatch");
-          return new Response("Error: Fixed route tenant mismatch", { status: 400 });
+          return await failBooking("Fixed route tenant mismatch", 400);
         }
         calculatedPrice = Number(route.price);
       } else {
@@ -180,7 +306,7 @@ Deno.serve(async (req) => {
 
         if (prErr || !allPricingRules || allPricingRules.length === 0) {
           console.error("CRITICAL: No pricing rules found for tenant");
-          return new Response("Error: Pricing rules not found", { status: 400 });
+          return await failBooking("Pricing rules not found", 400);
         }
 
         const cat = (vehicle.category ?? "").toLowerCase().trim();
@@ -206,7 +332,7 @@ Deno.serve(async (req) => {
 
       if (Math.abs(amountPaidCents - calculatedCents) > 1) {
         console.error(`CRITICAL: Price mismatch! Stripe paid = ${amountPaidCents} cents, Calculated = ${calculatedCents} cents`);
-        return new Response("Error: Price mismatch detected", { status: 400 });
+        return await failBooking("Price mismatch detected", 400);
       }
 
       const total = Number(calculatedPrice);
@@ -248,6 +374,8 @@ Deno.serve(async (req) => {
 
           passenger_count: Number(m.passenger_count ?? 1),
           luggage_count: Number(m.luggage_count ?? 0),
+          instructions: String(m.instructions ?? "").trim().slice(0, 500) || null,
+          address_alert: (ALERTES_ADRESSE as readonly string[]).includes(m.address_alert) ? m.address_alert : null,
 
           booking_type: m.booking_type,
 
@@ -256,10 +384,24 @@ Deno.serve(async (req) => {
         .select()
         .single();
 
+      if (error?.code === "23505") {
+        // Événement rejoué ou livré en double : la course existe déjà pour ce paiement.
+        const { data: already } = await supabase
+          .from("bookings")
+          .select("id")
+          .eq("stripe_payment_intent_id", session.payment_intent)
+          .maybeSingle();
+        await supabase
+          .from("stripe_events")
+          .update({ status: "booking_created", booking_id: already?.id ?? null })
+          .eq("stripe_event_id", event.id);
+        return new Response("OK (course déjà créée)");
+      }
+
       if (error) {
         console.error("CRITICAL: BOOKING INSERTION FAILED", error);
-        // On retourne une 500 pour que Stripe retente le webhook plus tard
-        return new Response(`Error: ${error.message}`, { status: 500 });
+        // 500 : Stripe retente plus tard (sans risque de doublon grâce à l'index unique)
+        return await failBooking(error.message, 500);
       }
 
       if (booking) {
@@ -270,15 +412,7 @@ Deno.serve(async (req) => {
             booking_id: booking.id,
           })
           .eq("stripe_event_id", event.id);
-
-        // Cas A : génération automatique de la facture officielle Stripe
-        const invoiceRes = await supabase.functions.invoke("generate-invoice", {
-          body: { booking_id: booking.id },
-        });
-        if (invoiceRes.error) {
-          // Non bloquant : le webhook a réussi, la facture peut être régénérée manuellement
-          console.error("INVOICE GENERATION FAILED (non-blocking)", invoiceRes.error);
-        }
+        await sendBookingConfirmation(session, tenantId, booking).catch((e) => console.error("CONFIRMATION EMAIL ERROR", e));
       }
     }
   }

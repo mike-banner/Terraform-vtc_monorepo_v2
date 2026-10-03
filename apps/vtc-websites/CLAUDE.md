@@ -7,7 +7,8 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 ## Résolution du tenant
 
 - `resolveTenant(host)` mappe le `Host` HTTP → RPC `get_public_tenant` → champs publics du tenant (middleware, requête Supabase unique par requête SSR).
-- Dev local : variable `PUBLIC_SITE` pour forcer le site testé. Preview Cloudflare : alias ou sous-domaine `*.pages.dev`.
+- Sites (ADR 0003) : une instance compile un ou plusieurs sites, un tenant et un domaine par site ; `PUBLIC_SITE` (site par défaut) est obligatoire à la compilation, `SITE_MAP` (`domaine=code,…`, un-pour-un) choisit le site par domaine ; en dev, le `.env` local suffit. Un site (`src/sites/<code>/`) ne contient que sa landing (`pages/index.astro`), sa configuration (`config.ts`, champs de `src/core/site-config.ts`), ses assets et styles ; tunnels et pages fonctionnelles sont communs (`src/pages/`) et ne contiennent aucun texte, lieu ou contact d'un client : tout ce qui varie se lit dans `configDuSite()`. Seuls `elite-lyon` (démonstration, sans domaine) et `_modele` sont versionnés ; un site client vit hors dépôt (`docs/INSTANCES.md`), jamais commité.
+- Preview Cloudflare : alias ou sous-domaine `*.pages.dev` (site par défaut).
 - Toute requête de lecture doit filtrer par le `tenant_id` résolu — pas d'exception.
 
 ## Accès Supabase
@@ -15,13 +16,13 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 | Table | Accès front | Canal |
 |---|---|---|
 | `tenants` | Champs publics uniquement (`id`, `name`, `logo_url`, `primary_domain`, `phone`, `email`) | RPC `get_public_tenant` — **pas de lecture directe** |
-| `vehicles`, `pricing_rules` | Lecture publique | SDK direct |
-| `bookings` | Aucune lecture directe. Résultat d'une réservation payée : RPC `get_public_booking_result(session_id)` | RPC / Edge Function backoffice. Notation : RPC `get_rating_context(booking_id)` (nom, logo, avis Google du tenant, déjà-noté) et `submit_rating(booking_id, rating, comment)` — seules écritures autorisées depuis le site, validées côté base (Phase 14, D-09). |
+| `vehicles`, `pricing_rules`, `zones`, `fixed_routes` | Lecture publique (`zones.postal_codes` inclus) | SDK direct |
+| `bookings` | Aucune lecture directe. Résultat d'une réservation payée : RPC `get_public_booking_result(session_id)` | RPC / Edge Function backoffice. Notation : RPC `get_rating_context(booking_id)` (nom, logo, avis Google du tenant, déjà-noté) et `submit_rating(booking_id, rating, comment)` — seules écritures autorisées depuis le site, validées côté base (Phase 14, D-09). Demande de devis des tunnels Mise à disposition et Longue distance : RPC `submit_booking_request` (course `pending`, prix calculé par la base, bornée et limitée en base). |
 | `customers`, `stripe_events` | Interdit total | — |
 
 ## Interdits
 
-- Aucune écriture/UPDATE directe sur `bookings`, `pricing_rules` depuis le client. Exception unique : la note d'une course terminée, via la RPC `submit_rating` (`/api/submit-rating`).
+- Aucune écriture/UPDATE directe sur `bookings`, `pricing_rules` depuis le client. Exceptions : la note d'une course terminée, via la RPC `submit_rating` (`/api/submit-rating`), et la demande de devis, via la RPC `submit_booking_request`.
 - Aucun calcul financier côté client — le montant final envoyé à Stripe est calculé par l'Edge Function backoffice à partir des règles en base.
 - Le front ne change jamais le statut d'un booking (réservé aux webhooks Stripe / actions admin).
 
@@ -32,7 +33,10 @@ Site vitrine public multi-tenant (un domaine par chauffeur/agence) + tunnel de r
 
 ## Tunnels de réservation
 
-- Types prévus : transfert A→B, mise à disposition (forfait horaire), longue distance, business/event (devis libre).
+- Transfert : contrôle des deux extrémités du trajet fixe contre les codes postaux des zones du chauffeur (api-adresse.data.gouv.fr, côté navigateur, blocage avant paiement) ; le serveur ne fait que signaler (`bookings.address_alert`).
+- Transfert : une extrémité dont la zone n'a pas de codes postaux (aéroport, gare) n'a pas de saisie libre : le champ est verrouillé sur le nom de la zone ; terminal et n° de vol vont dans les instructions.
+
+- Transfert = paiement Stripe ; Mise à disposition (à l'heure, période début-fin) et Longue distance = demande, devis envoyé par le propriétaire ; Business = non exposé (D-35).
 - Tunnels implémentés : ceux présents dans `src/components/booking/`.
 
 ## SEO (invariants)

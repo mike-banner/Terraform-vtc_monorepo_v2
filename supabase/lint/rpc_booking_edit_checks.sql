@@ -82,7 +82,7 @@ SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
 SELECT pg_temp.expect_error('update: driver ne change pas le montant', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 80)$q$, '42501', 'Seuls le propriétaire et le manager peuvent modifier le montant');
 SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
 SELECT pg_temp.expect_error('update: montant 0', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 0)$q$, '22023', 'Montant invalide : 0€');
-SELECT pg_temp.expect_error('update: montant 10000', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 10000)$q$, '22023', 'Montant invalide : 10000€');
+SELECT pg_temp.expect_error('update: montant 100000', $q$select public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'X', NULL, NULL, NULL, 100000)$q$, '22023', 'Montant invalide : 100000€');
 INSERT INTO _r SELECT 'b10_prix', public.update_booking_details('b1000000-0000-4000-8000-00000000000a', now() + interval '4 days', 'Autre adresse', NULL, NULL, NULL, 200);
 INSERT INTO _r SELECT 'b3_prix', public.update_booking_details('b3000000-0000-4000-8000-000000000003', now() + interval '4 days', 'Nouvelle adresse', NULL, NULL, NULL, 55);
 RESET ROLE;
@@ -129,7 +129,7 @@ SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
 SELECT pg_temp.expect_error('create: email vide', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', '')$q$, '22023', 'Email client invalide');
 SELECT pg_temp.expect_error('create: email sans @', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean.rpc')$q$, '22023', 'Email client invalide');
 SELECT pg_temp.expect_sqlstate('create: type foo', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_booking_type => 'foo')$q$, '22023');
-SELECT pg_temp.expect_error('create: montant 10000', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_manual_total => 10000)$q$, '22023', 'Montant invalide : 10000€');
+SELECT pg_temp.expect_error('create: montant 100000', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_manual_total => 100000)$q$, '22023', 'Montant invalide : 100000€');
 SELECT pg_temp.expect_error('create: véhicule tenant B', $q$select * from public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'jean@rpc.invalid', p_vehicle_id => 'ee000000-0000-4000-8000-0000000000bb')$q$, '22023', 'Véhicule introuvable pour ce tenant');
 
 INSERT INTO _c SELECT 'rule', * FROM public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', '  Client.New@RPC.invalid ', p_distance_km => 30);
@@ -151,6 +151,35 @@ SELECT pg_temp.expect_count('create: montant 0 -> règle', $q$select count(*) fr
 SELECT pg_temp.expect_count('create: tenant B exonéré', $q$select count(*) from public.bookings b join _c on _c.booking_id = b.id where _c.k = 'b_manual' and b.subtotal_amount = 100 and b.vat_amount = 0 and b.vehicle_id = 'ee000000-0000-4000-8000-0000000000bc' and b.driver_id = 'db000000-0000-4000-8000-0000000000bb'$q$, 1);
 SELECT pg_temp.expect_count('create: aucun mouvement ledger', 'select count(*) from public.financial_movements', :mvts_avant);
 SELECT pg_temp.expect_count('create: marqueur vide', $q$select count(*) from (select 1) x where coalesce(current_setting('vtc.trusted_rpc', true), '') = ''$q$, 1);
+
+
+-- Instructions du client (plan 14.1-03) ---------------------------------------------
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
+INSERT INTO _c SELECT 'instr', * FROM public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'client.new@rpc.invalid', p_manual_total => 90, p_instructions => 'Vol AF123, panneau Dupont');
+INSERT INTO _c SELECT 'noinstr', * FROM public.create_manual_booking('Gare', 'Hôtel', now() + interval '2 days', 'Jean Dupont', 'client.new@rpc.invalid', p_manual_total => 90);
+SELECT pg_temp.expect_ok('instr: owner sur b4 payée', $q$select public.update_booking_instructions('b4000000-0000-4000-8000-000000000004', 'Panneau Martin')$q$);
+SELECT pg_temp.expect_ok('instr: owner sur b1', $q$select public.update_booking_instructions('b1000000-0000-4000-8000-000000000001', 'Bagages: 3')$q$);
+SELECT pg_temp.expect_error('instr: 501 caractères', $q$select public.update_booking_instructions('b1000000-0000-4000-8000-000000000001', repeat('x', 501))$q$, '23514', 'new row for relation "bookings" violates check constraint "bookings_instructions_check"');
+SELECT pg_temp.expect_error('instr: course terminée', $q$select public.update_booking_instructions('b8000000-0000-4000-8000-000000000008', 'X')$q$, '22023', 'Instructions modifiables seulement avant la mission');
+SELECT pg_temp.expect_error('instr: UPDATE direct refusé', $q$update public.bookings set instructions = 'X' where id = 'b1000000-0000-4000-8000-000000000001'$q$, '42501', 'permission denied for table bookings');
+SELECT pg_temp.login('22222222-2222-4222-8222-222222222222');
+SELECT pg_temp.expect_ok('instr: manager', $q$select public.update_booking_instructions('b1000000-0000-4000-8000-000000000001', 'Manager')$q$);
+SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
+SELECT pg_temp.expect_ok('instr: driver1 sa course', $q$select public.update_booking_instructions('b1000000-0000-4000-8000-000000000001', 'Vol AF123')$q$);
+SELECT pg_temp.login('44444444-4444-4444-8444-444444444444');
+SELECT pg_temp.expect_denied('instr: driver2 sur b1', $q$select public.update_booking_instructions('b1000000-0000-4000-8000-000000000001', 'X')$q$);
+SELECT pg_temp.login('55555555-5555-4555-8555-555555555555');
+SELECT pg_temp.expect_sqlstate('instr: owner B sur b1', $q$select public.update_booking_instructions('b1000000-0000-4000-8000-000000000001', 'X')$q$, 'P0002');
+SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
+SELECT pg_temp.expect_ok('instr: espaces -> NULL', $q$select public.update_booking_instructions('b4000000-0000-4000-8000-000000000004', '   ')$q$);
+RESET ROLE;
+SELECT pg_temp.expect_count('instr: création', $q$select count(*) from public.bookings b join _c on _c.booking_id = b.id where _c.k = 'instr' and b.instructions = 'Vol AF123, panneau Dupont'$q$, 1);
+SELECT pg_temp.expect_count('instr: création sans', $q$select count(*) from public.bookings b join _c on _c.booking_id = b.id where _c.k = 'noinstr' and b.instructions is null$q$, 1);
+SELECT pg_temp.expect_count('instr: b1 dernière valeur', $q$select count(*) from public.bookings where id = 'b1000000-0000-4000-8000-000000000001' and instructions = 'Vol AF123'$q$, 1);
+SELECT pg_temp.expect_count('instr: b4 vide -> NULL', $q$select count(*) from public.bookings where id = 'b4000000-0000-4000-8000-000000000004' and instructions is null$q$, 1);
+SELECT pg_temp.expect_count('instr: une seule create_manual_booking', $q$select count(*) from pg_proc where proname = 'create_manual_booking'$q$, 1);
+SELECT pg_temp.expect_count('instr: pas de droit UPDATE colonne', $q$select count(*) from (select 1) x where not has_column_privilege('authenticated', 'public.bookings', 'instructions', 'UPDATE')$q$, 1);
 
 DO $$ BEGIN RAISE NOTICE 'RPC booking edit checks passed.'; END $$;
 

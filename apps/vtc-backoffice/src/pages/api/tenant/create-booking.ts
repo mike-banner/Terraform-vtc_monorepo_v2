@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const {
     pickup, dropoff, distance_km, pickup_time, client_name, client_email, payment_mode,
-    manual_total, booking_type, duration_hours, passenger_count, luggage_count, vehicle_id,
+    manual_total, booking_type, duration_hours, passenger_count, luggage_count, vehicle_id, instructions,
   } = await request.json().catch(() => ({}));
 
   const { data, error } = await locals.supabase
@@ -31,6 +31,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       p_passenger_count: Number(passenger_count || 1),
       p_luggage_count: Number(luggage_count || 0),
       p_vehicle_id: vehicle_id || undefined,
+      p_instructions: String(instructions ?? "").trim().slice(0, 500) || undefined,
     })
     .single();
 

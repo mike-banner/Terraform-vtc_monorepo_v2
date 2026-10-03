@@ -157,7 +157,7 @@
    → Policies supprimées, remplacées par la RPC `get_public_booking_result(session_id)` (SECURITY DEFINER, colonnes limitées, clé = session Stripe non devinable).
 3. 🔴 **Fuite d'informations tenant** — `public_read_tenants USING (true)` exposait `stripe_account_id`, `siret`, `vat_number`, adresses…
    → Remplacée par `get_public_tenant(host | id)` (`id, name, logo_url, primary_domain, phone, email`).
-4. 🔴 **Backdoor superadmin** — allowlist d'emails en dur (`super@admin.com`, `mike.webfree@gmail.com`) dans `apps/superadmin/src/layouts/AdminLayout.tsx`.
+4. 🔴 **Backdoor superadmin** — allowlist d'adresses e-mail en dur dans `apps/superadmin/src/layouts/AdminLayout.tsx`.
    → Supprimée ; seule source d'autorité : `profiles.platform_role`.
 5. 🔴 **Secrets versionnés** — `apps/vtc-backoffice/.dev.vars` (clé `sb_secret_*`, bypass RLS total) était tracké dans un repo **public**, ainsi que `scratch-tenant.ts` et `schema.json` (dump PostgREST complet).
    → Untrackés/supprimés, `.dev.vars` ajouté au `.gitignore` (+ `_headers` et garde-fou CI).

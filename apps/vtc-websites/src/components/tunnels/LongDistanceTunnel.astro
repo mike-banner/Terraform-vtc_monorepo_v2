@@ -5,41 +5,25 @@ import TunnelLayout from './TunnelLayout.astro';
 import ContactStep from './steps/ContactStep.astro';
 import VehicleGridStep from './steps/VehicleGridStep.astro';
 import { supabase } from '../../core/supabase';
+import { configDuSite } from '../../core/site-config';
 import DateTimePicker from './steps/DateTimePicker.astro';
 
 const { tenant } = Astro.locals;
+const site = configDuSite(Astro.url.host);
 const tenantId = tenant?.id || "";
 
-// Récupération des données en parallèle (Option A : Véhicules et Pricing)
-const [
-  { data: vehiclesData },
-  { data: pricingRulesData }
-] = await Promise.all([
-  supabase.rpc('get_available_vehicles', { p_tenant_id: tenantId }),
-  supabase.from('pricing_rules').select('*').eq('tenant_id', tenantId).eq('active', true)
-]);
-
+// Véhicules du tenant ; le prix est fixé par le chauffeur et communiqué par devis
+const { data: vehiclesData } = await supabase.rpc('get_available_vehicles', { p_tenant_id: tenantId });
 const availableVehicles = vehiclesData || [];
-const pricingRules = pricingRulesData || [];
 
 const vehicleTypes = availableVehicles.map((v: any) => ({
   type: v.category,
   id: v.id,
   name: `${v.brand} ${v.model}`,
   seats: v.capacity,
-  price: 'Sur devis', // Calculé dynamiquement côté JS
+  price: 'Sur devis',
   icon: v.category.toLowerCase().includes('van') ? 'ri:bus-2-line' : (v.category.toLowerCase().includes('business') ? 'ri:briefcase-line' : 'ri:car-line')
 }));
-
-// Option A: Villes populaires avec distances fixées "en dur" depuis Lyon
-const popularDestinations = [
-  { city: 'Paris', distance: '465 km', time: '4h30', distanceKm: 465 },
-  { city: 'Marseille', distance: '315 km', time: '3h', distanceKm: 315 },
-  { city: 'Nice', distance: '470 km', time: '4h45', distanceKm: 470 },
-  { city: 'Bordeaux', distance: '550 km', time: '5h30', distanceKm: 550 },
-  { city: 'Strasbourg', distance: '490 km', time: '5h', distanceKm: 490 },
-  { city: 'Toulouse', distance: '540 km', time: '5h15', distanceKm: 540 },
-];
 
 const serviceOptions = [
   { id: 'oneway', name: 'Trajet simple', desc: 'Aller simple sans retour' },
@@ -51,70 +35,73 @@ const { ...props } = Astro.props;
 ---
 
 <TunnelLayout currentStep={1} totalSteps={4} serviceType='longDistance' {...props}>
-  <div id="tunnel-data" data-tenant-id={tenantId} data-pricing={JSON.stringify(pricingRules)} class="hidden"></div>
+  <div id="tunnel-data" data-tenant-id={tenantId} class="hidden"></div>
   <form id='tunnel-form' class='max-w-4xl mx-auto' novalidate>
     
     <!-- Étape 1: Destination & Service -->
     <div class='step-container' data-step='1'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Destination principale</h2>
-        <p class='text-zinc-600 mb-8'>Sélectionnez votre destination ou entrez une ville personnalisée</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Destination principale</h2>
+        <p class='text-ui-muted mb-5'>Sélectionnez votre destination ou entrez une ville personnalisée</p>
 
-        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
+        {site.longueDistanceDestinations.length > 0 && (
+        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4'>
           {
-            popularDestinations.map((dest) => (
+            site.longueDistanceDestinations.map((dest) => (
               <label class='relative group cursor-pointer'>
-                <input type='radio' name='destination' value={dest.city} data-distance={dest.distanceKm} class='sr-only peer' />
-                <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-green-500 transition-all duration-300 peer-checked:border-green-500 peer-checked:bg-green-500/5 h-full'>
+                <input type='radio' name='destination' value={dest.ville} data-distance={dest.distanceKm} class='sr-only peer' />
+                <div class='p-4 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
                   <div class='flex items-start justify-between mb-4'>
                     <div>
-                      <div class='text-lg font-semibold text-zinc-900'>{dest.city}</div>
-                      <div class='text-sm text-zinc-600 mt-1'>
-                        {dest.distance} • {dest.time}
+                      <div class='text-lg font-semibold text-ui-ink'>{dest.ville}</div>
+                      <div class='text-sm text-ui-muted mt-1'>
+                        {dest.distanceKm} km • {dest.duree}
                       </div>
                     </div>
                     <!-- On cache le prix ici, on l'affichera à l'étape véhicule selon la gamme choisie -->
                   </div>
-                  <div class='flex items-center gap-2 text-sm text-zinc-500'>
+                  <div class='flex items-center gap-2 text-sm text-ui-muted'>
                     <Icon name='ri:road-map-line' class='text-sm' />
-                    <span>Depuis Lyon</span>
+                    {site.longueDistanceVilleDepart && <span>Depuis {site.longueDistanceVilleDepart}</span>}
                   </div>
                 </div>
-                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-ui-line-strong rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
                   <Icon name='ri:check-line' class='text-white text-xs' />
                 </div>
               </label>
             ))
           }
         </div>
+        )}
 
-        <div class="mb-12">
-          <label class='block text-sm font-medium text-zinc-700 mb-2'>Ou entrez une destination personnalisée (Prix Sur Devis)</label>
+        <div class="mb-6">
+          <label class='block text-sm font-medium text-ui-ink mb-1.5'>{site.longueDistanceDestinations.length > 0 ? 'Ou entrez une destination personnalisée (Prix Sur Devis)' : 'Destination (prix sur devis)'}</label>
           <input
             type='text'
             name='customDestination'
             id='customDestination'
-            placeholder='Ex: Montpellier, Lille, Genève...'
-            class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'
+            placeholder={site.longueDistancePlaceholderDestination}
+            required={site.longueDistanceDestinations.length === 0}
+            class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'
           />
         </div>
 
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Type de service</h2>
-        <p class='text-zinc-600 mb-8'>Choisissez la formule qui correspond à vos besoins</p>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Type de service</h2>
+        <p class='text-ui-muted mb-5'>Choisissez la formule qui correspond à vos besoins</p>
 
-        <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div class='grid grid-cols-1 md:grid-cols-3 gap-4'>
           {
             serviceOptions.map((option) => (
               <label class='relative group cursor-pointer'>
                 <input type='radio' name='serviceType' value={option.id} class='sr-only peer' required />
-                <div class='p-6 border-2 border-zinc-200 rounded-xl hover:border-green-500 transition-all duration-300 peer-checked:border-green-500 peer-checked:bg-green-500/5 h-full'>
-                  <div class='w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center mb-4 group-hover:bg-green-500/10 transition-colors'>
-                    <Icon name='ri:route-line' class='text-xl text-zinc-600 group-hover:text-green-500' />
+                <div class='p-4 border-2 border-ui-line rounded-xl hover:border-primary transition-all duration-300 peer-checked:border-primary peer-checked:bg-primary/5 h-full'>
+                  <div class='w-12 h-12 rounded-lg bg-ui-page flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors'>
+                    <Icon name='ri:route-line' class='text-xl text-ui-muted group-hover:text-primary' />
                   </div>
-                  <h3 class='text-lg font-semibold text-zinc-900 mb-2'>{option.name}</h3>
-                  <p class='text-sm text-zinc-600 mb-4'>{option.desc}</p>
+                  <h3 class='text-lg font-semibold text-ui-ink mb-2'>{option.name}</h3>
+                  <p class='text-sm text-ui-muted mb-4'>{option.desc}</p>
                 </div>
-                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-zinc-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
+                <div class='absolute top-4 right-4 w-6 h-6 border-2 border-ui-line-strong rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-all'>
                   <Icon name='ri:check-line' class='text-white text-xs' />
                 </div>
               </label>
@@ -127,23 +114,19 @@ const { ...props } = Astro.props;
     <!-- Étape 2: Véhicule -->
     <VehicleGridStep 
       stepNumber={2} 
-      themeColor="green" 
       vehicleTypes={vehicleTypes} 
       title="Choisissez votre véhicule"
-      subtitle="Sélectionnez la gamme pour voir l'estimation du prix de votre trajet."
-      showEstimationNote={true}
-      estimationNoteText="Le prix est 'Sur devis' pour les destinations personnalisées ou certaines options."
+      subtitle="Sélectionnez la gamme pour votre trajet. Le prix vous est communiqué par devis."
     />
 
     <!-- Étape 3: Dates et compléments -->
     <div class='step-container hidden' data-step='3'>
-      <div class='mb-12'>
-        <h2 class='text-2xl font-bold text-zinc-900 mb-2'>Détails du trajet</h2>
-        <p class='text-zinc-600 mb-8'>Précisez les dates et informations de départ</p>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold text-ui-ink mb-1'>Détails du trajet</h2>
+        <p class='text-ui-muted mb-5'>Précisez les dates et informations de départ</p>
 
         <DateTimePicker
           class='mb-8'
-          themeColor='green'
           dateName='departureDate'
           timeName='departureTime'
           dateLabel='Date de départ'
@@ -152,8 +135,8 @@ const { ...props } = Astro.props;
 
         <div class='space-y-6'>
           <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Nombre de passagers</label>
-            <select name='passengerCount' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' required>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Nombre de passagers</label>
+            <select name='passengerCount' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required>
               <option value='1'>1 passager</option>
               <option value='2'>2 passagers</option>
               <option value='3'>3 passagers</option>
@@ -163,40 +146,40 @@ const { ...props } = Astro.props;
             </select>
           </div>
           <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Adresse exacte de prise en charge (Lyon)</label>
-            <input type='text' name='pickupAddress' placeholder='Ex: 1 Place Bellecour, Lyon' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' required />
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Adresse exacte de prise en charge{site.longueDistanceVilleDepart ? ` (${site.longueDistanceVilleDepart})` : ''}</label>
+            <input type='text' name='pickupAddress' placeholder={site.longueDistancePlaceholderDepart} class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' required />
           </div>
           <div id="customDropoffContainer" class="hidden">
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Adresse exacte de destination</label>
-            <input type='text' name='destinationAddress' placeholder='Ex: Adresse complète de destination' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent' />
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Adresse exacte de destination</label>
+            <input type='text' name='destinationAddress' placeholder='Ex: Adresse complète de destination' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary' />
           </div>
           <div>
-            <label class='block text-sm font-medium text-zinc-700 mb-2'>Notes spéciales (optionnel)</label>
-            <textarea name='specialNotes' rows='3' placeholder='Ex: Arrêt prévu à mi-parcours, besoins particuliers...' class='w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'></textarea>
+            <label class='block text-sm font-medium text-ui-ink mb-1.5'>Notes spéciales (optionnel)</label>
+            <textarea name='specialNotes' rows='3' placeholder='Ex: Arrêt prévu à mi-parcours, besoins particuliers...' class='w-full px-4 py-2.5 border border-ui-line-strong rounded-lg focus:ring-2 focus:ring-primary focus:border-primary'></textarea>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Étape 4: Coordonnées -->
-    <ContactStep stepNumber={4} themeColor="green" />
+    <ContactStep stepNumber={4} />
   </form>
 </TunnelLayout>
 
 <script>
   import { TunnelManager } from '../../core/tunnel-core';
-  
+  import { supabase } from '../../core/supabase';
+
   function initTunnel() {
     const dataDiv = document.getElementById('tunnel-data');
     if (!dataDiv) return;
+    const tenantId = dataDiv.dataset.tenantId || '';
+    const message = document.getElementById('tunnel-message');
+    const show = (text: string) => { if (message) message.textContent = text; };
 
-    const pricingRules = JSON.parse(dataDiv.dataset.pricing || '[]');
-
-    const vehicleInputs = document.querySelectorAll('input[name="vehicle"]');
-    const destInputs = document.querySelectorAll('input[name="destination"]');
     const customDestInput = document.getElementById('customDestination') as HTMLInputElement;
     const customDropoffContainer = document.getElementById('customDropoffContainer');
-    const estimationNote = document.getElementById('estimationNote');
+    const destInputs = document.querySelectorAll('input[name="destination"]');
 
     customDestInput?.addEventListener('input', () => {
       if (customDestInput.value.trim() !== '') {
@@ -210,59 +193,16 @@ const { ...props } = Astro.props;
       });
     });
 
-    function updatePriceDisplay() {
-      let selectedDistance = 0;
-      let isCustom = false;
-      
-      if (customDestInput.value.trim() !== '') {
-        isCustom = true;
-      } else {
-        const selectedDest = Array.from(destInputs).find(r => (r as HTMLInputElement).checked) as HTMLInputElement;
-        if (selectedDest) selectedDistance = Number(selectedDest.getAttribute('data-distance') || 0);
-      }
-
-      const serviceRadios = document.querySelectorAll('input[name="serviceType"]');
-      const selectedService = Array.from(serviceRadios).find(r => (r as HTMLInputElement).checked) as HTMLInputElement;
-      let multiplier = 1;
-      if (selectedService?.value === 'roundtrip') multiplier = 2;
-      if (selectedService?.value === 'multiday') isCustom = true;
-
-      vehicleInputs.forEach((input) => {
-        const radio = input as HTMLInputElement;
-        const category = radio.value;
-        const vehicleCard = radio.nextElementSibling as HTMLElement;
-        if (!vehicleCard) return;
-        const priceDiv = vehicleCard.querySelector('.price-display');
-        
-        const rule = pricingRules.find((r: any) => r.service_category?.toLowerCase() === category.toLowerCase());
-
-        if (priceDiv) {
-          if (isCustom || !rule || !rule.price_per_km || selectedDistance === 0) {
-            priceDiv.textContent = `Sur devis`;
-            if (estimationNote) estimationNote.classList.remove('hidden');
-          } else {
-            let amount = rule.base_price + (selectedDistance * rule.price_per_km);
-            if (amount < rule.minimum_fare) amount = rule.minimum_fare;
-            amount = amount * multiplier;
-            priceDiv.textContent = `~ ${amount.toFixed(0)} €`;
-            if (estimationNote) estimationNote.classList.add('hidden');
-          }
-        }
-      });
-    }
-
     const manager = new TunnelManager('tunnel-form', {
       maxSteps: 4,
-      onStepChange: (stepIndex) => {
-        if (stepIndex === 2) updatePriceDisplay();
-      },
       onValidateStep: (stepIndex, formData) => {
+        show('');
         if (stepIndex === 1) {
           if (!formData.get('destination') && customDestInput.value.trim() === '') {
-            alert("Veuillez sélectionner ou entrer une destination."); return false;
+            show('Veuillez sélectionner ou entrer une destination.'); return false;
           }
           if (!formData.get('serviceType')) {
-            alert("Veuillez choisir un type de service."); return false;
+            show('Veuillez choisir un type de service.'); return false;
           }
           if (customDropoffContainer) {
             if (customDestInput.value.trim() !== '') customDropoffContainer.classList.remove('hidden');
@@ -270,31 +210,60 @@ const { ...props } = Astro.props;
           }
         }
 
-        if (stepIndex === 2 && !formData.get('vehicle')) { alert("Veuillez choisir un véhicule."); return false; }
-        
+        if (stepIndex === 2 && !formData.get('vehicle')) { show('Veuillez choisir un véhicule.'); return false; }
+
         if (stepIndex === 3) {
           if (!formData.get('departureDate') || !formData.get('departureTime') || !formData.get('pickupAddress')) {
-            alert("Veuillez remplir les informations de départ."); return false;
+            show('Veuillez remplir les informations de départ.'); return false;
           }
         }
 
         if (stepIndex === 4) {
           if (!formData.get('firstName') || !formData.get('lastName') || !formData.get('email') || !formData.get('phone')) {
-            alert("Veuillez remplir vos coordonnées."); return false;
+            show('Veuillez remplir vos coordonnées.'); return false;
           }
         }
         return true;
       },
-      onSubmit: async () => {
+      onSubmit: async (formData) => {
         manager.setLoading(true, 'Envoi de la demande...');
-        try {
-          alert("Tunnel V1 terminé avec succès ! (Plan X : Redirection Stripe en construction)");
-          if (manager.submitBtn) manager.submitBtn.textContent = 'Demande envoyée';
-        } catch (err: any) {
-          console.error("Submit error:", err);
-          alert(err.message || "Erreur lors de la soumission");
+
+        const custom = customDestInput.value.trim();
+        const destination = custom || String(formData.get('destination') || '');
+        const precise = String(formData.get('destinationAddress') || '');
+        const formule = { oneway: 'Trajet simple', roundtrip: 'Aller-retour', multiday: 'Plusieurs jours' }[String(formData.get('serviceType'))] || '';
+        const instructions = [];
+        if (formule) instructions.push(`Formule : ${formule}`);
+        if (precise) instructions.push(`Adresse de destination : ${precise}`);
+        if (formData.get('specialNotes')) instructions.push(`Notes client : ${formData.get('specialNotes')}`);
+
+        const vehicleInput = document.querySelector('input[name="vehicle"]:checked') as HTMLInputElement | null;
+
+        const { error } = await supabase.rpc('submit_booking_request', {
+          p_tenant_id: tenantId,
+          p_request_kind: 'longue_distance',
+          p_pickup: String(formData.get('pickupAddress') || ''),
+          p_dropoff: destination,
+          p_pickup_time: new Date(`${formData.get('departureDate')}T${formData.get('departureTime')}`).toISOString(),
+          p_end_time: null,
+          p_passenger_count: Number(formData.get('passengerCount') || 1),
+          p_luggage_count: 0,
+          p_vehicle_id: vehicleInput?.dataset.id || null,
+          p_first_name: String(formData.get('firstName') || ''),
+          p_last_name: String(formData.get('lastName') || ''),
+          p_email: String(formData.get('email') || ''),
+          p_phone: String(formData.get('phone') || ''),
+          p_instructions: instructions.join(' | ').slice(0, 500),
+        });
+
+        if (error) {
+          show(error.message || "Erreur lors de l'envoi de la demande.");
           manager.setLoading(false);
+          return;
         }
+        manager.form?.replaceChildren(document.createTextNode('Demande envoyée. Vous recevrez un devis par e-mail.'));
+        manager.form?.classList.add('text-ui-ink', 'text-center', 'py-12');
+        if (manager.submitBtn) manager.submitBtn.classList.add('hidden');
       }
     });
   }

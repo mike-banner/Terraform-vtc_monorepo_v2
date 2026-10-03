@@ -111,28 +111,24 @@ SELECT pg_temp.expect_error('cancel: mission terminée b5', $q$select public.dri
 RESET ROLE;
 
 -- État de la prod : les trois triggers de garde sont désactivés, la RPC doit tenir seule.
-ALTER TABLE public.bookings DISABLE TRIGGER trg_prevent_late_cancellation;
 ALTER TABLE public.bookings DISABLE TRIGGER trg_prevent_pickup_time_change_after_paid;
 ALTER TABLE public.bookings DISABLE TRIGGER trg_prevent_policy_update;
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
 SELECT pg_temp.expect_error('cancel: après prise en charge, triggers désactivés', $q$select public.driver_cancel_booking('b7000000-0000-4000-8000-000000000007', 'Panne')$q$, '22023', 'Annulation impossible après l''heure de prise en charge');
 RESET ROLE;
-ALTER TABLE public.bookings ENABLE TRIGGER trg_prevent_late_cancellation;
 ALTER TABLE public.bookings ENABLE TRIGGER trg_prevent_pickup_time_change_after_paid;
 ALTER TABLE public.bookings ENABLE TRIGGER trg_prevent_policy_update;
 
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.login('33333333-3333-4333-8333-333333333333');
-SELECT pg_temp.expect_ok('cancel: b4 payée', $q$select public.driver_cancel_booking('b4000000-0000-4000-8000-000000000004', 'Panne')$q$);
-SELECT pg_temp.expect_ok('cancel: b4 rejeu', $q$select public.driver_cancel_booking('b4000000-0000-4000-8000-000000000004', 'Panne')$q$);
+SELECT pg_temp.expect_error('cancel: b4 payée', $q$select public.driver_cancel_booking('b4000000-0000-4000-8000-000000000004', 'Panne')$q$, '22023', 'Course payée : utiliser Annuler avec remboursement');
 SELECT pg_temp.expect_ok('cancel: b1 acceptée', $q$select public.driver_cancel_booking('b1000000-0000-4000-8000-000000000001', 'Panne')$q$);
 SELECT pg_temp.login('11111111-1111-4111-8111-111111111111');
 SELECT pg_temp.expect_ok('cancel: owner sur b2', $q$select public.driver_cancel_booking('b2000000-0000-4000-8000-000000000002', 'Panne')$q$);
 RESET ROLE;
 
-SELECT pg_temp.expect_count('cancel: b4 cancelled_pending_refund', $q$select count(*) from public.bookings where id = 'b4000000-0000-4000-8000-000000000004' and status = 'cancelled_pending_refund' and cancellation_initiator = 'driver' and cancelled_at is not null$q$, 1);
-SELECT pg_temp.expect_count('cancel: b4 une seule ligne annulation', $q$select count(*) from regexp_matches((select mission_note from public.bookings where id = 'b4000000-0000-4000-8000-000000000004'), '\[annulation\] initiateur=chauffeur \| motif=Panne', 'g')$q$, 1);
+SELECT pg_temp.expect_count('cancel: b4 reste payée', $q$select count(*) from public.bookings where id = 'b4000000-0000-4000-8000-000000000004' and status = 'paid'$q$, 1);
 SELECT pg_temp.expect_count('cancel: b1 et b2 cancelled_no_refund', $q$select count(*) from public.bookings where id in ('b1000000-0000-4000-8000-000000000001','b2000000-0000-4000-8000-000000000002') and status = 'cancelled_no_refund'$q$, 2);
 SELECT pg_temp.expect_count('cancel: b7 intacte', $q$select count(*) from public.bookings where id = 'b7000000-0000-4000-8000-000000000007' and status = 'accepted'$q$, 1);
 SELECT pg_temp.expect_count('cancel: aucun mouvement ledger', 'select count(*) from public.financial_movements', :mvts_avant_annul);

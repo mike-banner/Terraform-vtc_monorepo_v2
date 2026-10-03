@@ -1,13 +1,9 @@
 terraform {
   required_version = ">= 1.5.0"
 
-  cloud {
-    organization = "mike-banner_inc"
-
-    workspaces {
-      name = "vtc_prod"
-    }
-  }
+  # Organisation et workspace lus dans TF_CLOUD_ORGANIZATION et TF_WORKSPACE
+  # (un workspace par instance, aucun nom dans le dépôt public).
+  cloud {}
 
   required_providers {
     cloudflare = {
@@ -59,5 +55,5 @@ output "supabase_project_ref" {
 
 # URL live du backoffice — affichée en fin de deploy.sh.
 output "cloudflare_pages_subdomain" {
-  value = "${cloudflare_pages_project.backoffice.name}.pages.dev"
+  value = cloudflare_pages_project.backoffice.subdomain
 }

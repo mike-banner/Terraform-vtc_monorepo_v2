@@ -15,7 +15,9 @@ L'application `apps/vtc-websites` permet à la plateforme de déployer et person
 ## 🛠️ Mécanisme Technique
 
 ### 1. Résolution Dynamique du Tenant (`resolveTenant`)
-Lorsqu'un client visite un domaine (ex: `elite-lyon.fr` ou `mon-vtc-paris.fr`), le middleware Astro identifie le domaine dans la table `tenants` de Supabase :
+Sites d'une instance (ADR 0003) : le domaine choisit le site dans `SITE_MAP`, fournie à la compilation (un domaine par site, un tenant par site) ; seuls les sites listés sont compilés ; les tunnels sont communs.
+
+Lorsqu'un client visite un domaine (ex: `exemple.invalid`), le middleware Astro identifie le domaine dans la table `tenants` de Supabase :
 
 ```ts
 // src/core/tenant.ts
@@ -35,8 +37,8 @@ export async function resolveTenant(host: string) {
 * **Thème Visuel & Tarifs** : Chargés à la volée depuis la configuration du tenant en base.
 
 ### 3. Connexion aux 4 Tunnels de Réservation
-Le widget de réservation du Hero permet d'orienter le client vers 4 tunnels spécialisés :
+Le widget de réservation du Hero permet d'orienter le client vers les tunnels spécialisés :
 1. **Transfert A ➔ B** (`/tunnels/transfert`) : Estimation kilométrique fixe.
-2. **Mise à Disposition** (`/tunnels/availability`) : Réservation forfaitaire par heures (2h, 4h, 8h, 12h).
-3. **Longue Distance** (`/tunnels/long-distance`) : Interurbain et trajets régionaux.
-4. **Business & VIP** (`/tunnels/business`) : Demandes d'événements et séminaires.
+2. **Mise à Disposition** (`/tunnels/availability`) : À l'heure, période début-fin, sur devis (demande enregistrée, prix fixé par le chauffeur).
+3. **Longue Distance** (`/tunnels/long-distance`) : Interurbain et trajets régionaux, sur devis.
+4. **Business & VIP** : mis de côté (D-35), non exposé.

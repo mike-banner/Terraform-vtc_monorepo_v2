@@ -10,7 +10,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const { legal_form, vat_number } = await request.json();
+    const { legal_form, vat_number, address_line, postal_code, city } = await request.json();
 
     if (!legal_form) {
       return new Response(JSON.stringify({ error: "Paramètre manquant: legal_form" }), { status: 400 });
@@ -22,6 +22,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), { status: rpcErrorStatus(error.code) });
+    }
+
+    // Adresse du vendeur : la garde de rôle (owner) est dans la RPC.
+    if (address_line && postal_code && city) {
+      const { error: addrErr } = await locals.supabase.rpc("update_tenant_address", {
+        p_address_line: address_line,
+        p_postal_code: postal_code,
+        p_city: city,
+      });
+      if (addrErr) {
+        return new Response(JSON.stringify({ error: addrErr.message }), { status: rpcErrorStatus(addrErr.code) });
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

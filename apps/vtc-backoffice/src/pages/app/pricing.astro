@@ -17,6 +17,21 @@ const { data: rules, error } = await supabase
 if (error) {
     console.error("Pricing fetch error:", error);
 }
+
+// Politique d'annulation active du tenant (RLS par tenant) ; modification réservée à l'owner.
+const { data: policy } = await supabase
+    .from("cancellation_policies")
+    .select("*")
+    .eq("active", true)
+    .maybeSingle();
+const isOwner = profile?.tenant_role === "owner";
+const policyFields = [
+    { name: "full_hours", label: "Remboursement total si annulation au moins (h) avant", value: policy?.hours_before_full_refund, step: "1" },
+    { name: "partial_hours", label: "Remboursement partiel si annulation au moins (h) avant", value: policy?.hours_before_partial_refund, step: "1" },
+    { name: "partial_rate", label: "Taux partiel (%)", value: policy ? Math.round(Number(policy.partial_refund_rate) * 100) : "", step: "1" },
+    { name: "no_show_rate", label: "Taux client absent (%)", value: policy ? Math.round(Number(policy.no_show_refund_rate) * 100) : "", step: "1" },
+    { name: "driver_fault_rate", label: "Taux faute du chauffeur (%)", value: policy ? Math.round(Number(policy.driver_fault_refund_rate) * 100) : "", step: "1" },
+];
 ---
 
 <AppLayout title="Gestion Pricing">
@@ -103,6 +118,25 @@ if (error) {
                         </div>
                         )}
                 </div>
+
+                <!-- POLITIQUE D'ANNULATION -->
+                <form id="policy-form" class="space-y-4 bg-card/50 border border-border rounded-[var(--radius)] p-5">
+                    <h3 class="text-xl font-heading font-bold text-foreground">Politique d'annulation</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {policyFields.map((f) => (
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">{f.label}</label>
+                                <input type="number" min="0" step={f.step} name={f.name} value={f.value ?? ""} required disabled={!isOwner} class="w-full bg-background border border-border rounded-[var(--radius)] px-3 py-2 text-foreground font-semibold tabular-nums text-sm disabled:opacity-60" />
+                            </div>
+                        ))}
+                    </div>
+                    <p class="text-[11px] text-muted-foreground">Les courses déjà réservées gardent la politique en vigueur à leur création.</p>
+                    {isOwner && (
+                        <button type="submit" id="save-policy-btn" class="py-2.5 px-5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[var(--radius)] font-bold text-xs uppercase tracking-wider">
+                            Enregistrer la politique
+                        </button>
+                    )}
+                </form>
             </div>
 
             <!-- SECTION 2: TRANSFERS -->
@@ -381,6 +415,27 @@ if (error) {
             saveBtn.disabled = false;
             saveBtn.innerText = "Sauvegarder";
         }
+    });
+
+    document.getElementById('policy-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget as HTMLFormElement);
+        const n = (k: string) => Number(f.get(k));
+        const btn = document.getElementById('save-policy-btn') as HTMLButtonElement | null;
+        if (btn) btn.disabled = true;
+        const { error } = await supabase.rpc('update_cancellation_policy', {
+            p_full_hours: n('full_hours'),
+            p_partial_hours: n('partial_hours'),
+            p_partial_rate: n('partial_rate') / 100,
+            p_no_show_rate: n('no_show_rate') / 100,
+            p_driver_fault_rate: n('driver_fault_rate') / 100,
+        });
+        if (error) {
+            alert(error.message);
+            if (btn) btn.disabled = false;
+            return;
+        }
+        window.location.reload();
     });
 
     window.addEventListener('keydown', (e) => {

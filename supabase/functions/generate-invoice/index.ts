@@ -1,320 +1,121 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
-import { generateInvoiceEmail } from "../_shared/email-templates/invoice.ts";
+import { generateInvoiceEmail } from "../_shared/email-templates/native/invoice.ts";
 import { sendEmailLog } from "../_shared/send-email-log.ts";
 import { checkInvoiceable } from "../_shared/invoiceable.ts";
+import { formatParisDate, legalLines } from "../_shared/invoice-mentions.ts";
+import { buildDocumentPdf } from "../_shared/invoice-pdf.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-);
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-// ponytail: facture générée en PDF local (sans Stripe Invoicing) — le compte
-// Stripe connecté de démo a un réglage d'auto-encaissement qui casse le flux
-// paid_out_of_band. Avant la vraie prod : élucider ce réglage côté Stripe
-// dashboard (Settings > Invoicing du compte connecté) et restaurer le flux
-// Stripe (création facture + invoiceItems + finalize + pay), qui reste le
-// seul moyen d'avoir une facture réellement encaissable/comptable côté Stripe.
-// Le code Stripe retiré est récupérable : `git show 16133a8^:supabase/functions/generate-invoice/index.ts`.
-//
-// Périmètre de facturation (2026-09-26) : seules les courses dont le montant ne
-// dépend pas d'une distance non vérifiée sont facturables — voir checkInvoiceable
-// dans ../_shared/invoiceable.ts. Les transferts à prix kilométrique attendent une
-// validation manuelle du montant, tant qu'aucune API de distance n'est câblée
-// (ORS ou OSRM le jour où le volume le justifie).
+// Facture maison, émise à la demande sur une course terminée (D-01). Le numéro FAC- est attribué par la RPC
+// assign_invoice_number, avec le JWT de l'appelant (owner/manager du tenant) et dans la même transaction que son
+// enregistrement : aucun trou de séquence. Le client service ne sert qu'à Storage et à l'e-mail, après autorisation.
+// Périmètre : voir checkInvoiceable (transferts à prix kilométrique non validé refusés).
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
   try {
     const { booking_id } = await req.json();
+    if (!booking_id) return json({ error: "booking_id requis" }, 400);
 
-    if (!booking_id) {
-      return new Response("Missing booking_id", { status: 400 });
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const svc = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    // Lecture sous RLS : une course d'un autre tenant reste introuvable.
+    const { data: pre } = await userClient.from("bookings")
+      .select("invoice_number, pricing_mode, booking_type, distance_km")
+      .eq("id", booking_id).maybeSingle();
+    if (!pre) return json({ error: "Course introuvable" }, 404);
+
+    const alreadyGenerated = pre.invoice_number?.startsWith("FAC-") === true;
+    if (!alreadyGenerated) {
+      const verdict = checkInvoiceable({
+        pricing_mode: pre.pricing_mode,
+        booking_type: pre.booking_type,
+        distance_km: pre.distance_km,
+      });
+      if (!verdict.invoiceable) return json({ error: "price_not_validated", message: verdict.reason }, 409);
     }
 
-    const { data: booking, error: bErr } = await supabase
-      .from("bookings")
-      .select(
-        "id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, booking_type, total_amount, subtotal_amount, vat_amount, status, mission_status, payment_mode, passenger_count, luggage_count, invoice_number, pricing_mode, distance_km"
-      )
-      .eq("id", booking_id)
-      .single();
-
-    if (bErr || !booking) {
-      return new Response("Booking not found", { status: 404 });
+    const { data: assigned, error: rpcErr } = await userClient.rpc("assign_invoice_number", { p_booking_id: booking_id });
+    if (rpcErr || !assigned?.[0]) {
+      const status = rpcErr?.code === "42501" ? 403 : rpcErr?.code === "P0002" ? 404 : 400;
+      return json({ error: rpcErr?.message ?? "Numéro non attribué" }, status);
     }
+    const { invoice_number: invoiceNumber, invoice_created_at: issuedAt } = assigned[0];
 
-    // Guard : seulement pour les courses terminées/payées
-    const isEligible =
-      booking.status === "paid" ||
-      booking.mission_status === "completed";
+    const { data: booking } = await svc.from("bookings").select(
+      "id, current_tenant_id, customer_id, pickup_address, dropoff_address, pickup_time, total_amount, subtotal_amount, vat_amount, payment_mode, passenger_count, luggage_count",
+    ).eq("id", booking_id).single();
+    if (!booking) return json({ error: "Course introuvable" }, 404);
 
-    if (!isEligible) {
-      return new Response(
-        `Booking not eligible (status=${booking.status}, mission_status=${booking.mission_status})`,
-        { status: 400 }
-      );
-    }
+    const [{ data: tenant }, { data: customer }, { data: payment }] = await Promise.all([
+      svc.from("tenants").select(
+        "name, logo_url, email, phone, siret, siren, vat_number, vat_rate, is_vat_exempt, legal_form, rcs_number, capital_social, address_line, postal_code, city",
+      ).eq("id", booking.current_tenant_id).single(),
+      svc.from("customers").select(
+        "first_name, last_name, email, phone, type, company_name, vat_number, billing_address, city, postal_code, country",
+      ).eq("id", booking.customer_id).maybeSingle(),
+      svc.from("financial_movements").select("created_at").eq("booking_id", booking_id)
+        .eq("movement_type", "payment").order("created_at").limit(1).maybeSingle(),
+    ]);
+    if (!tenant) return json({ error: "Tenant introuvable" }, 404);
 
-    // Guard : les courses à prix calculé au kilomètre ne sont pas facturables tant
-    // que le montant n'a pas été validé à la main. Placé avant next_invoice_number :
-    // un refus ne doit jamais consommer un numéro de la séquence, qui doit rester
-    // continue pour être comptablement recevable.
-    const verdict = checkInvoiceable({
-      pricing_mode: booking.pricing_mode,
-      booking_type: booking.booking_type,
-      distance_km: booking.distance_km,
+    const serviceDate = booking.pickup_time ?? issuedAt;
+    const pdfBytes = await buildDocumentPdf({
+      kind: "invoice",
+      logoUrl: tenant.logo_url,
+      lines: legalLines(tenant, customer ?? {}, {
+        kind: "invoice",
+        number: invoiceNumber,
+        issuedAt,
+        serviceDate,
+        paidAt: payment?.created_at ?? null,
+        paymentMethod: booking.payment_mode === "cash" ? "cash" : "card",
+      }),
+      item: {
+        description: `Course VTC - ${formatParisDate(serviceDate, true)}`,
+        details: [
+          `Départ : ${booking.pickup_address ?? "-"}`,
+          `Arrivée : ${booking.dropoff_address ?? "-"}`,
+          ...(booking.passenger_count ? [`${booking.passenger_count} passager(s)`] : []),
+          ...(booking.luggage_count ? [`${booking.luggage_count} bagage(s)`] : []),
+        ],
+      },
+      totals: {
+        ht: Number(booking.subtotal_amount ?? booking.total_amount ?? 0),
+        vat: Number(booking.vat_amount ?? 0),
+        ttc: Number(booking.total_amount ?? 0),
+        exempt: tenant.is_vat_exempt === true, // null = non exonéré (prudent, WR-02)
+        vatRate: Number(tenant.vat_rate ?? 0),
+      },
     });
 
-    if (!verdict.invoiceable) {
-      return new Response(
-        JSON.stringify({ error: "price_not_validated", message: verdict.reason }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Facture déjà générée — on renvoie l'existante
-    if (booking.invoice_number?.startsWith("FAC-")) {
-      const { data: existing, error: urlErr } = await supabase.storage
-        .from("invoices")
-        .createSignedUrl(`${booking.current_tenant_id}/factures/${booking_id}.pdf`, 60 * 60 * 24 * 30);
-      if (urlErr || !existing?.signedUrl) {
-        console.error("SIGNED URL ERROR (idempotent path)", urlErr);
-        return new Response("PDF introuvable, veuillez régénérer la facture", { status: 404 });
-      }
-      return new Response(
-        JSON.stringify({ success: true, invoice_number: booking.invoice_number, invoice_url: existing.signedUrl }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const [{ data: tenant }, { data: customer }] = await Promise.all([
-      supabase.from("tenants").select(
-        "name, logo_url, email, phone, siret, vat_number, vat_rate, is_vat_exempt, legal_form, rcs_number, capital_social"
-      ).eq("id", booking.current_tenant_id).single(),
-      supabase.from("customers").select(
-        "first_name, last_name, email, phone, company_name, vat_number, billing_address, city, postal_code, country"
-      ).eq("id", booking.customer_id).maybeSingle(),
-    ]);
-
-    if (!tenant) {
-      return new Response("Tenant not found", { status: 404 });
-    }
-
-    // Numéro séquentiel (art. L441-3 : sans rupture ni réutilisation)
-    const now = new Date();
-    const { data: invoiceNumber, error: seqErr } = await supabase.rpc(
-      "next_invoice_number",
-      { t_id: booking.current_tenant_id, y: now.getFullYear() }
-    );
-    if (seqErr || !invoiceNumber) {
-      console.error("SEQUENCE ERROR", seqErr);
-      return new Response("Failed to generate invoice number", { status: 500 });
-    }
-
-    // --- PDF ---
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595, 842]); // A4
-    const { width, height } = page.getSize();
-    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const black = rgb(0, 0, 0);
-    const gray = rgb(0.5, 0.5, 0.5);
-    const green = rgb(0.09, 0.4, 0.2);
-    const blue = rgb(0.1, 0.3, 0.6);
-
-    let y = height - 60;
-
-    // En-tête avec Logo si présent
-    page.drawText("FACTURE", { x: width - 170, y, size: 22, font: fontBold, color: blue });
-
-    let logoEmbedded = false;
-    if (tenant.logo_url) {
-      try {
-        const logoResp = await fetch(tenant.logo_url);
-        if (logoResp.ok) {
-          const logoBytes = new Uint8Array(await logoResp.arrayBuffer());
-          const isPng = tenant.logo_url.toLowerCase().includes(".png");
-          const logoImage = isPng
-            ? await pdfDoc.embedPng(logoBytes)
-            : await pdfDoc.embedJpg(logoBytes);
-
-          page.drawImage(logoImage, {
-            x: 50,
-            y: y - 35,
-            width: 45,
-            height: 45,
-          });
-          page.drawText(tenant.name ?? "", { x: 105, y: y - 10, size: 16, font: fontBold, color: blue });
-          logoEmbedded = true;
-          y -= 45;
-        }
-      } catch (e) {
-        console.warn("Could not load tenant logo in PDF:", e);
-      }
-    }
-
-    if (!logoEmbedded) {
-      page.drawText(tenant.name ?? "", { x: 50, y, size: 18, font: fontBold, color: blue });
-      y -= 22;
-    }
-
-    for (const line of [
-      tenant.email,
-      tenant.phone,
-      tenant.siret ? `SIRET : ${tenant.siret}` : null,
-      tenant.vat_number ? `TVA : ${tenant.vat_number}` : null,
-      tenant.rcs_number ? `RCS : ${tenant.rcs_number}` : null,
-    ].filter(Boolean) as string[]) {
-      page.drawText(line, { x: 50, y, size: 9, font, color: gray });
-      y -= 13;
-    }
-
-    page.drawText(`N° ${invoiceNumber}`, { x: width - 200, y: height - 82, size: 11, font: fontBold, color: black });
-    page.drawText(`Date : ${now.toLocaleDateString("fr-FR")}`, { x: width - 200, y: height - 97, size: 10, font, color: black });
-
-    y -= 20;
-    page.drawLine({ start: { x: 50, y }, end: { x: width - 50, y }, thickness: 0.5, color: gray });
-    y -= 20;
-
-    // Mention paiement reçu
-    const paymentLabel = booking.payment_mode === "cash" ? "Espèces" : "Paiement en ligne";
-    page.drawText(`Paiement reçu — ${paymentLabel}`, { x: 50, y, size: 10, font: fontBold, color: green });
-    y -= 25;
-
-    // Bloc client
-    page.drawText("CLIENT", { x: 50, y, size: 10, font: fontBold, color: gray });
-    y -= 16;
-
-    const customerName = customer
-      ? `${customer.first_name ?? ""} ${customer.last_name ?? ""}`.trim()
-      : "—";
-    page.drawText(customerName, { x: 50, y, size: 11, font: fontBold, color: black });
-    y -= 14;
-
-    for (const line of [
-      customer?.company_name,
-      customer?.email,
-      customer?.phone,
-      customer?.billing_address
-        ? [customer.billing_address, customer.postal_code, customer.city, customer.country].filter(Boolean).join(", ")
-        : null,
-      customer?.vat_number ? `TVA client : ${customer.vat_number}` : null,
-    ].filter(Boolean) as string[]) {
-      page.drawText(line, { x: 50, y, size: 10, font, color: black });
-      y -= 13;
-    }
-
-    // Tableau prestation
-    y -= 20;
-    page.drawLine({ start: { x: 50, y }, end: { x: width - 50, y }, thickness: 0.5, color: gray });
-    y -= 25;
-
-    page.drawText("DÉTAILS DE LA PRESTATION", { x: 50, y, size: 10, font: fontBold, color: gray });
-    y -= 20;
-
-    const col = [50, 280, 375, 465];
-    for (const [i, label] of ["Description", "Qté", "P.U. HT", "Total HT"].entries()) {
-      page.drawText(label, { x: col[i], y, size: 10, font: fontBold, color: black });
-    }
-    y -= 6;
-    page.drawLine({ start: { x: 50, y }, end: { x: width - 50, y }, thickness: 0.3, color: gray });
-    y -= 16;
-
-    const pickupDate = booking.pickup_time
-      ? new Date(booking.pickup_time).toLocaleString("fr-FR")
-      : "—";
-    const subtotal = Number(booking.subtotal_amount ?? booking.total_amount ?? 0);
-
-    page.drawText(`Course VTC — ${pickupDate}`, { x: col[0], y, size: 10, font: fontBold, color: black });
-    page.drawText("1", { x: col[1], y, size: 10, font, color: black });
-    page.drawText(`${subtotal.toFixed(2)} €`, { x: col[2], y, size: 10, font, color: black });
-    page.drawText(`${subtotal.toFixed(2)} €`, { x: col[3], y, size: 10, font, color: black });
-    y -= 14;
-
-    for (const detail of [
-      `Départ : ${booking.pickup_address ?? "—"}`,
-      `Arrivée : ${booking.dropoff_address ?? "—"}`,
-      booking.passenger_count ? `${booking.passenger_count} passager(s)` : null,
-      booking.luggage_count ? `${booking.luggage_count} bagage(s)` : null,
-    ].filter(Boolean) as string[]) {
-      page.drawText(detail, { x: col[0] + 10, y, size: 9, font, color: gray });
-      y -= 12;
-    }
-
-    // Totaux
-    y -= 20;
-    page.drawLine({ start: { x: 50, y }, end: { x: width - 50, y }, thickness: 0.3, color: gray });
-    y -= 20;
-
-    const total = Number(booking.total_amount ?? 0);
-    const vat = Number(booking.vat_amount ?? 0);
-    // ponytail: null → non exonéré (prudent fiscalement, WR-02)
-    const isExempt = tenant.is_vat_exempt === true;
-    const vatRate = Number(tenant.vat_rate ?? 0);
-    const labelX = width - 200;
-    const valueX = width - 55;
-
-    const drawTotal = (label: string, value: string, bold = false, color = black) => {
-      page.drawText(label, { x: labelX, y, size: bold ? 12 : 10, font: bold ? fontBold : font, color });
-      page.drawText(value, { x: valueX - value.length * (bold ? 7 : 5.5), y, size: bold ? 12 : 10, font: bold ? fontBold : font, color });
-      y -= bold ? 20 : 16;
-    };
-
-    drawTotal("Sous-total HT :", `${subtotal.toFixed(2)} €`);
-    if (!isExempt && vatRate > 0) {
-      drawTotal(`TVA (${vatRate}%) :`, `${vat.toFixed(2)} €`);
-    }
-    drawTotal("TOTAL TTC :", `${total.toFixed(2)} €`, true, blue);
-
-    // Pied de page légal
-    const footerY = 60;
-    page.drawLine({ start: { x: 50, y: footerY + 20 }, end: { x: width - 50, y: footerY + 20 }, thickness: 0.3, color: gray });
-    let fy = footerY + 10;
-    for (const line of [
-      isExempt ? "TVA non applicable, art. 293 B du CGI." : `TVA au taux de ${vatRate}%.`,
-      tenant.legal_form ? `Forme juridique : ${tenant.legal_form}` : null,
-      tenant.capital_social ? `Capital social : ${Number(tenant.capital_social).toFixed(2)} €` : null,
-    ].filter(Boolean) as string[]) {
-      page.drawText(line, { x: 50, y: fy, size: 8, font, color: gray });
-      fy -= 11;
-    }
-
-    const pdfBytes = await pdfDoc.save();
-
-    // Upload Storage
+    // upsert : régénérer le même document n'a aucun effet sur la numérotation.
     const storagePath = `${booking.current_tenant_id}/factures/${booking_id}.pdf`;
-    const { error: uploadErr } = await supabase.storage
-      .from("invoices")
+    const { error: uploadErr } = await svc.storage.from("invoices")
       .upload(storagePath, pdfBytes, { contentType: "application/pdf", upsert: true });
-
     if (uploadErr) {
       console.error("UPLOAD ERROR", uploadErr);
-      return new Response(`Upload failed: ${uploadErr.message}`, { status: 500 });
+      return json({ error: `Envoi du PDF impossible : ${uploadErr.message}` }, 500);
     }
+    const { data: signed } = await svc.storage.from("invoices").createSignedUrl(storagePath, 60 * 60 * 24 * 7);
+    const invoiceUrl = signed?.signedUrl ?? "";
 
-    const { data: signedData } = await supabase.storage
-      .from("invoices")
-      .createSignedUrl(storagePath, 60 * 60 * 24 * 30); // 30 jours
-
-    const invoiceUrl = signedData?.signedUrl ?? "";
-
-    await supabase.from("bookings").update({
-      invoice_url: invoiceUrl || null,
-      invoice_number: invoiceNumber,
-      invoice_created_at: now.toISOString(),
-    }).eq("id", booking_id);
-
-    // --- Email ---
-    const customerEmail = customer?.email;
-    if (customerEmail && invoiceUrl) {
+    if (!alreadyGenerated && customer?.email && invoiceUrl) {
       const html = generateInvoiceEmail({
         invoiceNumber,
         invoiceUrl,
@@ -330,10 +131,10 @@ Deno.serve(async (req) => {
           capital_social: tenant.capital_social,
         },
         customer: {
-          first_name: customer?.first_name,
-          last_name: customer?.last_name,
-          email: customer?.email,
-          company_name: customer?.company_name,
+          first_name: customer.first_name,
+          last_name: customer.last_name,
+          email: customer.email,
+          company_name: customer.company_name,
         },
         booking: {
           pickup_address: booking.pickup_address,
@@ -345,22 +146,18 @@ Deno.serve(async (req) => {
           payment_mode: booking.payment_mode,
         },
       });
-
       await sendEmailLog({
         bookingId: booking_id,
         emailType: "invoice",
-        recipientEmail: customerEmail,
-        subject: `Votre facture ${invoiceNumber} — ${tenant.name ?? ""}`,
+        recipientEmail: customer.email,
+        subject: `Votre facture ${invoiceNumber} - ${tenant.name ?? ""}`,
         html,
       }).catch((err) => console.error("SEND EMAIL ERROR", err));
     }
 
-    return new Response(
-      JSON.stringify({ success: true, invoice_number: invoiceNumber, invoice_url: invoiceUrl }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  } catch (err: any) {
+    return json({ success: true, invoice_number: invoiceNumber, invoice_url: invoiceUrl, already_generated: alreadyGenerated });
+  } catch (err) {
     console.error("GENERATE INVOICE ERROR", err);
-    return new Response("Internal server error", { status: 500 });
+    return json({ error: "Erreur interne" }, 500);
   }
 });

@@ -25,9 +25,19 @@ export default [
   ...astro.configs.recommended,
   {
     // Scripts de build/CI : Node, pas navigateur — `console` et `process` existent.
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'apps/vtc-websites/*.mjs'],
     languageOptions: {
-      globals: { console: 'readonly', process: 'readonly' },
+      globals: { console: 'readonly', process: 'readonly', URL: 'readonly' },
+    },
+  },
+  {
+    // Logique pure partagée navigateur / Node (zone-check) : globals web standard.
+    files: ['apps/vtc-websites/src/core/*.mjs'],
+    languageOptions: {
+      globals: {
+        fetch: 'readonly', Response: 'readonly', URL: 'readonly', AbortController: 'readonly',
+        setTimeout: 'readonly', clearTimeout: 'readonly',
+      },
     },
   },
   {

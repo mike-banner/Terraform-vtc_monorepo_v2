@@ -5,7 +5,7 @@
 <div class='bg-[#151F2B] p-6 sm:p-8 rounded-2xl w-full shadow-2xl border border-white/10 border-t-4 border-t-[#6185B2] relative overflow-hidden backdrop-blur-xl font-headline'>
   
   <!-- ONGLETS SÉLECTEURS DE SERVICES -->
-  <div class='grid grid-cols-4 gap-1 p-1 bg-[#0B0F15]/60 rounded-xl mb-6 border border-white/10 text-[10px] sm:text-xs font-bold uppercase tracking-wider'>
+  <div class='grid grid-cols-3 gap-1 p-1 bg-[#0B0F15]/60 rounded-xl mb-6 border border-white/10 text-[10px] sm:text-xs font-bold uppercase tracking-wider'>
     <button type='button' data-service='transfert' class='service-tab active py-2.5 rounded-lg text-center transition-all bg-[#6185B2] text-white shadow-md'>
       Transfert
     </button>
@@ -14,9 +14,6 @@
     </button>
     <button type='button' data-service='long-distance' class='service-tab py-2.5 rounded-lg text-center transition-all text-white/60 hover:text-white hover:bg-white/5'>
       Distance
-    </button>
-    <button type='button' data-service='business' class='service-tab py-2.5 rounded-lg text-center transition-all text-white/60 hover:text-white hover:bg-white/5'>
-      Business
     </button>
   </div>
 
@@ -136,13 +133,6 @@
         if (lblPickup) lblPickup.textContent = 'Ville de départ';
         if (pickupInput) pickupInput.placeholder = 'Lyon, Annecy, Genève...';
         if (btnSubmitLabel) btnSubmitLabel.textContent = 'Estimer la longue distance';
-      } else if (service === 'business') {
-        form.action = '/tunnels/business';
-        containerDropoff?.classList.remove('hidden');
-        containerHours?.classList.add('hidden');
-        if (lblPickup) lblPickup.textContent = 'Lieu de congrès ou entreprise';
-        if (pickupInput) pickupInput.placeholder = 'Eurexpo Lyon, Siège social...';
-        if (btnSubmitLabel) btnSubmitLabel.textContent = 'Demander un devis VIP';
       }
     });
   });
