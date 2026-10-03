@@ -81,3 +81,39 @@ export async function setTenantStatus(status: 'active' | 'suspended'): Promise<v
   const { error } = await admin().from('tenants').update({ status } as never).eq('id', TENANT_ID);
   if (error) throw new Error(`setTenantStatus : ${error.message}`);
 }
+
+const SEED_PLATE = 'AA-001-AA';
+
+/** Remet les véhicules du seed : supprime les plaques `E2E-*`, réactive le véhicule du seed (un seul actif). */
+export async function resetVehicles(): Promise<void> {
+  const db = admin();
+  const del = await db.from('vehicles').delete().eq('tenant_id', TENANT_ID).like('plate_number', 'E2E-%');
+  if (del.error) throw new Error(`resetVehicles : ${del.error.message}`);
+  const off = await db.from('vehicles').update({ status: 'inactive' } as never).eq('tenant_id', TENANT_ID);
+  if (off.error) throw new Error(`resetVehicles : ${off.error.message}`);
+  const on = await db.from('vehicles').update({ status: 'active' } as never).eq('tenant_id', TENANT_ID).eq('plate_number', SEED_PLATE);
+  if (on.error) throw new Error(`resetVehicles : ${on.error.message}`);
+}
+
+export async function seedVehicle(plate: string, model: string, status: 'active' | 'inactive' = 'inactive'): Promise<void> {
+  const { error } = await admin().from('vehicles').insert({ tenant_id: TENANT_ID, brand: 'E2E', model, plate_number: plate, category: 'berline', capacity: 4, status } as never);
+  if (error) throw new Error(`seedVehicle : ${error.message}`);
+}
+
+export async function vehicleStatuses(): Promise<Record<string, string>> {
+  const { data, error } = await admin().from('vehicles').select('plate_number, status').eq('tenant_id', TENANT_ID);
+  if (error) throw new Error(`vehicleStatuses : ${error.message}`);
+  return Object.fromEntries(data.map((v) => [v.plate_number, v.status]));
+}
+
+/** Téléphone d'une fiche chauffeur (lecture ou remise à l'état du seed). */
+export async function driverPhone(lastName: string, set?: string): Promise<string | null> {
+  const db = admin();
+  if (set !== undefined) {
+    const { error } = await db.from('drivers').update({ phone: set } as never).eq('tenant_id', TENANT_ID).eq('last_name', lastName);
+    if (error) throw new Error(`driverPhone : ${error.message}`);
+  }
+  const { data, error } = await db.from('drivers').select('phone').eq('tenant_id', TENANT_ID).eq('last_name', lastName).single();
+  if (error) throw new Error(`driverPhone : ${error.message}`);
+  return data.phone;
+}
