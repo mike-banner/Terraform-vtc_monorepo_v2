@@ -110,7 +110,7 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   if (claims && (claims.tenant_role !== undefined || claims.platform_role !== undefined)) {
     // Les claims du hook (10-01) ne portent que les rôles : id/first_name/last_name
     // viennent de l'utilisateur authentifié (id) ou restent null (jamais utilisés
-    // dans ce chemin — setup.astro lit profile.first_name via `|| ''`).
+    // dans ce chemin — SetupPage lit profile.first_name via `|| ''`).
     profile = {
       id: user.id,
       platform_role: claims.platform_role ?? null,
@@ -205,10 +205,8 @@ export const onRequest = defineMiddleware(async ({ cookies, request, redirect, l
   }
 
   // 2ter. Politique d'accès par rôle tenant (voir ROUTE_POLICY dans lib/guards.ts).
-  // Appliquée ici et pas page par page : les routes `/api/tenant/*` étaient à
-  // découvert alors que les pages correspondantes étaient gardées — un `driver`
-  // pouvait appeler `update-settings` / `update-logo` malgré le guard de
-  // `settings.astro`. Deny-by-default : un chemin non déclaré est refusé.
+  // Appliquée ici et pas page par page : les routes `/api/tenant/*` ne doivent
+  // pas rester à découvert. Deny-by-default : un chemin non déclaré est refusé.
   // Les rôles plateforme et `pending` sont hors périmètre (traités en 3).
   const tenantRole =
     !profile?.platform_role && profile?.tenant_role && profile.tenant_role !== 'pending'
