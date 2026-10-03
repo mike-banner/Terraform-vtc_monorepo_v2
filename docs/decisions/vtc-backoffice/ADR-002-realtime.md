@@ -9,4 +9,4 @@ Les chauffeurs sur le terrain doivent signaler leur statut ("En route", "Client 
 - Supabase Realtime Channels est uniquement utilisé pour la mise à jour visuelle (lecture seule) de l'UI.
 
 ## Statut
-Accepté et implémenté.
+Remplacé par ADR-014 (2026-10-03). Le canal décrit ici n'avait jamais été implémenté ; les transitions passent toujours par l'API (terrain_transition).

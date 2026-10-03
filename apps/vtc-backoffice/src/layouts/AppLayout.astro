@@ -3,6 +3,8 @@
 import "../styles/global.css";
 import { isTenant } from "../lib/guards";
 import InactivityTimeout from "../components/common/InactivityTimeout.astro";
+import { SyncPill } from "../components/common/RealtimeStatus";
+import { RealtimeSync } from "../components/common/RealtimeSync";
 
 interface Props {
     title: string;
@@ -17,6 +19,7 @@ if (!isTenant(profile)) {
 }
 
 const safeProfile = profile!;
+const realtimeTenantId = ["owner", "manager", "driver"].includes(safeProfile.tenant_role ?? "") ? safeProfile.tenant_id : null;
 
 const navItems = [
     {
@@ -85,6 +88,7 @@ const tenantName = tenant?.name || "VTC HUB";
     </head>
 
     <body class="bg-background text-foreground selection:bg-primary/30 font-sans flex flex-col">
+        {realtimeTenantId && <RealtimeSync client:only="react" tenantId={realtimeTenantId} />}
 
         <!-- ═══════════════════════════════════
              MOBILE HEADER — in-flow, flex-shrink-0
@@ -93,6 +97,7 @@ const tenantName = tenant?.name || "VTC HUB";
             <h1 class="text-sm font-black uppercase tracking-wider text-white truncate min-w-0 flex-1">
                 {title}
             </h1>
+            <SyncPill client:load compact />
             <span class="text-[10px] font-semibold tracking-wider uppercase text-slate-400 truncate flex-shrink-0 max-w-[100px]">{tenantName}</span>
         </header>
 
@@ -185,6 +190,7 @@ const tenantName = tenant?.name || "VTC HUB";
                         </h1>
                     </div>
                     <div class="flex items-center gap-6">
+                        <SyncPill client:load />
                         <div class="flex flex-col items-end">
                             <span class="text-xs font-semibold uppercase text-primary tracking-wider">{tenantName}</span>
                             <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{safeProfile.tenant_role} mode</span>
