@@ -156,7 +156,7 @@ export async function updateCancellationPolicy(v: CancellationPolicyValues): Pro
   });
 }
 
-export const useRules = (tenantId: string) => useQuery({ queryKey: pricingKeys.rules(tenantId), queryFn: () => listRules(tenantId) });
+export const useRules = (tenantId: string) => useQuery({ queryKey: pricingKeys.rules(tenantId), enabled: !!tenantId, queryFn: () => listRules(tenantId) });
 export const usePolicy = (tenantId: string) => useQuery({ queryKey: pricingKeys.policy(tenantId), queryFn: () => getActivePolicy(tenantId) });
 
 export function useSaveRule(tenantId: string) {

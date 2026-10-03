@@ -187,3 +187,43 @@ export async function setTenantSiret(siret: string | null): Promise<string | nul
   if (e2) throw new Error(`setTenantSiret : ${e2.message}`);
   return data.siret;
 }
+
+const OWNER_ID = '11111111-1111-1111-1111-111111111111';
+const SETUP_COLS = 'setup_completed, siret, rcs_number, capital_social, vat_number, legal_form';
+export type SetupSnapshot = { tenant: Row; license: string | null; vehicles: string[]; rules: string[] };
+
+/** Remet le tenant du seed à l'état « non configuré » (première connexion) ; renvoie l'instantané pour `restoreSetup`. */
+export async function unconfigureTenant(): Promise<SetupSnapshot> {
+  const db = admin();
+  const { data: tenant, error } = await db.from('tenants').select(SETUP_COLS).eq('id', TENANT_ID).single();
+  if (error) throw new Error(`unconfigureTenant : ${error.message}`);
+  const { data: drv } = await db.from('drivers').select('license_number').eq('user_id', OWNER_ID).maybeSingle();
+  const { data: veh } = await db.from('vehicles').select('id').eq('tenant_id', TENANT_ID).eq('status', 'active');
+  const { data: rules } = await db.from('pricing_rules').select('id').eq('tenant_id', TENANT_ID).eq('active', true);
+  const snap: SetupSnapshot = { tenant: tenant as Row, license: drv?.license_number ?? null, vehicles: (veh ?? []).map((v) => v.id), rules: (rules ?? []).map((r) => r.id) };
+  const steps = await Promise.all([
+    db.from('vehicles').update({ status: 'inactive' } as never).eq('tenant_id', TENANT_ID),
+    db.from('pricing_rules').update({ active: false } as never).eq('tenant_id', TENANT_ID),
+    db.from('tenants').update({ setup_completed: false, siret: null } as never).eq('id', TENANT_ID),
+  ]);
+  for (const s of steps) if (s.error) throw new Error(`unconfigureTenant : ${s.error.message}`);
+  return snap;
+}
+
+/** Rétablit l'état d'avant `unconfigureTenant` et supprime ce que les tests ont créé (plaques `E2E-`, services `E2E`). */
+export async function restoreSetup(snap: SetupSnapshot): Promise<void> {
+  const db = admin();
+  await db.from('vehicles').delete().eq('tenant_id', TENANT_ID).like('plate_number', 'E2E-%');
+  await db.from('pricing_rules').delete().eq('tenant_id', TENANT_ID).like('service_category', 'E2E%');
+  if (snap.vehicles.length) await db.from('vehicles').update({ status: 'active' } as never).in('id', snap.vehicles);
+  if (snap.rules.length) await db.from('pricing_rules').update({ active: true } as never).in('id', snap.rules);
+  const { error } = await db.from('tenants').update(snap.tenant as never).eq('id', TENANT_ID);
+  if (error) throw new Error(`restoreSetup : ${error.message}`);
+  if (snap.license !== null) await db.from('drivers').update({ license_number: snap.license } as never).eq('user_id', OWNER_ID);
+}
+
+export async function tenantSetupRow(): Promise<Row> {
+  const { data, error } = await admin().from('tenants').select(SETUP_COLS).eq('id', TENANT_ID).single();
+  if (error) throw new Error(`tenantSetupRow : ${error.message}`);
+  return data as Row;
+}
