@@ -14,10 +14,10 @@ const pushRoute = (page: import('@playwright/test').Page, path: string) =>
   }, path);
 
 test.describe('coque React', () => {
-  test('spike : attrape-tout derrière les pages Astro et le refus par défaut', async ({ page }) => {
+  test('spike : dashboard servi par la coque et refus par défaut', async ({ page }) => {
     await page.goto('/app/dashboard');
     await expect(page.locator('main').first()).toBeVisible();
-    await expect(shell(page)).toHaveCount(0); // page Astro spécifique prioritaire
+    await expect(shell(page)).toBeVisible(); // plus aucune page Astro sous /app : tout passe par l'attrape-tout
     await page.goto('/app/inexistant');
     expect(page.url()).toContain('/app/dashboard?denied=1'); // middleware avant l'attrape-tout
   });
@@ -33,13 +33,14 @@ test.describe('coque React', () => {
     expect(errors()).toEqual([]);
   });
 
-  test('lien vers une page Astro = chargement complet, retour vers vehicles', async ({ page }) => {
+  test('lien vers le tableau de bord = navigation interne sans rechargement, retour vers vehicles', async ({ page }) => {
     await page.goto('/app/vehicles');
     await expect(shell(page)).toBeVisible();
     await page.evaluate(() => ((window as any).__marker = 1));
     await page.getByRole('link', { name: 'Accueil' }).click();
     await page.waitForURL('**/app/dashboard');
-    expect(await page.evaluate(() => (window as any).__marker)).toBeUndefined();
+    expect(await page.evaluate(() => (window as any).__marker)).toBe(1);
+    await expect(page.getByRole('heading', { name: 'Tableau de bord', level: 1 })).toBeVisible();
     await page.goBack();
     await expect(shell(page)).toBeVisible();
     expect(page.url()).toContain('/app/vehicles');
