@@ -1,5 +1,9 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { rpc } from "@/lib/app-error";
 import { supabase } from "@/lib/supabase/client";
 import { analyserCommunes, type AnalyseCommunes } from "@/lib/geo-communes.mjs";
+import type { Database } from "@vtc/database";
+import type { CancellationPolicyValues, RuleValues } from "./schema";
 
 // --- ZONES ---
 export const getZones = async (tenantId: string) => {
@@ -113,3 +117,57 @@ export const deleteFixedRoute = async (id: string) => {
   const { error } = await supabase.from("fixed_routes").delete().eq("id", id);
   if (error) throw error;
 };
+
+// --- RÈGLES STANDARD ---
+export type PricingRule = Database["public"]["Tables"]["pricing_rules"]["Row"];
+export type CancellationPolicy = Database["public"]["Tables"]["cancellation_policies"]["Row"];
+
+export const pricingKeys = {
+  rules: (tenantId: string) => ["pricing", "rules", tenantId] as const,
+  policy: (tenantId: string) => ["pricing", "policy", tenantId] as const,
+};
+
+export async function listRules(tenantId: string): Promise<PricingRule[]> {
+  const { data, error } = await supabase.from("pricing_rules").select("*").eq("tenant_id", tenantId).order("service_category", { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function saveRule(tenantId: string, id: string | undefined, v: RuleValues): Promise<void> {
+  const payload = { ...v, tenant_id: tenantId, service_category: v.service_category.toUpperCase() };
+  const { error } = id ? await supabase.from("pricing_rules").update(payload).eq("id", id) : await supabase.from("pricing_rules").insert(payload);
+  if (error) throw error;
+}
+
+export async function getActivePolicy(tenantId: string): Promise<CancellationPolicy | null> {
+  const { data, error } = await supabase.from("cancellation_policies").select("*").eq("tenant_id", tenantId).eq("active", true).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Owner seulement (garde dans la RPC). Les pourcentages saisis deviennent des taux 0-1 : simple changement d'unité, aucun montant calculé. */
+export async function updateCancellationPolicy(v: CancellationPolicyValues): Promise<void> {
+  await rpc("update_cancellation_policy", {
+    p_full_hours: v.full_hours,
+    p_partial_hours: v.partial_hours,
+    p_partial_rate: v.partial_rate / 100,
+    p_no_show_rate: v.no_show_rate / 100,
+    p_driver_fault_rate: v.driver_fault_rate / 100,
+  });
+}
+
+export const useRules = (tenantId: string) => useQuery({ queryKey: pricingKeys.rules(tenantId), queryFn: () => listRules(tenantId) });
+export const usePolicy = (tenantId: string) => useQuery({ queryKey: pricingKeys.policy(tenantId), queryFn: () => getActivePolicy(tenantId) });
+
+export function useSaveRule(tenantId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (a: { id?: string; values: RuleValues }) => saveRule(tenantId, a.id, a.values),
+    onSuccess: () => qc.invalidateQueries({ queryKey: pricingKeys.rules(tenantId) }),
+  });
+}
+
+export function useUpdatePolicy(tenantId: string) {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: updateCancellationPolicy, onSuccess: () => qc.invalidateQueries({ queryKey: pricingKeys.policy(tenantId) }) });
+}
