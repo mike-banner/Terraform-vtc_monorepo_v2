@@ -55,7 +55,10 @@ export default function IndexPage() {
             <a href="/signup" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-8 text-sm font-bold text-primary-foreground">
               Démarrer maintenant
             </a>
-            <Button variant="secondary" onClick={() => setAbout((v) => !v)} aria-expanded={about}>
+            <a href="/login" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-muted px-8 text-sm font-bold text-foreground hover:bg-secondary">
+              Se connecter
+            </a>
+            <Button variant="ghost" onClick={() => setAbout((v) => !v)} aria-expanded={about}>
               En savoir plus
             </Button>
           </div>

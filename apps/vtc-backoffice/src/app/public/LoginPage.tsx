@@ -83,6 +83,9 @@ export default function LoginPage() {
               Connexion
             </Button>
           </form>
+          <p className="text-center text-sm text-muted-foreground">
+            Pas encore de compte ? <a href="/signup" className="font-bold text-primary underline underline-offset-2 hover:opacity-90">Créer un compte</a>
+          </p>
         </div>
       </div>
     </main>
