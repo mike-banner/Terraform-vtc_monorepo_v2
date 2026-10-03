@@ -37,8 +37,8 @@ test.describe('coque React', () => {
     await page.goto('/app/vehicles');
     await expect(shell(page)).toBeVisible();
     await page.evaluate(() => ((window as any).__marker = 1));
-    await page.getByRole('link', { name: 'Fiscal' }).click();
-    await page.waitForURL('**/app/ledger');
+    await page.getByRole('link', { name: 'Accueil' }).click();
+    await page.waitForURL('**/app/dashboard');
     expect(await page.evaluate(() => (window as any).__marker)).toBeUndefined();
     await page.goBack();
     await expect(shell(page)).toBeVisible();

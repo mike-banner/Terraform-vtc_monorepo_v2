@@ -160,3 +160,30 @@ export async function restoreTenantSettings(snap: Row): Promise<void> {
   const { error } = await admin().from('tenants').update({ legal_form, vat_number, address_line, postal_code, city, logo_url } as never).eq('id', TENANT_ID);
   if (error) throw new Error(`restoreTenantSettings : ${error.message}`);
 }
+
+const LEDGER_EVENT = 'e2e-ledger';
+const LEDGER_BOOKING = '77777777-7777-7777-7777-777777777772'; // course payée 100 € du seed
+
+/** Mouvement du grand livre `e2e-ledger` sur une course du seed (service_role : seul INSERT autorisé). */
+export async function seedLedgerMovement(type: 'payment' | 'refund', createdAt: string, gross: number, net: number, vat: number): Promise<void> {
+  const { error } = await admin().from('financial_movements').insert({
+    booking_id: LEDGER_BOOKING, tenant_id: TENANT_ID, movement_type: type, direction: type === 'payment' ? 'credit' : 'debit',
+    gross_amount: gross, net_amount: net, vat_amount: vat, created_at: createdAt, created_by_event: LEDGER_EVENT,
+  } as never);
+  if (error) throw new Error(`seedLedgerMovement : ${error.message}`);
+}
+
+/** Retire les mouvements `e2e-ledger` (ledger immuable : suppression par la connexion propriétaire, base locale). */
+export function resetLedgerMovements(): void {
+  execFileSync('psql', [DB_URL, '-v', 'ON_ERROR_STOP=1', '-q', '-c', `delete from public.financial_movements where created_by_event = '${LEDGER_EVENT}'`], { stdio: 'pipe' });
+}
+
+/** SIRET du tenant du seed (requis par l'export FEC) ; renvoie l'ancienne valeur pour la restaurer. */
+export async function setTenantSiret(siret: string | null): Promise<string | null> {
+  const db = admin();
+  const { data, error } = await db.from('tenants').select('siret').eq('id', TENANT_ID).single();
+  if (error) throw new Error(`setTenantSiret : ${error.message}`);
+  const { error: e2 } = await db.from('tenants').update({ siret } as never).eq('id', TENANT_ID);
+  if (e2) throw new Error(`setTenantSiret : ${e2.message}`);
+  return data.siret;
+}

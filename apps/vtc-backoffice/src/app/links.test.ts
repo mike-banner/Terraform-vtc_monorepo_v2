@@ -14,6 +14,7 @@ describe("liens", () => {
   it("MIGRATED_PATHS contient les pages React", () => {
     expect(MIGRATED_PATHS.has("/app/vehicles")).toBe(true);
     expect(MIGRATED_PATHS.has("/app/pricing")).toBe(true);
-    expect(MIGRATED_PATHS.has("/app/ledger")).toBe(false);
+    expect(MIGRATED_PATHS.has("/app/ledger")).toBe(true);
+    expect(MIGRATED_PATHS.has("/app/dashboard")).toBe(false);
   });
 });
