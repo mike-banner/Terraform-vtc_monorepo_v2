@@ -64,6 +64,7 @@ export function EditBookingSheet({ booking: b, open, onClose }: { booking: Booki
         </div>
       }
     >
+      {open ? (
       <form id="edit-booking-form" onSubmit={submit} noValidate className="space-y-4">
         <Field label="Date et heure de prise en charge" error={errors.pickup_time?.message}>
           <Input type="datetime-local" {...register("pickup_time")} />
@@ -102,6 +103,7 @@ export function EditBookingSheet({ booking: b, open, onClose }: { booking: Booki
           />
         </Field>
       </form>
+      ) : null}
     </Sheet>
   );
 }

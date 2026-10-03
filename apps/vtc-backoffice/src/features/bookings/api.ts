@@ -149,7 +149,7 @@ export const createManualBooking = (v: NewBookingValues) => {
   const hourly = v.booking_type === "hourly";
   return rpc<{ booking_id: string; total_price: number }[]>("create_manual_booking", {
     p_pickup: v.pickup,
-    p_dropoff: !hourly && v.dropoff.trim() ? v.dropoff : undefined,
+    p_dropoff: v.dropoff.trim(), // sans valeur par défaut côté SQL : toujours envoyé (chaîne vide = pas d'arrivée)
     p_pickup_time: new Date(v.pickup_time).toISOString(),
     p_client_name: v.client_name,
     p_client_email: v.client_email,

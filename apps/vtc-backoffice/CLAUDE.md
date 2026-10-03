@@ -10,7 +10,7 @@ Dashboard SaaS tenant (chauffeurs/agences VTC) : bookings, fiscalité, tarifs, v
 |---|---|
 | `src/middleware.ts` | Guard global : auth, résolution du rôle (`platform_role`/`tenant_role`/`tenant_id`), routage SaaS |
 | `supabase/migrations/20260929110400_rpc_terrain_transition.sql`, `20261002100200_booking_cancel_refund.sql` | Seuls chemins qui changent `mission_status` / annulent une course (RPC gardées par rôle) : `terrain_transition` / `cancel_booking` (via l'Edge Function `cancel-booking`) / `mark_booking_no_show`. Le pourcentage de remboursement vient de `cancellation_preview` ; la politique se règle par `update_cancellation_policy` (owner). `api/missions/terrain-transition` et `api/tenant/booking-actions` n'en sont que les proxys |
-| `supabase/migrations/20260929110300_booking_pricing_functions.sql` | `calculate_booking_price` / `booking_vat_split` : prix et TVA de toute écriture. `src/lib/pricing.ts` = aperçu client seulement, non contractuel |
+| `supabase/migrations/20260929110300_booking_pricing_functions.sql` | `calculate_booking_price` / `booking_vat_split` : prix et TVA de toute écriture. Aperçu de prix du formulaire : RPC `quote_booking_estimate` (non contractuel) ; plus aucun calcul de prix dans le navigateur |
 | `supabase/functions/stripe_webhook/` | Paiement/remboursement, recalcul serveur du montant |
 
 ## Interdits

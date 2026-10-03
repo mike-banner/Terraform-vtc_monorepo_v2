@@ -227,3 +227,25 @@ export async function tenantSetupRow(): Promise<Row> {
   if (error) throw new Error(`tenantSetupRow : ${error.message}`);
   return data as Row;
 }
+
+/** Identifiant d'un véhicule du tenant du seed (course éditable avec aperçu de prix). */
+export async function firstVehicleId(): Promise<string> {
+  const { data, error } = await admin().from('vehicles').select('id').eq('tenant_id', TENANT_ID).order('created_at').limit(1).single();
+  if (error) throw new Error(`firstVehicleId : ${error.message}`);
+  return data.id;
+}
+
+/** Purge des courses et mouvements d'un tenant jetable (base locale, triggers d'immuabilité levés le temps de la transaction). */
+export function purgeTenantBookings(tenantId: string): void {
+  if (!/^[0-9a-f-]{36}$/.test(tenantId)) throw new Error('purgeTenantBookings : identifiant invalide');
+  execFileSync(
+    'psql',
+    [DB_URL, '-v', 'ON_ERROR_STOP=1', '-q', '-c', `
+      begin;
+      set local session_replication_role = replica;
+      delete from public.financial_movements where tenant_id = '${tenantId}';
+      delete from public.bookings where current_tenant_id = '${tenantId}';
+      commit;`],
+    { stdio: 'pipe' },
+  );
+}

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import './e2e-env';
+import { purgeTenantBookings } from './helpers/seed';
 
 let supabase: any;
 
@@ -29,7 +30,7 @@ test.describe.serial('Backoffice E2E Flow', () => {
       // Les FK bookings -> tenants ne sont pas en cascade : sans ce DELETE préalable,
       // celui du tenant échouait en silence et laissait un tenant orphelin en base.
       if (tenantId) {
-        await supabase.from('bookings').delete().eq('current_tenant_id', tenantId);
+        purgeTenantBookings(tenantId); // courses terminées : ledger et trigger anti-suppression
         const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
         if (error) console.error('Nettoyage tenant en échec :', error.message);
       }
@@ -118,122 +119,54 @@ test.describe.serial('Backoffice E2E Flow', () => {
     });
     expect(vError).toBeNull();
     
-    // On simule un rechargement / navigation vers l'app après approbation
-    await page.goto('/app/bookings');
-
-    // Print URL to debug where we landed
-    console.log("URL AFTER GOTO:", page.url());
-    
-    // L'utilisateur approuvé devrait accéder au dashboard (ou au setup)
-    // await page.waitForURL('**/app*');
-
-    // Scénario 3 : Réservation manuelle
-    // Naviguer vers les réservations
-    await page.goto('/app/bookings');
-    
-    // Ouvrir le modal Nouvelle Course
-    await page.click('#open-new-booking');
-    
-    // Remplir le formulaire
-    await page.fill('input[name="client_name"]', 'John Doe E2E');
-    await page.fill('input[name="client_email"]', 'johndoe@e2e.com');
-    await page.fill('input[name="pickup"]', 'Gare de Lyon, Paris');
-    
-    // Le input dropoff a un id particulier
-    await page.fill('#dropoff-input', 'Aéroport Charles de Gaulle');
-    
-    // Date: dans 10 minutes (pour permettre le démarrage immédiat dans le test)
-    const pickupDate = new Date();
-    pickupDate.setMinutes(pickupDate.getMinutes() + 10);
-    const tomorrowIso = pickupDate.toISOString().slice(0, 16);
-    await page.fill('input[name="pickup_time"]', tomorrowIso);
-    
-    // Prix estimé
-    await page.fill('input[name="manual_total"]', '85.50');
-    
-    const invalidFields = await page.evaluate(() => {
-      const form = document.getElementById('new-booking-form') as HTMLFormElement;
-      if (!form.checkValidity()) {
-        const invalids = [];
-        for (const el of form.elements) {
-          if (!(el as HTMLInputElement).validity.valid) {
-            invalids.push((el as HTMLInputElement).name || (el as HTMLInputElement).id);
-          }
-        }
-        return invalids;
-      }
-      return [];
+    // Prérequis de configuration (la porte d'entrée de /app renvoie sinon vers /app/setup) : identité légale validée,
+    // un véhicule actif (ci-dessus) et un tarif actif.
+    const { error: tError } = await supabase.from('tenants').update({ setup_completed: true }).eq('id', tenantId);
+    expect(tError).toBeNull();
+    const { error: rError } = await supabase.from('pricing_rules').insert({
+      tenant_id: tenantId, service_category: 'berline', base_price: 10, price_per_km: 2, price_per_hour: 60, minimum_fare: 30, active: true,
     });
-    console.log("INVALID FIELDS:", invalidFields);
-    
-    // Soumettre et intercepter la requête
-    const [response] = await Promise.all([
-      page.waitForResponse(res => res.url().includes('/api/tenant/create-booking') && res.request().method() === 'POST'),
-      page.click('#new-booking-form button[type="submit"]')
-    ]);
-    
-    console.log("API BOOKING STATUS:", response.status());
-    if (!response.ok()) {
-      console.log("API BOOKING ERROR:", await response.text());
-    }
-    
-    // Attendre que la course apparaisse dans la liste
-    await expect(page.locator('text=John Doe E2E >> visible=true').first()).toBeVisible({ timeout: 10000 });
+    expect(rError).toBeNull();
 
-    // --- PHASE 4: CYCLE DE VIE & NOTATION ---
+    // L'approbation s'est faite côté serveur : le jeton de la session d'inscription est périmé, on se reconnecte.
+    await page.context().clearCookies();
+    await page.goto('/login');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.click('#login-form button[type="submit"]');
+    await page.waitForURL('**/app/**');
 
-    // 1. Ouvrir la modale de la course
-    await page.locator('text=John Doe E2E >> visible=true').first().click();
-    await expect(page.locator('#detail-booking-modal')).toBeVisible();
+    // Scénario 3 : réservation manuelle (formulaire React)
+    await page.goto('/app/bookings');
+    await page.getByRole('button', { name: 'Nouvelle course' }).click();
+    const form = page.getByRole('dialog', { name: 'Nouvelle course' });
+    await form.getByLabel('Nom du client').fill('John Doe E2E');
+    await form.getByLabel('E-mail du client').fill('johndoe@e2e.com');
+    await form.getByLabel('Adresse de départ').fill('Gare de Lyon, Paris');
+    await form.getByLabel("Adresse d'arrivée").fill('Aéroport Charles de Gaulle');
 
-    // 2. Prendre la main (Accepter)
-    // La réservation créée manuellement est déjà en statut "not_started".
-    // Pas besoin de cliquer sur "Prendre la main", le bouton Démarrer est dispo.
-    await expect(page.locator('#btn-start')).toBeVisible({ timeout: 10000 });
-    await page.click('#btn-start');
-    await page.waitForLoadState('networkidle');
+    // Dans 10 minutes (heure locale du navigateur) : « En route » est disponible dès 15 minutes avant le départ.
+    const d = new Date(Date.now() + 10 * 60_000);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+    await form.getByLabel('Date et heure de prise en charge').fill(local);
+    await form.getByLabel('Montant TTC (€)').fill('85.50');
+    await form.getByRole('button', { name: 'Confirmer la réservation' }).click();
 
-    // 4. Terminer la course
-    await page.locator('text=John Doe E2E >> visible=true').first().click();
-    await expect(page.locator('#btn-complete')).toBeVisible({ timeout: 10000 });
-    await page.click('#btn-complete');
-    await page.waitForLoadState('networkidle');
+    // La fiche de la nouvelle course s'ouvre.
+    const fiche = page.getByRole('dialog', { name: /^Course #/ });
+    await expect(fiche).toContainText('John Doe E2E', { timeout: 10000 });
+    await expect(fiche).toContainText(/85,50\s€/);
 
-    // 5. Vérifier l'apparition du QR Code
-    await page.locator('text=John Doe E2E >> visible=true').first().click();
-    await expect(page.locator('#modal-qr-section')).toBeVisible({ timeout: 10000 });
-    
-    // Récupérer l'ID de la course dans le HTML
-    const tr = page.locator('tr:has-text("John Doe E2E")').first();
-    const dataBooking = await tr.getAttribute('data-booking');
-    JSON.parse(decodeURIComponent(dataBooking!));
-    
-    // NB: On simule le scan du QR code mais on ne navigue pas sur la page /rate 
-    // car le SSR d'Astro peut échouer sur des clés de test sans contexte complet.
-    // L'essentiel du cycle (Démarrer -> Terminer) est validé.
+    // --- Cycle de vie & notation ---
+    // La réservation créée manuellement est déjà « non démarrée » : pas de prise en main, « En route » puis « Terminer ».
+    await fiche.getByRole('button', { name: 'En route', exact: true }).click();
+    await fiche.getByRole('button', { name: 'Terminer', exact: true }).click();
 
-    // --- PHASE 4: SETTINGS & TARIFICATION ---
-    await page.goto('http://localhost:4321/app/pricing');
-    await expect(page.locator('text=Grille KM / MIN')).toBeVisible({ timeout: 10000 });
-
-    // Click add to create a new rule (since the tenant is fresh)
-    await page.locator('#add-rule-btn').click();
-    await expect(page.locator('#pricing-modal')).toBeVisible({ timeout: 10000 });
-
-    // Remplir la nouvelle règle
-    await page.fill('input[name="service_category"]', 'STANDARD');
-    await page.fill('input[name="base_price"]', '2.50');
-    await page.fill('input[name="price_per_km"]', '1.50');
-    await page.fill('input[name="minimum_fare"]', '15.00');
-
-    // Sauvegarder
-    await page.click('#save-rule-btn');
-    await page.waitForLoadState('networkidle');
-
-    // Vérifier la mise à jour (wait for modal to close or page to reload)
-    await page.waitForTimeout(1000);
-    // Let's just assume it passed if it reloaded successfully without error.
-
+    // Course terminée : le QR de notation apparaît.
+    await expect(fiche).toContainText('Faire noter la course', { timeout: 10000 });
+    await expect(fiche.locator('svg').last()).toBeVisible();
+    // NB : on ne navigue pas sur /rate (page publique couverte ailleurs).
+    // Le tarif (création, modification) est couvert par backoffice-pricing.spec.ts.
   });
 
   test.skip('Tentative accès non autorisé (RLS)', async () => {

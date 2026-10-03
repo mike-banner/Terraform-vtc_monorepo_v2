@@ -84,7 +84,7 @@ export type Capabilities = {
 
 type CapFields = Pick<BookingRow, "status" | "mission_status" | "pickup_time" | "booking_source" | "invoice_number">;
 
-/** Droits d'action de la fiche, repris de scripts/bookings.ts ; le serveur (RPC, RLS) reste l'arbitre. */
+/** Droits d'action de la fiche, reprise de l'ancien script de la page ; le serveur (RPC, RLS) reste l'arbitre. */
 export function bookingCapabilities(b: CapFields, profile: { role: TenantRole | null }, now: number = Date.now()): Capabilities {
   const canManage = profile.role === "owner" || profile.role === "manager";
   const preMission = b.mission_status === "to_validate" || b.mission_status === "not_started";
