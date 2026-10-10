@@ -14,11 +14,11 @@ import { useInactivity } from "./useInactivity";
 import { useResume } from "./useResume";
 import { useThemeColor } from "./useThemeColor";
 
-const NAV: { to: string; label: string; Icon: LucideIcon }[] = [
+const NAV: { to: string; label: string; Icon: LucideIcon; desktopOnly?: boolean }[] = [
   { to: "/app/dashboard", label: "Accueil", Icon: LayoutDashboard },
   { to: "/app/bookings", label: "Courses", Icon: CalendarDays },
-  { to: "/app/vehicles", label: "Flotte", Icon: Car },
-  { to: "/app/pricing", label: "Tarifs", Icon: Tag },
+  { to: "/app/vehicles", label: "Flotte", Icon: Car, desktopOnly: true },
+  { to: "/app/pricing", label: "Tarifs", Icon: Tag, desktopOnly: true },
   { to: "/app/ledger", label: "Fiscal", Icon: FileText },
   { to: "/app/settings", label: "Réglages", Icon: Settings },
   { to: "/app/profile", label: "Profil", Icon: User },
@@ -84,7 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
         <ActiveMissionBanner mission={mission} />
         <nav data-bottom-nav className="flex shrink-0 border-t border-border pb-[env(safe-area-inset-bottom)] md:hidden">
-          {items.map(({ to, label, Icon }) => (
+          {items.filter((n) => !n.desktopOnly).map(({ to, label, Icon }) => (
             <AppLink key={to} to={to} className={`flex min-h-14 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-xs font-semibold ${link(pathname === to)}`}>
               <Icon aria-hidden="true" className="size-5" />
               <span className="w-full truncate text-center">{label}</span>
