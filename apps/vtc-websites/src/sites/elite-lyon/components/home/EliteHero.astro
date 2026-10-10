@@ -1,70 +1,48 @@
 ---
 import { Image } from 'astro:assets';
-import heroImage from '../../assets/images/elite-van-hero-city.png';
+import heroImage from '../../assets/images/elite-van-hero-wide.jpg';
 import EliteBookingWidget from './EliteBookingWidget.astro';
 ---
 
-<section
-  id='hero'
-  class='relative min-h-[100dvh] flex items-center pt-28 pb-16 lg:py-24 overflow-hidden bg-[#0B0F15]'>
-  
-  <!-- PHOTO D'ARRIÈRE-PLAN : SPOTLIGHT LUMINEUX & MISE EN VALEUR EN PLEINE LUMIÈRE -->
-  <div class='absolute inset-0 z-0 pointer-events-none'>
-    <Image
-      class='w-full h-full object-cover object-center brightness-110 contrast-105 scale-105 transition-all duration-1000'
-      src={heroImage}
-      alt='Elite Chauffeur Privé Lyon - Véhicule de Prestige'
-      loading='eager'
-      format='webp'
-      quality='high'
-    />
-    <!-- Spotlight Radial -->
-    <div class='absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(97,133,178,0.25)_0%,rgba(11,15,21,0.4)_50%,rgba(11,15,21,0.85)_100%)]'></div>
-    <div class='absolute inset-0 bg-gradient-to-r from-[#0B0F15]/90 via-[#0B0F15]/40 to-transparent'></div>
-    <div class='absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[#0B0F15] to-transparent'></div>
+<section id='hero' class='bg-[#0B0F15] pt-20 sm:pt-24 pb-16 lg:pb-24'>
+  <!-- PHOTO CADRÉE DANS LA PAGE : aucun voile, la photo porte seule le hero -->
+  <div class='mx-auto max-w-[1600px] px-4 sm:px-6'>
+    <div class='overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 aspect-[4/3] sm:aspect-[16/7] lg:aspect-[8/3]'>
+      <Image
+        class='h-full w-full object-cover object-[55%_center]'
+        src={heroImage}
+        alt='Mercedes Classe V noire en circulation dans le quartier d&apos;affaires de Lyon au crépuscule'
+        loading='eager'
+        format='webp'
+        quality={82}
+      />
+    </div>
   </div>
 
-  <div class='container mx-auto px-6 sm:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center'>
-    
-    <!-- CONTENU GAUCHE : ACCROCHE & UNIQUE CTA BLEU ACIER -->
-    <div class='lg:col-span-7 flex flex-col justify-center items-center lg:items-start text-center lg:text-left pt-4 lg:pt-0'>
-      
-      <!-- BADGE EYEBROW BLEU ACIER -->
-      <div class='inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#6185B2]/15 border border-[#6185B2]/30 text-[#719DCC] text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] mb-6 shadow-lg shadow-[#6185B2]/10 backdrop-blur-md'>
-        <span class='relative flex h-2 w-2'>
-          <span class='motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[#719DCC] opacity-75'></span>
-          <span class='relative inline-flex rounded-full h-2 w-2 bg-[#6185B2]'></span>
-        </span>
-        Premium Fleet Service — Lyon & Rhône-Alpes
-      </div>
-
-      <!-- TITRE PRINCIPAL -->
-      <h1 class='text-white font-headline text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[0.95] mb-6 uppercase drop-shadow-lg'>
-        Chauffeur <br /> <span class='text-transparent bg-clip-text bg-gradient-to-r from-[#A8C0E0] via-[#6185B2] to-[#719DCC]'>Privé De Luxe</span>
-      </h1>
-
-      <!-- SOUS-TITRE LEGEREMENT OMBRE -->
-      <p class='text-slate-200 font-body text-base sm:text-lg lg:text-xl max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed font-normal drop-shadow-md'>
-        L'excellence opérationnelle pour vos déplacements stratégiques. Discrétion, ponctualité et prestige garantis 24/7.
+  <!-- TEXTE ET RÉSERVATION SOUS LA PHOTO -->
+  <div class='mx-auto mt-10 lg:mt-14 grid max-w-[1400px] grid-cols-1 gap-10 px-6 sm:px-8 lg:grid-cols-12 lg:gap-16 lg:items-start'>
+    <div class='lg:col-span-7'>
+      <p class='mb-4 font-label text-xs font-semibold uppercase tracking-[0.25em] text-[#719DCC]'>
+        Chauffeur privé — Lyon et Rhône-Alpes
       </p>
-
-      <!-- BOUTON UNIQUE DE RÉSERVATION -> RENVOI VERS LA SECTION SUR-MESURE (#services) -->
-      <div class='flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto'>
-        <a
-          href='#services'
-          class='btn-premium w-full sm:w-auto px-10 py-4 font-headline font-bold text-xs sm:text-sm uppercase tracking-[0.2em] shadow-xl hover:shadow-2xl text-center flex items-center justify-center gap-3 group'>
-          <span>Réserver un trajet</span>
-          <svg class='w-4 h-4 transition-transform group-hover:translate-x-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M14 5l7 7m0 0l-7 7m7-7H3' />
-          </svg>
-        </a>
-      </div>
+      <h1 class='mb-5 font-headline text-3xl font-bold leading-[1.05] tracking-tighter text-white sm:text-5xl'>
+        Chauffeur privé de luxe
+      </h1>
+      <p class='mb-8 max-w-[52ch] font-body text-base leading-relaxed text-slate-300 sm:text-lg'>
+        Vos déplacements professionnels et privés, avec discrétion et ponctualité, 24 h sur 24.
+      </p>
+      <a
+        href='#services'
+        class='btn-premium group inline-flex w-full items-center justify-center gap-3 px-10 py-4 text-center text-xs uppercase tracking-[0.2em] sm:w-auto sm:text-sm'>
+        <span>Réserver un trajet</span>
+        <svg class='h-4 w-4 transition-transform group-hover:translate-x-1' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
+          <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M14 5l7 7m0 0l-7 7m7-7H3' />
+        </svg>
+      </a>
     </div>
 
-    <!-- WIDGET DE RÉSERVATION DROITE -->
-    <div id='booking' class='lg:col-span-5 flex items-center w-full mt-6 lg:mt-0'>
+    <div id='booking' class='lg:col-span-5 w-full'>
       <EliteBookingWidget />
     </div>
-
   </div>
 </section>
